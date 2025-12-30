@@ -258,14 +258,10 @@ export default function AuthPage() {
               </motion.div>
             </TabsContent>
           </Tabs>
-        </div>
+          </div>
+        </motion.div>
+        <FooterSignature />
+      </div>
+    );
+  }
 
-        <footer className="mt-10 text-center">
-          <p className="text-xs text-blue-400 dark:text-blue-500 font-bold uppercase tracking-widest">
-            &copy; 2024 PigierGrad | Excellence Académique
-          </p>
-        </footer>
-      </motion.div>
-    </div>
-  );
-}
