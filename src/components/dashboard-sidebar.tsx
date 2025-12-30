@@ -99,18 +99,25 @@ export function DashboardSidebar() {
           <span className="text-sm font-semibold">Mon Profil</span>
         </Link>
         
-        <div className="flex items-center justify-between px-2">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center border-2 border-white dark:border-blue-900 shadow-lg">
-              <User className="w-4 h-4 text-blue-900" />
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center gap-2">
+              <Avatar className="w-9 h-9 border-2 border-white dark:border-blue-900 shadow-lg">
+                <AvatarImage src={profile?.avatar_url} />
+                <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-blue-900 text-[10px] font-black">
+                  {profile?.full_name?.charAt(0) || "A"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-blue-900 dark:text-white uppercase tracking-tight truncate max-w-[100px]">
+                  {profile?.full_name || "Admin"}
+                </span>
+                <span className="text-[10px] text-blue-400 font-medium truncate max-w-[100px]">
+                  {profile?.department || "Pigier University"}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-bold text-blue-900 dark:text-white uppercase tracking-tight">Admin</span>
-              <span className="text-[10px] text-blue-400 font-medium">Pigier University</span>
-            </div>
+            <ThemeToggle />
           </div>
-          <ThemeToggle />
-        </div>
 
         <Button
           variant="ghost"
