@@ -122,6 +122,14 @@ export default function ProfilePage() {
       .getPublicUrl(fileName);
 
     setProfile(prev => ({ ...prev, avatar_url: publicUrl }));
+    
+    // Auto-save the avatar URL to the profile
+    if (user) {
+      await supabase
+        .from("profiles")
+        .upsert({ user_id: user.id, avatar_url: publicUrl, updated_at: new Date().toISOString() });
+    }
+    
     toast.success("Photo de profil mise à jour !");
   };
 
