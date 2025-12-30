@@ -67,6 +67,7 @@ export default function AuthPage() {
   };
 
   const handleOAuthSignIn = async (provider: 'google') => {
+    console.log("OAuth Sign In clicked for:", provider);
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
