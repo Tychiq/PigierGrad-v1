@@ -151,19 +151,20 @@ export default function DashboardLayout({
       </AnimatePresence>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        <header className="h-16 flex items-center justify-between px-6 bg-white/80 dark:bg-[#0f1629]/80 backdrop-blur-xl border-b border-blue-100 dark:border-blue-900/30 transition-colors duration-300 z-40">
-            <div className="flex items-center gap-4 flex-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/30 hidden md:flex"
-              >
-                {sidebarOpen ? <X className="w-5 h-5 text-blue-600" /> : <Menu className="w-5 h-5 text-blue-600" />}
-              </Button>
+          <header className="h-16 flex items-center justify-between px-6 bg-white/80 dark:bg-[#0f1629]/80 backdrop-blur-xl border-b border-blue-100 dark:border-blue-900/30 transition-colors duration-300 z-40">
+              <div className="flex items-center gap-4 flex-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/30 flex"
+                >
+                  {sidebarOpen ? <X className="w-5 h-5 text-blue-600" /> : <Menu className="w-5 h-5 text-blue-600" />}
+                </Button>
 
-              {/* Mobile Navigation Dropdown */}
-              <div className="md:hidden">
+                {/* Mobile Navigation Dropdown - Keep as backup for ease */}
+                <div className="md:hidden">
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="h-10 rounded-xl bg-blue-50/50 border-blue-100 text-blue-900 font-bold flex items-center gap-2">
