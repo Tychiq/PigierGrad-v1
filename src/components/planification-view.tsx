@@ -289,9 +289,9 @@ const ITEMS_PER_PAGE = 8;
               Appliquer Session
             </Button>
           </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <ResetEverythingButton />
-            <div className="relative">
+            <div className="flex items-center gap-3 flex-wrap">
+              <ResetEverythingButton diplomaType={diplomaType} target="planning" />
+              <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
               <Input 
                 placeholder="Rechercher..." 
