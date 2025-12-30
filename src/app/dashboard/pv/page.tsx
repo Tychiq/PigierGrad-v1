@@ -180,10 +180,11 @@ export default function PVGenerationPage() {
             GradeRapporteur: selectedStudent.grade_rapporteur || "..........",
             Président: selectedStudent.president || "....................",
             GradePrésident: selectedStudent.grade_president || "..........",
-            // Adding extras just in case
             Theme: selectedStudent.theme || "....................",
             Directeur: selectedStudent.directeur || "....................",
             GradeDirecteur: selectedStudent.grade_directeur || "..........",
+            Date: formatDate(selectedStudent.date_soutenance) || "....................",
+            Heure: formatTime(selectedStudent.heure_soutenance) || "....................",
             DateSoutenance: formatDate(selectedStudent.date_soutenance) || "....................",
             HeureSoutenance: formatTime(selectedStudent.heure_soutenance) || "....................",
             Diplome: selectedStudent.diploma_type?.toUpperCase() || "LICENCE",
