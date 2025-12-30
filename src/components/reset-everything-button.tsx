@@ -23,11 +23,16 @@ interface ResetEverythingButtonProps {
   target: "planning" | "directors";
 }
 
-export function ResetEverythingButton({ diplomaType, target }: ResetEverythingButtonProps) {
+export function ResetEverythingButton({ diplomaType = "", target }: ResetEverythingButtonProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleReset = async () => {
+    if (!diplomaType) {
+      toast.error("Type de diplôme non spécifié");
+      return;
+    }
+
     setLoading(true);
     try {
       if (target === "planning") {
@@ -39,9 +44,7 @@ export function ResetEverythingButton({ diplomaType, target }: ResetEverythingBu
         
         if (soutenancesError) throw soutenancesError;
 
-        // Also delete related notifications for this diploma type if possible, 
-        // but currently notifications don't have diploma_type. 
-        // We'll just delete notifications that mention the diploma type in the message as a best effort.
+        // Also delete related notifications for this diploma type
         const { error: notificationsError } = await supabase
           .from("notifications")
           .delete()
@@ -66,7 +69,8 @@ export function ResetEverythingButton({ diplomaType, target }: ResetEverythingBu
       }
       
       router.refresh();
-      window.location.reload();
+      // Use window.location.reload() as a fallback to ensure state is cleared
+      setTimeout(() => window.location.reload(), 500);
     } catch (error: any) {
       console.error("Error resetting data:", error);
       toast.error("Erreur lors de l'opération: " + error.message);
@@ -75,13 +79,16 @@ export function ResetEverythingButton({ diplomaType, target }: ResetEverythingBu
     }
   };
 
+  const safeDiplomaType = diplomaType || "";
+  const displayDiplomaType = safeDiplomaType.toUpperCase();
+
   const title = target === "planning" 
-    ? `RÉINITIALISER LE PLANNING ${diplomaType.toUpperCase()}`
-    : `RÉINITIALISER LES DIRECTEURS ${diplomaType.toUpperCase()}`;
+    ? `RÉINITIALISER LE PLANNING ${displayDiplomaType}`
+    : `RÉINITIALISER LES DIRECTEURS ${displayDiplomaType}`;
 
   const description = target === "planning"
-    ? `Cette action supprimera définitivement TOUS les étudiants et planifications pour le diplôme ${diplomaType}.`
-    : `Cette action retirera TOUS les directeurs assignés aux soutenances de type ${diplomaType}. Les étudiants et thèmes seront conservés.`;
+    ? `Cette action supprimera définitivement TOUS les étudiants et planifications pour le diplôme ${safeDiplomaType}.`
+    : `Cette action retirera TOUS les directeurs assignés aux soutenances de type ${safeDiplomaType}. Les étudiants et thèmes seront conservés.`;
 
   return (
     <AlertDialog>
