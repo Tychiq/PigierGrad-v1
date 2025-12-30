@@ -993,6 +993,33 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+        <AlertDialogContent className="rounded-3xl border-none shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-black text-blue-900 dark:text-white uppercase tracking-tight">
+              Confirmer la suppression
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-blue-400 font-medium">
+              Êtes-vous sûr de vouloir supprimer <span className="font-black text-blue-600">"{itemToDelete?.name}"</span> ? Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="rounded-xl font-bold border-blue-200">Annuler</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                if (itemToDelete) {
+                  handleDelete(itemToDelete.id, itemToDelete.name);
+                  setItemToDelete(null);
+                }
+              }}
+              className="rounded-xl bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest text-xs"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
