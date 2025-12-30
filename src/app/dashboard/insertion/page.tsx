@@ -78,9 +78,13 @@ export default function InsertionPage() {
 
         const validData = formattedData.filter(d => d.nom);
 
-        const { error } = await supabase.from("soutenances").insert(validData);
-
-        if (error) throw error;
+        // Batch insertion to avoid payload limits and timeouts (especially for 100+ rows)
+        const BATCH_SIZE = 50;
+        for (let i = 0; i < validData.length; i += BATCH_SIZE) {
+          const batch = validData.slice(i, i + BATCH_SIZE);
+          const { error } = await supabase.from("soutenances").insert(batch);
+          if (error) throw error;
+        }
 
         await supabase.from("notifications").insert({
           title: "Importation Réussie",
