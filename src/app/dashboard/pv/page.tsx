@@ -34,6 +34,11 @@ interface Student {
   matricule: string;
   date_naissance: string;
   lieu_naissance: string;
+  nom2?: string;
+  prenoms2?: string;
+  matricule2?: string;
+  date_naissance2?: string;
+  lieu_naissance2?: string;
   theme: string;
   directeur: string;
   grade_directeur: string;
@@ -48,6 +53,7 @@ interface Student {
   rapporteur: string;
   grade_rapporteur: string;
   diploma_type: string;
+  date_depot?: string;
 }
 
 export default function PVGenerationPage() {
@@ -56,6 +62,8 @@ export default function PVGenerationPage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -70,8 +78,11 @@ export default function PVGenerationPage() {
   }, []);
 
   const filteredStudents = students.filter(s => 
-    `${s.nom} ${s.prenoms} ${s.matricule}`.toLowerCase().includes(searchQuery.toLowerCase())
+    `${s.nom} ${s.prenoms} ${s.matricule} ${s.nom2 || ""} ${s.prenoms2 || ""}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const paginatedStudents = filteredStudents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
 
   const selectedStudent = students.find(s => s.id === selectedStudentId);
 
@@ -84,7 +95,9 @@ export default function PVGenerationPage() {
     setGenerating(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const studentNames = selectedStudent.nom2 
+        ? `${selectedStudent.nom} ${selectedStudent.prenoms} & ${selectedStudent.nom2} ${selectedStudent.prenoms2}`
+        : `${selectedStudent.nom} ${selectedStudent.prenoms}`;
 
       const doc = new Document({
         sections: [{
@@ -94,132 +107,111 @@ export default function PVGenerationPage() {
               alignment: AlignmentType.CENTER,
               spacing: { after: 200 },
               children: [
-                new TextRun({ text: "RÉPUBLIQUE DU BÉNIN", bold: true, size: 24 }),
+                new TextRun({ text: "RÉPUBLIQUE DU BÉNIN", bold: true, size: 24, font: "Arial" }),
               ],
             }),
             new Paragraph({
               alignment: AlignmentType.CENTER,
               spacing: { after: 200 },
               children: [
-                new TextRun({ text: "MINISTÈRE DE L'ENSEIGNEMENT SUPÉRIEUR ET DE LA RECHERCHE SCIENTIFIQUE", size: 20 }),
+                new TextRun({ text: "MINISTÈRE DE L'ENSEIGNEMENT SUPÉRIEUR ET DE LA RECHERCHE SCIENTIFIQUE", size: 20, font: "Arial" }),
               ],
             }),
             new Paragraph({
               alignment: AlignmentType.CENTER,
               spacing: { after: 400 },
               children: [
-                new TextRun({ text: "UNIVERSITÉ PIGIER", bold: true, size: 28 }),
+                new TextRun({ text: "UNIVERSITÉ PIGIER", bold: true, size: 28, font: "Arial", color: "1e40af" }),
               ],
             }),
             new Paragraph({
               alignment: AlignmentType.CENTER,
               spacing: { after: 600 },
               children: [
-                new TextRun({ text: "PROCÈS-VERBAL DE SOUTENANCE", bold: true, size: 32, underline: {} }),
+                new TextRun({ text: "PROCÈS-VERBAL DE SOUTENANCE", bold: true, size: 32, underline: {}, font: "Arial" }),
               ],
             }),
             new Paragraph({
               spacing: { after: 300 },
               children: [
-                new TextRun({ text: `Diplôme : `, bold: true, size: 24 }),
-                new TextRun({ text: selectedStudent.diploma_type || "Non spécifié", size: 24 }),
+                new TextRun({ text: `Diplôme : `, bold: true, size: 24, font: "Arial" }),
+                new TextRun({ text: selectedStudent.diploma_type || "Non spécifié", size: 24, font: "Arial" }),
               ],
             }),
             new Paragraph({
               spacing: { after: 300 },
               children: [
-                new TextRun({ text: `Matricule : `, bold: true, size: 24 }),
-                new TextRun({ text: selectedStudent.matricule || "Non spécifié", size: 24 }),
+                new TextRun({ text: `Candidat(s) : `, bold: true, size: 24, font: "Arial" }),
+                new TextRun({ text: studentNames, size: 24, font: "Arial", bold: true }),
               ],
             }),
             new Paragraph({
               spacing: { after: 300 },
               children: [
-                new TextRun({ text: `Nom et Prénoms : `, bold: true, size: 24 }),
-                new TextRun({ text: `${selectedStudent.nom || ""} ${selectedStudent.prenoms || ""}`, size: 24 }),
-              ],
-            }),
-            new Paragraph({
-              spacing: { after: 300 },
-              children: [
-                new TextRun({ text: `Date de Naissance : `, bold: true, size: 24 }),
-                new TextRun({ text: selectedStudent.date_naissance || "Non spécifié", size: 24 }),
-              ],
-            }),
-            new Paragraph({
-              spacing: { after: 300 },
-              children: [
-                new TextRun({ text: `Lieu de Naissance : `, bold: true, size: 24 }),
-                new TextRun({ text: selectedStudent.lieu_naissance || "Non spécifié", size: 24 }),
+                new TextRun({ text: `Matricule(s) : `, bold: true, size: 24, font: "Arial" }),
+                new TextRun({ text: selectedStudent.matricule2 ? `${selectedStudent.matricule} / ${selectedStudent.matricule2}` : selectedStudent.matricule, size: 24, font: "Arial" }),
               ],
             }),
             new Paragraph({
               spacing: { after: 400 },
               children: [
-                new TextRun({ text: `Thème : `, bold: true, size: 24 }),
-                new TextRun({ text: selectedStudent.theme || "Non spécifié", size: 24, italics: true }),
+                new TextRun({ text: `Thème : `, bold: true, size: 24, font: "Arial" }),
+                new TextRun({ text: selectedStudent.theme || "Non spécifié", size: 24, italics: true, font: "Arial" }),
               ],
             }),
             new Paragraph({
               spacing: { after: 200 },
               children: [
-                new TextRun({ text: `Directeur de Mémoire : `, bold: true, size: 24 }),
-                new TextRun({ text: `${selectedStudent.directeur || "Non spécifié"} (${selectedStudent.grade_directeur || ""})`, size: 24 }),
-              ],
-            }),
-            new Paragraph({
-              spacing: { after: 600 },
-              children: [
-                new TextRun({ text: `Date de Dépôt : `, bold: true, size: 24 }),
-                new TextRun({ text: selectedStudent.date_depot || "Non spécifié", size: 24 }),
+                new TextRun({ text: `Directeur de Mémoire : `, bold: true, size: 24, font: "Arial" }),
+                new TextRun({ text: `${selectedStudent.directeur || "Non spécifié"} (${selectedStudent.grade_directeur || ""})`, size: 24, font: "Arial" }),
               ],
             }),
             new Paragraph({
               spacing: { after: 300 },
               children: [
-                new TextRun({ text: "COMPOSITION DU JURY :", bold: true, size: 26, underline: {} }),
+                new TextRun({ text: "COMPOSITION DU JURY :", bold: true, size: 26, underline: {}, font: "Arial" }),
               ],
             }),
             new Paragraph({
               spacing: { after: 200 },
               children: [
-                new TextRun({ text: `Président : `, bold: true, size: 24 }),
-                new TextRun({ text: `${selectedStudent.president || "À définir"} (${selectedStudent.grade_president || ""})`, size: 24 }),
+                new TextRun({ text: `Président : `, bold: true, size: 24, font: "Arial" }),
+                new TextRun({ text: `${selectedStudent.president || "À définir"} (${selectedStudent.grade_president || ""})`, size: 24, font: "Arial" }),
               ],
             }),
             new Paragraph({
               spacing: { after: 200 },
               children: [
-                new TextRun({ text: `Examinateur : `, bold: true, size: 24 }),
-                new TextRun({ text: `${selectedStudent.examinateur || "À définir"} (${selectedStudent.grade_examinateur || ""})`, size: 24 }),
+                new TextRun({ text: `Examinateur : `, bold: true, size: 24, font: "Arial" }),
+                new TextRun({ text: `${selectedStudent.examinateur || "À définir"} (${selectedStudent.grade_examinateur || ""})`, size: 24, font: "Arial" }),
               ],
             }),
             new Paragraph({
               spacing: { after: 200 },
               children: [
-                new TextRun({ text: `Rapporteur : `, bold: true, size: 24 }),
-                new TextRun({ text: `${selectedStudent.rapporteur || "À définir"} (${selectedStudent.grade_rapporteur || ""})`, size: 24 }),
+                new TextRun({ text: `Rapporteur : `, bold: true, size: 24, font: "Arial" }),
+                new TextRun({ text: `${selectedStudent.rapporteur || "À définir"} (${selectedStudent.grade_rapporteur || ""})`, size: 24, font: "Arial" }),
               ],
             }),
             new Paragraph({
               spacing: { after: 600 },
               children: [
-                new TextRun({ text: `Date de Soutenance : `, bold: true, size: 24 }),
-                new TextRun({ text: `${selectedStudent.date_soutenance || "À définir"} à ${selectedStudent.heure_soutenance || ""}`, size: 24 }),
+                new TextRun({ text: `Date de Soutenance : `, bold: true, size: 24, font: "Arial" }),
+                new TextRun({ text: `${selectedStudent.date_soutenance || "À définir"} à ${selectedStudent.heure_soutenance || ""}`, size: 24, font: "Arial" }),
               ],
             }),
             new Paragraph({
               spacing: { after: 200 },
               children: [
-                new TextRun({ text: `Salle : `, bold: true, size: 24 }),
-                new TextRun({ text: selectedStudent.salle || "À définir", size: 24 }),
+                new TextRun({ text: `Salle : `, bold: true, size: 24, font: "Arial" }),
+                new TextRun({ text: selectedStudent.salle || "À définir", size: 24, font: "Arial" }),
               ],
             }),
             new Paragraph({ text: "", spacing: { after: 800 } }),
             new Paragraph({
               alignment: AlignmentType.RIGHT,
               children: [
-                new TextRun({ text: `Fait à Cotonou, le ${new Date().toLocaleDateString('fr-FR')}`, italics: true, size: 22 }),
+                new TextRun({ text: `Fait à Cotonou, le ${new Date().toLocaleDateString('fr-FR')}`, italics: true, size: 22, font: "Arial" }),
               ],
             }),
           ],
@@ -227,7 +219,15 @@ export default function PVGenerationPage() {
       });
 
       const blob = await Packer.toBlob(doc);
-      saveAs(blob, `PV_Soutenance_${selectedStudent.nom}_${selectedStudent.prenoms}.docx`);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `PV_Soutenance_${selectedStudent.nom.replace(/\s+/g, '_')}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
       toast.success("Procès-Verbal généré avec succès !");
     } catch (err: any) {
       console.error(err);
