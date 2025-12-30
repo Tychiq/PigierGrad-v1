@@ -374,11 +374,13 @@ interface Notification {
               <div className="absolute bottom-0 left-0 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl" />
             </div>
             
-            <div className="relative z-10 max-w-7xl mx-auto">
-              {children}
-            </div>
-          </main>
+              <div className="relative z-10 max-w-7xl mx-auto">
+                {children}
+              </div>
+              <FooterSignature />
+            </main>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
+
