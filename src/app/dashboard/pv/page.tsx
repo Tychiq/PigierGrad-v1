@@ -105,61 +105,61 @@ export default function PVGenerationPage() {
 
   const selectedStudent = students.find(s => s.id === selectedStudentId);
 
-  const generatePV = async () => {
-    if (!selectedStudent) {
-      toast.error("Veuillez sélectionner un étudiant");
-      return;
-    }
+    const generatePV = async () => {
+      if (!selectedStudent) {
+        toast.error("Veuillez sélectionner un étudiant");
+        return;
+      }
 
-    setGenerating(true);
+      setGenerating(true);
 
-    try {
-      const doc = new Document({
-        sections: [{
-          properties: {
-            page: {
-              margin: {
-                top: 720,
-                right: 720,
-                bottom: 720,
-                left: 720,
+      try {
+        const doc = new Document({
+          sections: [{
+            properties: {
+              page: {
+                margin: {
+                  top: 720,
+                  right: 720,
+                  bottom: 720,
+                  left: 720,
+                },
               },
             },
-          },
-          children: [
-            // Header Section
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [
-                new TextRun({ text: "RÉPUBLIQUE DU BÉNIN", bold: true, size: 24 }),
-              ],
-            }),
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [
-                new TextRun({ text: "----------", bold: true }),
-              ],
-            }),
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [
-                new TextRun({ text: "MINISTÈRE DE L'ENSEIGNEMENT SUPÉRIEUR ET DE LA RECHERCHE SCIENTIFIQUE", size: 18 }),
-              ],
-            }),
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [
-                new TextRun({ text: "----------", bold: true }),
-              ],
-            }),
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              spacing: { after: 400 },
-              children: [
-                new TextRun({ text: "ÉCOLE SUPÉRIEURE DE COMMERCE ET D'ADMINISTRATION DES ENTREPRISES", bold: true, size: 20 }),
-                new TextRun({ text: "\nPIGIER - BÉNIN", bold: true, size: 28, color: "1e40af" }),
-              ],
-            }),
+            children: [
+              // Header Section
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [
+                  new TextRun({ text: "RÉPUBLIQUE DU BÉNIN", bold: true, size: 24, font: "Arial" }),
+                ],
+              }),
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [
+                  new TextRun({ text: "----------", bold: true, font: "Arial" }),
+                ],
+              }),
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [
+                  new TextRun({ text: "MINISTÈRE DE L'ENSEIGNEMENT SUPÉRIEUR ET DE LA RECHERCHE SCIENTIFIQUE", size: 18, font: "Arial" }),
+                ],
+              }),
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [
+                  new TextRun({ text: "----------", bold: true, font: "Arial" }),
+                ],
+              }),
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 400 },
+                children: [
+                  new TextRun({ text: "ÉCOLE SUPÉRIEURE DE COMMERCE ET D'ADMINISTRATION DES ENTREPRISES", bold: true, size: 20, font: "Arial" }),
+                  new TextRun({ text: "\nPIGIER - BÉNIN", bold: true, size: 32, color: "1e40af", font: "Arial" }),
+                ],
+              }),
 
               new Paragraph({
                 alignment: AlignmentType.CENTER,
@@ -168,229 +168,261 @@ export default function PVGenerationPage() {
                   new TextRun({ 
                     text: "PROCÈS-VERBAL DE SOUTENANCE DE FIN DE CYCLE", 
                     bold: true, 
-                    size: 32, 
-                    underline: { type: "single" } 
+                    size: 36, 
+                    underline: { type: "single" },
+                    font: "Arial"
                   }),
                 ],
               }),
 
               new Paragraph({
                 alignment: AlignmentType.CENTER,
-                spacing: { after: 400 },
+                spacing: { after: 600 },
                 children: [
                   new TextRun({ 
                     text: `SESSION DE : ${selectedStudent.session_month?.toUpperCase() || "...................."} ${selectedStudent.session_year || "202..."}`, 
                     bold: true, 
-                    size: 24 
+                    size: 28,
+                    font: "Arial"
                   }),
                 ],
               }),
 
-
-            // Diploma & Speciality
-            new Paragraph({
-              spacing: { after: 200 },
-              children: [
-                new TextRun({ text: "DIPLÔME PRÉPARÉ : ", bold: true, size: 22 }),
-                new TextRun({ text: selectedStudent.diploma_type?.toUpperCase() || "LICENCE", size: 22 }),
-              ],
-            }),
-            new Paragraph({
-              spacing: { after: 400 },
-              children: [
-                new TextRun({ text: "SPÉCIALITÉ : ", bold: true, size: 22 }),
-                new TextRun({ text: selectedStudent.speciality?.toUpperCase() || "NON PRÉCISÉE", size: 22 }),
-              ],
-            }),
-
-            // Student Table
-            new Paragraph({
-              children: [new TextRun({ text: "IDENTIFICATION DU CANDIDAT", bold: true, underline: {} })],
-              spacing: { after: 200 },
-            }),
-            new Table({
-              width: { size: 100, type: WidthType.PERCENTAGE },
-              rows: [
-                new TableRow({
-                  children: [
-                    new TableCell({ 
-                      width: { size: 30, type: WidthType.PERCENTAGE },
-                      children: [new Paragraph({ children: [new TextRun({ text: "Nom & Prénoms", bold: true })] })] 
-                    }),
-                    new TableCell({ 
-                      width: { size: 70, type: WidthType.PERCENTAGE },
-                      children: [new Paragraph({ children: [new TextRun({ text: `${selectedStudent.nom} ${selectedStudent.prenoms}`.toUpperCase() })] })] 
-                    }),
-                  ],
-                }),
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Matricule", bold: true })] })] }),
-                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: selectedStudent.matricule })] })] }),
-                  ],
-                }),
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Né(e) le", bold: true })] })] }),
-                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `${selectedStudent.date_naissance} à ${selectedStudent.lieu_naissance}` })] })] }),
-                  ],
-                }),
-                ...(selectedStudent.nom2 ? [
+              // Diploma & Speciality Table
+              new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                borders: {
+                  top: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
+                  bottom: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
+                  left: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
+                  right: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
+                },
+                rows: [
                   new TableRow({
                     children: [
-                      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Binôme (Nom & Prénoms)", bold: true })] })] }),
-                      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `${selectedStudent.nom2} ${selectedStudent.prenoms2}`.toUpperCase() })] })] }),
+                      new TableCell({
+                        width: { size: 30, type: WidthType.PERCENTAGE },
+                        shading: { fill: "f3f4f6" },
+                        children: [new Paragraph({ children: [new TextRun({ text: "DIPLÔME PRÉPARÉ", bold: true, font: "Arial" })] })]
+                      }),
+                      new TableCell({
+                        width: { size: 70, type: WidthType.PERCENTAGE },
+                        children: [new Paragraph({ children: [new TextRun({ text: selectedStudent.diploma_type?.toUpperCase() || "LICENCE", font: "Arial" })] })]
+                      }),
                     ],
                   }),
                   new TableRow({
                     children: [
-                      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Matricule Binôme", bold: true })] })] }),
-                      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: selectedStudent.matricule2 || "" })] })] }),
+                      new TableCell({
+                        shading: { fill: "f3f4f6" },
+                        children: [new Paragraph({ children: [new TextRun({ text: "SPÉCIALITÉ", bold: true, font: "Arial" })] })]
+                      }),
+                      new TableCell({
+                        children: [new Paragraph({ children: [new TextRun({ text: selectedStudent.speciality?.toUpperCase() || "NON PRÉCISÉE", font: "Arial" })] })]
+                      }),
                     ],
                   }),
-                ] : []),
-              ],
-            }),
+                ],
+              }),
 
-            // Theme
-            new Paragraph({
-              spacing: { before: 400, after: 200 },
-              children: [
-                new TextRun({ text: "THÈME DU MÉMOIRE : ", bold: true }),
-                new TextRun({ text: selectedStudent.theme || "Non spécifié", italics: true }),
-              ],
-            }),
+              new Paragraph({ spacing: { before: 400 } }),
 
-            // Jury Table
-            new Paragraph({
-              children: [new TextRun({ text: "COMPOSITION DU JURY", bold: true, underline: {} })],
-              spacing: { before: 400, after: 200 },
-            }),
-            new Table({
-              width: { size: 100, type: WidthType.PERCENTAGE },
-              rows: [
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "FONCTION", bold: true })] })] }),
-                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "NOM & PRÉNOMS", bold: true })] })] }),
-                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "GRADE", bold: true })] })] }),
-                  ],
-                }),
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph({ text: "PRÉSIDENT" })] }),
-                    new TableCell({ children: [new Paragraph({ text: selectedStudent.president || "................................................" })] }),
-                    new TableCell({ children: [new Paragraph({ text: selectedStudent.grade_president || ".........." })] }),
-                  ],
-                }),
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph({ text: "EXAMINATEUR" })] }),
-                    new TableCell({ children: [new Paragraph({ text: selectedStudent.examinateur || "................................................" })] }),
-                    new TableCell({ children: [new Paragraph({ text: selectedStudent.grade_examinateur || ".........." })] }),
-                  ],
-                }),
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph({ text: "RAPPORTEUR" })] }),
-                    new TableCell({ children: [new Paragraph({ text: selectedStudent.rapporteur || "................................................" })] }),
-                    new TableCell({ children: [new Paragraph({ text: selectedStudent.grade_rapporteur || ".........." })] }),
-                  ],
-                }),
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph({ text: "DIRECTEUR" })] }),
-                    new TableCell({ children: [new Paragraph({ text: selectedStudent.directeur || "................................................" })] }),
-                    new TableCell({ children: [new Paragraph({ text: selectedStudent.grade_directeur || ".........." })] }),
-                  ],
-                }),
-              ],
-            }),
-
-            // Results Section (The Gaps)
-            new Paragraph({
-              children: [new TextRun({ text: "RÉSULTATS DE LA SOUTENANCE", bold: true, underline: {} })],
-              spacing: { before: 400, after: 200 },
-            }),
-            new Table({
-              width: { size: 100, type: WidthType.PERCENTAGE },
-              rows: [
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "NOTE OBTENUE (/20)", bold: true })] })] }),
-                    new TableCell({ children: [new Paragraph({ text: ".................... / 20" })] }),
-                  ],
-                }),
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "MENTION", bold: true })] })] }),
-                    new TableCell({ children: [new Paragraph({ text: "................................................" })] }),
-                  ],
-                }),
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "DÉCISION DU JURY", bold: true })] })] }),
-                    new TableCell({ children: [new Paragraph({ text: "ADMIS(E) / AJOURNÉ(E)" })] }),
-                  ],
-                }),
-              ],
-            }),
-
-            // Observations
-            new Paragraph({
-              spacing: { before: 400, after: 100 },
-              children: [new TextRun({ text: "OBSERVATIONS :", bold: true })],
-            }),
-            new Paragraph({
-              children: [new TextRun({ text: "............................................................................................................................................................" })],
-            }),
-            new Paragraph({
-              children: [new TextRun({ text: "............................................................................................................................................................" })],
-            }),
-
-            // Signatures
-            new Paragraph({
-              alignment: AlignmentType.RIGHT,
-              spacing: { before: 600, after: 400 },
-              children: [
-                new TextRun({ text: `Fait à Cotonou, le ${selectedStudent.date_soutenance || "......../......../202..."}`, italics: true }),
-              ],
-            }),
-
-            new Table({
-              width: { size: 100, type: WidthType.PERCENTAGE },
-              borders: {
-                top: { style: BorderStyle.NONE },
-                bottom: { style: BorderStyle.NONE },
-                left: { style: BorderStyle.NONE },
-                right: { style: BorderStyle.NONE },
-                insideHorizontal: { style: BorderStyle.NONE },
-                insideVertical: { style: BorderStyle.NONE },
-              },
-              rows: [
-                new TableRow({
-                  children: [
-                    new TableCell({ 
+              // Student Table
+              new Paragraph({
+                children: [new TextRun({ text: "IDENTIFICATION DU CANDIDAT", bold: true, underline: {}, font: "Arial", size: 24 })],
+                spacing: { after: 200 },
+              }),
+              new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                rows: [
+                  new TableRow({
+                    children: [
+                      new TableCell({ 
+                        width: { size: 30, type: WidthType.PERCENTAGE },
+                        shading: { fill: "f3f4f6" },
+                        children: [new Paragraph({ children: [new TextRun({ text: "Nom & Prénoms", bold: true, font: "Arial" })] })] 
+                      }),
+                      new TableCell({ 
+                        width: { size: 70, type: WidthType.PERCENTAGE },
+                        children: [new Paragraph({ children: [new TextRun({ text: `${selectedStudent.nom} ${selectedStudent.prenoms}`.toUpperCase(), font: "Arial" })] })] 
+                      }),
+                    ],
+                  }),
+                  new TableRow({
+                    children: [
+                      new TableCell({ shading: { fill: "f3f4f6" }, children: [new Paragraph({ children: [new TextRun({ text: "Matricule", bold: true, font: "Arial" })] })] }),
+                      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: selectedStudent.matricule, font: "Arial" })] })] }),
+                    ],
+                  }),
+                  new TableRow({
+                    children: [
+                      new TableCell({ shading: { fill: "f3f4f6" }, children: [new Paragraph({ children: [new TextRun({ text: "Né(e) le", bold: true, font: "Arial" })] })] }),
+                      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `${formatDate(selectedStudent.date_naissance)} à ${selectedStudent.lieu_naissance}`, font: "Arial" })] })] }),
+                    ],
+                  }),
+                  ...(selectedStudent.nom2 ? [
+                    new TableRow({
                       children: [
-                        new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Le Rapporteur", bold: true })] }),
-                        new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "\n\n\n\n" })] }),
-                        new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "(Signature)" })] }),
-                      ] 
+                        new TableCell({ shading: { fill: "f3f4f6" }, children: [new Paragraph({ children: [new TextRun({ text: "Binôme (Nom & Prénoms)", bold: true, font: "Arial" })] })] }),
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `${selectedStudent.nom2} ${selectedStudent.prenoms2}`.toUpperCase(), font: "Arial" })] })] }),
+                      ],
                     }),
-                    new TableCell({ 
+                    new TableRow({
                       children: [
-                        new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Le Président du Jury", bold: true })] }),
-                        new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "\n\n\n\n" })] }),
-                        new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "(Signature et Cachet)" })] }),
-                      ] 
+                        new TableCell({ shading: { fill: "f3f4f6" }, children: [new Paragraph({ children: [new TextRun({ text: "Matricule Binôme", bold: true, font: "Arial" })] })] }),
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: selectedStudent.matricule2 || "", font: "Arial" })] })] }),
+                      ],
                     }),
-                  ],
-                }),
-              ],
-            }),
-          ],
-        }],
-      });
+                    new TableRow({
+                      children: [
+                        new TableCell({ shading: { fill: "f3f4f6" }, children: [new Paragraph({ children: [new TextRun({ text: "Né(e) le (Binôme)", bold: true, font: "Arial" })] })] }),
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `${formatDate(selectedStudent.date_naissance2)} à ${selectedStudent.lieu_naissance2}`, font: "Arial" })] })] }),
+                      ],
+                    }),
+                  ] : []),
+                ],
+              }),
+
+              // Theme
+              new Paragraph({
+                spacing: { before: 400, after: 200 },
+                children: [
+                  new TextRun({ text: "THÈME DU MÉMOIRE : ", bold: true, font: "Arial", size: 22 }),
+                  new TextRun({ text: selectedStudent.theme || "Non spécifié", italics: true, font: "Arial", size: 22 }),
+                ],
+              }),
+
+              // Jury Table
+              new Paragraph({
+                children: [new TextRun({ text: "COMPOSITION DU JURY", bold: true, underline: {}, font: "Arial", size: 24 })],
+                spacing: { before: 400, after: 200 },
+              }),
+              new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                rows: [
+                  new TableRow({
+                    children: [
+                      new TableCell({ shading: { fill: "1e40af" }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "FONCTION", bold: true, color: "ffffff", font: "Arial" })] })] }),
+                      new TableCell({ shading: { fill: "1e40af" }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "NOM & PRÉNOMS", bold: true, color: "ffffff", font: "Arial" })] })] }),
+                      new TableCell({ shading: { fill: "1e40af" }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "GRADE", bold: true, color: "ffffff", font: "Arial" })] })] }),
+                    ],
+                  }),
+                  new TableRow({
+                    children: [
+                      new TableCell({ children: [new Paragraph({ text: "PRÉSIDENT", font: "Arial" })] }),
+                      new TableCell({ children: [new Paragraph({ text: selectedStudent.president || "................................................", font: "Arial" })] }),
+                      new TableCell({ children: [new Paragraph({ text: selectedStudent.grade_president || "..........", font: "Arial" })] }),
+                    ],
+                  }),
+                  new TableRow({
+                    children: [
+                      new TableCell({ children: [new Paragraph({ text: "EXAMINATEUR", font: "Arial" })] }),
+                      new TableCell({ children: [new Paragraph({ text: selectedStudent.examinateur || "................................................", font: "Arial" })] }),
+                      new TableCell({ children: [new Paragraph({ text: selectedStudent.grade_examinateur || "..........", font: "Arial" })] }),
+                    ],
+                  }),
+                  new TableRow({
+                    children: [
+                      new TableCell({ children: [new Paragraph({ text: "RAPPORTEUR", font: "Arial" })] }),
+                      new TableCell({ children: [new Paragraph({ text: selectedStudent.rapporteur || "................................................", font: "Arial" })] }),
+                      new TableCell({ children: [new Paragraph({ text: selectedStudent.grade_rapporteur || "..........", font: "Arial" })] }),
+                    ],
+                  }),
+                  new TableRow({
+                    children: [
+                      new TableCell({ children: [new Paragraph({ text: "DIRECTEUR", font: "Arial" })] }),
+                      new TableCell({ children: [new Paragraph({ text: selectedStudent.directeur || "................................................", font: "Arial" })] }),
+                      new TableCell({ children: [new Paragraph({ text: selectedStudent.grade_directeur || "..........", font: "Arial" })] }),
+                    ],
+                  }),
+                ],
+              }),
+
+              // Results Section
+              new Paragraph({
+                children: [new TextRun({ text: "RÉSULTATS DE LA SOUTENANCE", bold: true, underline: {}, font: "Arial", size: 24 })],
+                spacing: { before: 400, after: 200 },
+              }),
+              new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                rows: [
+                  new TableRow({
+                    children: [
+                      new TableCell({ width: { size: 50, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: "NOTE OBTENUE (/20)", bold: true, font: "Arial" })] })] }),
+                      new TableCell({ width: { size: 50, type: WidthType.PERCENTAGE }, children: [new Paragraph({ text: ".................... / 20", font: "Arial" })] }),
+                    ],
+                  }),
+                  new TableRow({
+                    children: [
+                      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "MENTION", bold: true, font: "Arial" })] })] }),
+                      new TableCell({ children: [new Paragraph({ text: "................................................", font: "Arial" })] }),
+                    ],
+                  }),
+                  new TableRow({
+                    children: [
+                      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "DÉCISION DU JURY", bold: true, font: "Arial" })] })] }),
+                      new TableCell({ children: [new Paragraph({ text: "ADMIS(E) / AJOURNÉ(E)", font: "Arial" })] }),
+                    ],
+                  }),
+                ],
+              }),
+
+              // Observations
+              new Paragraph({
+                spacing: { before: 400, after: 100 },
+                children: [new TextRun({ text: "OBSERVATIONS :", bold: true, font: "Arial" })],
+              }),
+              new Paragraph({
+                children: [new TextRun({ text: "............................................................................................................................................................", font: "Arial" })],
+              }),
+              new Paragraph({
+                children: [new TextRun({ text: "............................................................................................................................................................", font: "Arial" })],
+              }),
+
+              // Signatures
+              new Paragraph({
+                alignment: AlignmentType.RIGHT,
+                spacing: { before: 600, after: 400 },
+                children: [
+                  new TextRun({ text: `Fait à Cotonou, le ${formatDate(selectedStudent.date_soutenance)}`, italics: true, font: "Arial" }),
+                ],
+              }),
+
+              new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                borders: {
+                  top: { style: BorderStyle.NONE },
+                  bottom: { style: BorderStyle.NONE },
+                  left: { style: BorderStyle.NONE },
+                  right: { style: BorderStyle.NONE },
+                  insideHorizontal: { style: BorderStyle.NONE },
+                  insideVertical: { style: BorderStyle.NONE },
+                },
+                rows: [
+                  new TableRow({
+                    children: [
+                      new TableCell({ 
+                        children: [
+                          new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Le Rapporteur", bold: true, font: "Arial" })] }),
+                          new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "\n\n\n\n" })] }),
+                          new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "(Signature)", font: "Arial" })] }),
+                        ] 
+                      }),
+                      new TableCell({ 
+                        children: [
+                          new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Le Président du Jury", bold: true, font: "Arial" })] }),
+                          new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "\n\n\n\n" })] }),
+                          new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "(Signature et Cachet)", font: "Arial" })] }),
+                        ] 
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }],
+        });
+
 
         const blob = await Packer.toBlob(doc);
         
