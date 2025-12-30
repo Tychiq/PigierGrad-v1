@@ -28,15 +28,13 @@ export function formatDate(dateString: string | null | undefined): string {
 }
 
 export function formatTime(timeString: string | null | undefined): string {
-  if (!timeString) return "--:--:--";
+  if (!timeString) return "--h--";
   try {
-    // If it's already in a recognizable time format or just a string
     const parts = timeString.split(/[:\-]/);
     if (parts.length >= 2) {
       const h = parts[0].padStart(2, '0');
       const m = parts[1].padStart(2, '0');
-      const s = parts[2] ? parts[2].padStart(2, '0') : "00";
-      return `${h}-${m}-${s}`;
+      return `${h}h${m}`;
     }
     return timeString;
   } catch {
