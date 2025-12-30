@@ -490,6 +490,7 @@ export default function PVGenerationPage() {
       return;
     }
 
+    console.log("Triggering download for:", downloadFilename);
     try {
       // Use saveAs for more robust downloading in iframe environments
       saveAs(generatedBlob, downloadFilename || "PV_Soutenance.docx");
