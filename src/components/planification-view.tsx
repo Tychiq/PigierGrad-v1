@@ -661,11 +661,28 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                             </div>
                           </div>
                         </div>
-                        <div className="pt-2 flex flex-wrap gap-2">
-                           <span className="text-[9px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 px-2 py-1 rounded-md">P: {item.president || "???"}</span>
-                           <span className="text-[9px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 px-2 py-1 rounded-md">E: {item.examinateur || "???"}</span>
-                           <span className="text-[9px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 px-2 py-1 rounded-md">R: {item.rapporteur || "???"}</span>
-                        </div>
+                          <div className="pt-3 border-t border-blue-50 dark:border-blue-900/10 grid grid-cols-2 gap-y-3">
+                            <div className="flex flex-col">
+                              <span className="text-[10px] font-black text-blue-300 uppercase">Président</span>
+                              <span className="text-xs font-bold text-blue-900 dark:text-white">{item.president || "???"}</span>
+                              <span className="text-[9px] text-blue-400 uppercase">{item.grade_president}</span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[10px] font-black text-blue-300 uppercase">Examinateur</span>
+                              <span className="text-xs font-bold text-blue-900 dark:text-white">{item.examinateur || "???"}</span>
+                              <span className="text-[9px] text-blue-400 uppercase">{item.grade_examinateur}</span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[10px] font-black text-blue-300 uppercase">Rapporteur</span>
+                              <span className="text-xs font-bold text-blue-900 dark:text-white">{item.rapporteur || "???"}</span>
+                              <span className="text-[9px] text-blue-400 uppercase">{item.grade_rapporteur}</span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[10px] font-black text-blue-300 uppercase">Dépôt</span>
+                              <span className="text-xs font-bold text-blue-900 dark:text-white">{item.date_depot || "???"}</span>
+                            </div>
+                          </div>
+
                       </div>
 
                       {/* Section Planning & Actions */}
