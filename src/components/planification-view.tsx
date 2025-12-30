@@ -391,33 +391,31 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                     </div>
                   </div>
 
-                  {diplomaType === "Licence" && (
-                    <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
-                      <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Étudiant 2 (Optionnel)</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Matricule 2</Label>
-                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.matricule2 || ""} onChange={e => setForm({...form, matricule2: e.target.value})} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Nom 2</Label>
-                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.nom2 || ""} onChange={e => setForm({...form, nom2: e.target.value})} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Prénoms 2</Label>
-                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.prenoms2 || ""} onChange={e => setForm({...form, prenoms2: e.target.value})} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Date Naissance 2</Label>
-                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.date_naissance2 || ""} onChange={e => setForm({...form, date_naissance2: e.target.value})} />
-                        </div>
-                        <div className="col-span-2 space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Lieu Naissance 2</Label>
-                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.lieu_naissance2 || ""} onChange={e => setForm({...form, lieu_naissance2: e.target.value})} />
-                        </div>
+                  <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Étudiant 2 (Optionnel)</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Matricule 2</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.matricule2 || ""} onChange={e => setForm({...form, matricule2: e.target.value})} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Nom 2</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.nom2 || ""} onChange={e => setForm({...form, nom2: e.target.value})} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Prénoms 2</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.prenoms2 || ""} onChange={e => setForm({...form, prenoms2: e.target.value})} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Date Naissance 2</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.date_naissance2 || ""} onChange={e => setForm({...form, date_naissance2: e.target.value})} />
+                      </div>
+                      <div className="col-span-2 space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Lieu Naissance 2</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.lieu_naissance2 || ""} onChange={e => setForm({...form, lieu_naissance2: e.target.value})} />
                       </div>
                     </div>
-                  )}
+                  </div>
 
                   <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
                     <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Soutenance</h3>
