@@ -152,18 +152,27 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
       const timestamp = new Date().toISOString().split('T')[0];
       const filename = `PIGIERGRAD_Directeurs_${diplomaType}_${timestamp}.pdf`;
       
-      const pdfBlob = doc.output('blob');
-      const blobUrl = URL.createObjectURL(pdfBlob);
+      const pdfBase64 = doc.output('datauristring');
+      
+      const response = await fetch('/api/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pdfBase64, filename })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to download PDF');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = blobUrl;
+      link.href = url;
       link.download = filename;
-      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
-      setTimeout(() => {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(blobUrl);
-      }, 100);
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
       
       toast.success("Le PDF a été téléchargé avec succès !");
     } catch (error) {
