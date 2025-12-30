@@ -47,17 +47,11 @@ export default function RootLayout({
             data-custom-data='{"appName": "PigierGrad", "version": "1.0.0"}'
           />
             {children}
-            <footer className="fixed bottom-4 w-full flex justify-center items-center pointer-events-none z-50">
-              <div className="bg-white/80 dark:bg-black/80 backdrop-blur-sm px-4 py-1.5 rounded-full border border-blue-100 dark:border-blue-900 shadow-sm flex items-center gap-2 pointer-events-auto">
-                <span className="text-[10px] font-bold uppercase tracking-tighter text-blue-900/40 dark:text-white/40">Made with</span>
-                <Code2 className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
-                <span className="text-[10px] font-bold uppercase tracking-tighter text-blue-900/40 dark:text-white/40">By Tychique</span>
-              </div>
-            </footer>
             <Toaster position="top-right" richColors />
-          <VisualEditsMessenger />
-        </ThemeProvider>
-      </body>
-    </html>
-  );
-}
+            <VisualEditsMessenger />
+          </ThemeProvider>
+        </body>
+      </html>
+    );
+  }
+
