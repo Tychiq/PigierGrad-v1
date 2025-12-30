@@ -116,54 +116,45 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
       const now = new Date();
       doc.text(`Document généré le ${formatDate(now.toISOString())} à ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`, 105, 62, { align: "center" });
       
-      autoTable(doc, {
-        startY: 70,
-        head: [['N°', 'NOM DU DIRECTEUR', 'NOMBRE D\'ENCADREMENTS']],
-        body: filteredDirectors.map((d, i) => [i + 1, d.name.toUpperCase(), d.count]),
-        theme: 'striped',
-        headStyles: { 
-          fillColor: [30, 64, 175],
-          textColor: [255, 255, 255],
-          fontSize: 10,
-          fontStyle: 'bold',
-          halign: 'center',
-          cellPadding: 4
-        },
-        bodyStyles: {
-          fontSize: 9,
-          halign: 'center',
-          cellPadding: 3,
-          textColor: [51, 65, 85]
-        },
-        columnStyles: {
-          0: { cellWidth: 15, halign: 'center' },
-          1: { cellWidth: 'auto', halign: 'left', fontStyle: 'bold' },
-          2: { cellWidth: 45, halign: 'center' }
-        },
-        margin: { top: 70, left: 15, right: 15 },
-        didDrawPage: (data) => {
-          doc.setFontSize(8);
-          doc.setTextColor(148, 163, 184);
-          doc.text("PIGIERGRAD - Plateforme de gestion des soutenances", 105, 285, { align: "center" });
-          doc.text(`Page ${data.pageNumber}`, 195, 285, { align: "right" });
-        }
-      });
-      
-      const timestamp = new Date().toISOString().split('T')[0];
-      const filename = `PIGIERGRAD_Directeurs_${diplomaType}_${timestamp}.pdf`;
-      
-      // Use Blob and a link for more reliable download in all browsers/iframes
-      const blob = doc.output('blob');
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      toast.success("Le PDF a été téléchargé avec succès !");
+        autoTable(doc, {
+          startY: 70,
+          head: [['N°', 'NOM DU DIRECTEUR', 'NOMBRE D\'ENCADREMENTS']],
+          body: filteredDirectors.map((d, i) => [i + 1, d.name.toUpperCase(), d.count]),
+          theme: 'striped',
+          headStyles: { 
+            fillColor: [30, 64, 175],
+            textColor: [255, 255, 255],
+            fontSize: 10,
+            fontStyle: 'bold',
+            halign: 'center',
+            cellPadding: 4
+          },
+          bodyStyles: {
+            fontSize: 9,
+            halign: 'center',
+            cellPadding: 3,
+            textColor: [51, 65, 85]
+          },
+          columnStyles: {
+            0: { cellWidth: 20, halign: 'center' },
+            1: { cellWidth: 'auto', halign: 'left', fontStyle: 'bold' },
+            2: { cellWidth: 50, halign: 'center' }
+          },
+          margin: { top: 70, left: 15, right: 15 },
+          didDrawPage: (data) => {
+            doc.setFontSize(8);
+            doc.setTextColor(148, 163, 184);
+            doc.text("PIGIERGRAD - Plateforme de gestion des soutenances", 105, 285, { align: "center" });
+            doc.text(`Page ${data.pageNumber}`, 195, 285, { align: "right" });
+          }
+        });
+        
+        const timestamp = new Date().toISOString().split('T')[0];
+        const filename = `PIGIERGRAD_Directeurs_${diplomaType}_${timestamp}.pdf`;
+        
+        doc.save(filename);
+        
+        toast.success("Le PDF a été téléchargé avec succès !");
     } catch (error) {
       console.error("Erreur lors de la génération du PDF:", error);
       toast.error("Une erreur est survenue lors de la génération du PDF.");
