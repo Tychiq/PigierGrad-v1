@@ -75,9 +75,19 @@ interface Student {
   session_year?: string;
 }
 
+interface FlatStudent extends Student {
+  uniqueId: string;
+  isSecond: boolean;
+  currentNom: string;
+  currentPrenoms: string;
+  currentMatricule: string;
+  currentDateNaissance: string;
+  currentLieuNaissance: string;
+}
+
 export default function PVGenerationPage() {
   const [students, setStudents] = useState<Student[]>([]);
-  const [selectedStudentId, setSelectedStudentId] = useState<string>("");
+  const [selectedUniqueId, setSelectedUniqueId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -96,14 +106,40 @@ export default function PVGenerationPage() {
     fetchStudents();
   }, []);
 
-  const filteredStudents = students.filter(s => 
-    `${s.nom} ${s.prenoms} ${s.matricule} ${s.nom2 || ""} ${s.prenoms2 || ""}`.toLowerCase().includes(searchQuery.toLowerCase())
+  const flattenedStudents: FlatStudent[] = students.flatMap(s => {
+    const list: FlatStudent[] = [{
+      ...s,
+      uniqueId: `${s.id}-1`,
+      isSecond: false,
+      currentNom: s.nom,
+      currentPrenoms: s.prenoms,
+      currentMatricule: s.matricule,
+      currentDateNaissance: s.date_naissance,
+      currentLieuNaissance: s.lieu_naissance
+    }];
+    if (s.nom2 && s.nom2.trim() !== "") {
+      list.push({
+        ...s,
+        uniqueId: `${s.id}-2`,
+        isSecond: true,
+        currentNom: s.nom2,
+        currentPrenoms: s.prenoms2 || "",
+        currentMatricule: s.matricule2 || "",
+        currentDateNaissance: s.date_naissance2 || "",
+        currentLieuNaissance: s.lieu_naissance2 || ""
+      });
+    }
+    return list;
+  });
+
+  const filteredStudents = flattenedStudents.filter(s => 
+    `${s.currentNom} ${s.currentPrenoms} ${s.currentMatricule}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const paginatedStudents = filteredStudents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
 
-  const selectedStudent = students.find(s => s.id === selectedStudentId);
+  const selectedStudent = flattenedStudents.find(s => s.uniqueId === selectedUniqueId);
 
     const generatePV = async () => {
       if (!selectedStudent) {
@@ -248,9 +284,7 @@ export default function PVGenerationPage() {
                         new TableCell({ 
                           width: { size: 65, type: WidthType.PERCENTAGE },
                           children: [new Paragraph({ children: [new TextRun({ 
-                            text: selectedStudent.nom2 
-                              ? `${selectedStudent.nom} ${selectedStudent.prenoms} & ${selectedStudent.nom2} ${selectedStudent.prenoms2}`.toUpperCase()
-                              : `${selectedStudent.nom} ${selectedStudent.prenoms}`.toUpperCase(), 
+                            text: `${selectedStudent.currentNom} ${selectedStudent.currentPrenoms}`.toUpperCase(), 
                             font: "Arial", 
                             bold: true 
                           })] })] 
@@ -261,9 +295,7 @@ export default function PVGenerationPage() {
                       children: [
                         new TableCell({ shading: { fill: "f8fafc" }, children: [new Paragraph({ children: [new TextRun({ text: "Numéro Matricule :", bold: true, font: "Arial" })] })] }),
                         new TableCell({ children: [new Paragraph({ children: [new TextRun({ 
-                          text: selectedStudent.matricule2 
-                            ? `${selectedStudent.matricule} / ${selectedStudent.matricule2}` 
-                            : selectedStudent.matricule, 
+                          text: selectedStudent.currentMatricule, 
                           font: "Arial", 
                           bold: true 
                         })] })] }),
@@ -273,10 +305,7 @@ export default function PVGenerationPage() {
                       children: [
                         new TableCell({ shading: { fill: "f8fafc" }, children: [new Paragraph({ children: [new TextRun({ text: "Date et Lieu de Naissance :", bold: true, font: "Arial" })] })] }),
                         new TableCell({ children: [new Paragraph({ children: [
-                          new TextRun({ text: `${formatDate(selectedStudent.date_naissance)} à ${selectedStudent.lieu_naissance}`, font: "Arial" }),
-                          ...(selectedStudent.nom2 ? [
-                            new TextRun({ text: `\n${formatDate(selectedStudent.date_naissance2)} à ${selectedStudent.lieu_naissance2}`, font: "Arial" })
-                          ] : [])
+                          new TextRun({ text: `${formatDate(selectedStudent.currentDateNaissance)} à ${selectedStudent.currentLieuNaissance}`, font: "Arial" }),
                         ] })] }),
                       ],
                     }),
@@ -432,7 +461,7 @@ export default function PVGenerationPage() {
         const a = document.createElement("a");
         a.style.display = "none";
         a.href = url;
-        a.download = `PV_Soutenance_${selectedStudent.nom.replace(/\s+/g, '_')}.docx`;
+        a.download = `PV_Soutenance_${selectedStudent.currentNom.replace(/\s+/g, '_')}.docx`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -481,7 +510,7 @@ export default function PVGenerationPage() {
                 />
               </div>
 
-              <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
+              <Select value={selectedUniqueId} onValueChange={setSelectedUniqueId}>
                 <SelectTrigger className="h-14 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none text-base font-semibold">
                   <SelectValue placeholder="Sélectionner un étudiant..." />
                 </SelectTrigger>
@@ -495,15 +524,13 @@ export default function PVGenerationPage() {
                   ) : (
                     <>
                       {paginatedStudents.map((student) => (
-                        <SelectItem key={student.id} value={student.id} className="py-3">
+                        <SelectItem key={student.uniqueId} value={student.uniqueId} className="py-3">
                           <div className="flex flex-col">
                             <span className="font-bold">
-                              {student.nom} {student.prenoms}
-                              {student.nom2 && ` & ${student.nom2} ${student.prenoms2}`}
+                              {student.currentNom} {student.currentPrenoms}
                             </span>
                             <span className="text-xs text-blue-400">
-                              {student.diploma_type} - {student.matricule}
-                              {student.matricule2 && ` / ${student.matricule2}`}
+                              {student.diploma_type} - {student.currentMatricule}
                             </span>
                           </div>
                         </SelectItem>
@@ -544,7 +571,7 @@ export default function PVGenerationPage() {
 
               <Button 
                 onClick={generatePV}
-                disabled={!selectedStudentId || generating}
+                disabled={!selectedUniqueId || generating}
                 className="w-full h-14 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-black uppercase tracking-widest text-sm shadow-lg shadow-blue-600/30 transition-all hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {generating ? (
@@ -611,10 +638,10 @@ export default function PVGenerationPage() {
                     <div className="space-y-3">
                         {[
                           { label: "Diplôme", value: selectedStudent.diploma_type },
-                          { label: "Matricule", value: selectedStudent.matricule2 ? `${selectedStudent.matricule} / ${selectedStudent.matricule2}` : selectedStudent.matricule },
-                          { label: "Étudiant", value: selectedStudent.nom2 ? `${selectedStudent.nom} ${selectedStudent.prenoms} & ${selectedStudent.nom2} ${selectedStudent.prenoms2}` : `${selectedStudent.nom} ${selectedStudent.prenoms}` },
-                          { label: "Date de naissance", value: selectedStudent.nom2 ? `${selectedStudent.date_naissance} / ${selectedStudent.date_naissance2}` : selectedStudent.date_naissance },
-                          { label: "Lieu de naissance", value: selectedStudent.nom2 ? `${selectedStudent.lieu_naissance} / ${selectedStudent.lieu_naissance2}` : selectedStudent.lieu_naissance },
+                          { label: "Matricule", value: selectedStudent.currentMatricule },
+                          { label: "Étudiant", value: `${selectedStudent.currentNom} ${selectedStudent.currentPrenoms}` },
+                          { label: "Date de naissance", value: formatDate(selectedStudent.currentDateNaissance) },
+                          { label: "Lieu de naissance", value: selectedStudent.currentLieuNaissance },
                           { label: "Thème", value: selectedStudent.theme },
                             { label: "Directeur", value: `${selectedStudent.directeur} (${selectedStudent.grade_directeur})` },
                             { label: "Date de soutenance", value: formatDate(selectedStudent.date_soutenance) },
