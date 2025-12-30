@@ -286,6 +286,26 @@ export default function AuthPage() {
                           {loading ? "Création..." : "Créer un compte"}
                         </Button>
                       </form>
+
+                      <div className="relative py-6">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t border-blue-100 dark:border-blue-900" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-white dark:bg-[#0f1629] px-4 text-blue-400 font-bold tracking-widest">Ou continuer avec</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1">
+                        <Button
+                          variant="outline"
+                          className="h-14 rounded-xl border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 font-bold"
+                          onClick={() => handleOAuthSignIn('google')}
+                        >
+                          <Chrome className="w-5 h-5 mr-2 text-blue-500" />
+                          Google
+                        </Button>
+                      </div>
                     </motion.div>
                   </TabsContent>
                 </Tabs>
