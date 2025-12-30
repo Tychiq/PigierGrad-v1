@@ -80,11 +80,13 @@ interface Soutenance {
 
 const ITEMS_PER_PAGE = 8;
 
-export function PlanificationView({ diplomaType }: { diplomaType: string }) {
-  const [data, setData] = useState<Soutenance[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  export function PlanificationView({ diplomaType }: { diplomaType: string }) {
+    const [data, setData] = useState<Soutenance[]>([]);
+    const [loading, setLoading] = useState(true);
+    const searchParams = useSearchParams();
+    const initialSearch = searchParams.get("search") || "";
+    const [search, setSearch] = useState(initialSearch);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Soutenance | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [form, setForm] = useState<Partial<Soutenance>>({});
