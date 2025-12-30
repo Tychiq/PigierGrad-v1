@@ -129,8 +129,8 @@ export default function DashboardPage() {
   ];
 
   const radialData = [
-    { name: 'Planifiées', value: stats.totalSoutenances, fill: '#3b82f6' },
-    { name: 'En attente', value: Math.max(0, stats.totalStudents - stats.totalSoutenances), fill: '#fbbf24' },
+    { name: 'Planifiées', value: stats.scheduledSoutenances, fill: '#3b82f6' },
+    { name: 'En attente', value: Math.max(0, stats.totalSoutenances - stats.scheduledSoutenances), fill: '#fbbf24' },
   ];
 
   const container = {
@@ -146,8 +146,8 @@ export default function DashboardPage() {
     show: { opacity: 1, y: 0, transition: { duration: 0.5 } }
   };
 
-  const completionRate = stats.totalStudents > 0 
-    ? Math.round((stats.totalSoutenances / stats.totalStudents) * 100) 
+  const completionRate = stats.totalSoutenances > 0 
+    ? Math.round((stats.scheduledSoutenances / stats.totalSoutenances) * 100) 
     : 0;
 
   return (
@@ -181,7 +181,7 @@ export default function DashboardPage() {
       >
         {[
           { title: "Étudiants", value: stats.totalStudents, icon: Users, description: "Total inscrits", color: "blue", href: "/dashboard/licence" },
-          { title: "Soutenances", value: stats.totalSoutenances, icon: GraduationCap, description: "Planifiées", color: "yellow", href: "/dashboard/licence" },
+          { title: "Soutenances", value: stats.totalSoutenances, icon: GraduationCap, description: "Total dossiers", color: "yellow", href: "/dashboard/licence" },
           { title: "Directeurs", value: stats.totalDirectors, icon: UserCheck, description: "Intervenants", color: "blue", href: "/dashboard/directeurs-licence" },
           { title: "Complétion", value: `${completionRate}%`, icon: TrendingUp, description: "Taux de planification", color: "green", href: "/dashboard/licence" },
         ].map((stat, i) => (
