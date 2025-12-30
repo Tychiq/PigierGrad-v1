@@ -36,7 +36,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { formatDate, formatTime } from "@/lib/utils";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
-import { saveAs } from "file-saver";
 
 interface Student {
   id: string;
