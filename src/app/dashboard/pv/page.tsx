@@ -197,12 +197,15 @@ export default function PVGenerationPage() {
           mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         });
 
+        console.log("Blob generated", { size: out.size, type: out.type });
+
         const filename = `PV_Soutenance_${selectedStudent.currentNom.replace(/\s+/g, '_')}.docx`;
         
         setGeneratedBlob(out);
         setDownloadFilename(filename);
         setShowSuccessDialog(true);
         
+        console.log("Success dialog opened and blob set", { filename });
         toast.success("Procès-Verbal généré avec succès !");
 
     } catch (err: any) {
