@@ -34,6 +34,7 @@ import {
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDate, formatTime } from "@/lib/utils";
+import { triggerDownload } from "@/lib/download-helper";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 
