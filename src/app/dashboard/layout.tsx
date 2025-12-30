@@ -152,17 +152,47 @@ export default function DashboardLayout({
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         <header className="h-16 flex items-center justify-between px-6 bg-white/80 dark:bg-[#0f1629]/80 backdrop-blur-xl border-b border-blue-100 dark:border-blue-900/30 transition-colors duration-300 z-40">
-          <div className="flex items-center gap-4 flex-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/30"
-            >
-              {sidebarOpen ? <X className="w-5 h-5 text-blue-600" /> : <Menu className="w-5 h-5 text-blue-600" />}
-            </Button>
+            <div className="flex items-center gap-4 flex-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/30 hidden md:flex"
+              >
+                {sidebarOpen ? <X className="w-5 h-5 text-blue-600" /> : <Menu className="w-5 h-5 text-blue-600" />}
+              </Button>
 
-            <div className="relative max-w-md w-full hidden sm:block">
+              {/* Mobile Navigation Dropdown */}
+              <div className="md:hidden">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="h-10 rounded-xl bg-blue-50/50 border-blue-100 text-blue-900 font-bold flex items-center gap-2">
+                      <Menu className="w-4 h-4" />
+                      Menu
+                      <ChevronDown className="w-4 h-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-56 rounded-2xl border-none shadow-2xl p-2">
+                    {sidebarItems.map((item) => {
+                      const isActive = pathname === item.href;
+                      return (
+                        <DropdownMenuItem key={item.href} asChild>
+                          <Link
+                            href={item.href}
+                            className={`flex items-center gap-3 p-3 rounded-xl transition-all ${isActive ? 'bg-blue-600 text-white' : 'text-blue-900 hover:bg-blue-50'}`}
+                          >
+                            <item.icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-blue-500'}`} />
+                            <span className="text-sm font-bold">{item.name}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              <div className="relative max-w-md w-full hidden sm:block">
+
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
               <Input
                 placeholder="Rechercher un étudiant, un thème..."
