@@ -45,7 +45,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDate, formatTime } from "@/lib/utils";
 import { LICENCE_SPECIALITIES, MASTER_SPECIALITIES } from "@/lib/constants";
-import { ResetEverythingButton } from "./reset-everything-button";
+import { ResetEverythingButton } from "@/components/reset-everything-button";
 
 interface Soutenance {
   id: string;
