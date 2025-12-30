@@ -158,6 +158,10 @@ export default function PVGenerationPage() {
         const doc = new Docxtemplater(zip, {
           paragraphLoop: true,
           linebreaks: true,
+          delimiters: {
+            start: "«",
+            end: "»",
+          },
         });
 
         // Map data to template fields
