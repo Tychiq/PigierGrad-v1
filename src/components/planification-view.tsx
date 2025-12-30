@@ -694,7 +694,8 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                           <div className="flex items-center justify-end gap-3">
                             <div className="flex flex-col items-end">
                               <span className="text-[10px] font-black text-blue-300 uppercase">Date</span>
-                              <span className="text-sm font-black text-blue-900 dark:text-white">{item.date_soutenance || "À définir"}</span>
+                                <span className="text-sm font-black text-blue-900 dark:text-white">{item.date_soutenance ? formatDate(item.date_soutenance) : "À définir"}</span>
+
                             </div>
                             <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl">
                               <Calendar className="w-5 h-5 text-blue-600" />
