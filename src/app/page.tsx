@@ -171,7 +171,12 @@ export default function AuthPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label className="text-xs font-black uppercase tracking-widest text-blue-400">Mot de passe</Label>
-                      <Button variant="link" className="p-0 h-auto text-xs text-blue-500 font-semibold">
+                      <Button 
+                        type="button"
+                        variant="link" 
+                        className="p-0 h-auto text-xs text-blue-500 font-semibold"
+                        onClick={() => setIsResetting(true)}
+                      >
                         Oublié ?
                       </Button>
                     </div>
