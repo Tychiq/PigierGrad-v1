@@ -97,9 +97,12 @@ export default function DashboardPage() {
           licenceCount: licence,
           masterCount: master,
         });
-        setRecentStudents([...data].reverse().slice(0, 5));
-        setAreaChartData(evolutionData);
-      }
+          setRecentStudents([...data].reverse().slice(0, 5));
+          if (evolutionData.length > 0) {
+            setAreaChartData(evolutionData);
+          }
+        }
+
       setLoading(false);
     }
     fetchStats();
