@@ -15,7 +15,33 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard,
+  FileUp,
+  GraduationCap,
+  Users,
+  FileText,
+  Settings,
+  ChevronDown
+} from "lucide-react";
+
+const sidebarItems = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Insertion", href: "/dashboard/insertion", icon: FileUp },
+  { name: "Planning Licence", href: "/dashboard/licence", icon: GraduationCap },
+  { name: "Planning Master", href: "/dashboard/master", icon: GraduationCap },
+  { name: "Directeurs Licence", href: "/dashboard/directeurs-licence", icon: Users },
+  { name: "Directeurs Master", href: "/dashboard/directeurs-master", icon: Users },
+  { name: "Génération PV", href: "/dashboard/pv", icon: FileText },
+];
 
 interface Notification {
   id: string;
