@@ -245,7 +245,6 @@ const ITEMS_PER_PAGE = 8;
   };
 
     const activeSpecialities = diplomaType === "Licence" ? LICENCE_SPECIALITIES : MASTER_SPECIALITIES;
-    const { ResetEverythingButton } = require("./reset-everything-button");
 
     return (
 
