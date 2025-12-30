@@ -160,18 +160,31 @@ export default function PVGenerationPage() {
               ],
             }),
 
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              spacing: { after: 400 },
-              children: [
-                new TextRun({ 
-                  text: "PROCÈS-VERBAL DE SOUTENANCE DE FIN DE CYCLE", 
-                  bold: true, 
-                  size: 32, 
-                  underline: { type: "single" } 
-                }),
-              ],
-            }),
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 400 },
+                children: [
+                  new TextRun({ 
+                    text: "PROCÈS-VERBAL DE SOUTENANCE DE FIN DE CYCLE", 
+                    bold: true, 
+                    size: 32, 
+                    underline: { type: "single" } 
+                  }),
+                ],
+              }),
+
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 400 },
+                children: [
+                  new TextRun({ 
+                    text: `SESSION DE : ${selectedStudent.session_month?.toUpperCase() || "...................."} ${selectedStudent.session_year || "202..."}`, 
+                    bold: true, 
+                    size: 24 
+                  }),
+                ],
+              }),
+
 
             // Diploma & Speciality
             new Paragraph({
