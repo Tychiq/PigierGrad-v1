@@ -103,6 +103,10 @@ export default function PVGenerationPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [downloadFilename, setDownloadFilename] = useState("");
+
   useEffect(() => {
     const fetchStudents = async () => {
       const { data, error } = await supabase
