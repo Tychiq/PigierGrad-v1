@@ -49,12 +49,47 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function fetchStats() {
-      const { data, error } = await supabase.from("soutenances").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("soutenances").select("*").order("created_at", { ascending: true });
       if (data) {
         const uniqueDirectors = new Set(data.map(s => s.directeur).filter(Boolean)).size;
         const licence = data.filter(s => s.diploma_type === "Licence").length;
         const master = data.filter(s => s.diploma_type === "Master").length;
         
+        // Process monthly data for area chart
+        const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+        const currentYear = new Date().getFullYear();
+        
+        const monthlyData = months.map((month, index) => {
+          const monthLicence = data.filter(s => {
+            const date = new Date(s.created_at);
+            return date.getMonth() === index && date.getFullYear() === currentYear && s.diploma_type === "Licence";
+          }).length;
+          
+          const monthMaster = data.filter(s => {
+            const date = new Date(s.created_at);
+            return date.getMonth() === index && date.getFullYear() === currentYear && s.diploma_type === "Master";
+          }).length;
+          
+          return {
+            name: month,
+            licence: monthLicence,
+            master: monthMaster
+          };
+        });
+
+        // Cumulative data for the area chart to show growth
+        let cumulativeLicence = 0;
+        let cumulativeMaster = 0;
+        const evolutionData = monthlyData.map(d => {
+          cumulativeLicence += d.licence;
+          cumulativeMaster += d.master;
+          return {
+            name: d.name,
+            licence: cumulativeLicence,
+            master: cumulativeMaster
+          };
+        });
+
         setStats({
           totalStudents: data.length,
           totalSoutenances: data.filter(s => s.date_soutenance).length,
@@ -62,16 +97,19 @@ export default function DashboardPage() {
           licenceCount: licence,
           masterCount: master,
         });
-        setRecentStudents(data.slice(0, 5));
+        setRecentStudents([...data].reverse().slice(0, 5));
+        setAreaChartData(evolutionData);
       }
       setLoading(false);
     }
     fetchStats();
   }, []);
 
+  const [areaChartData, setAreaChartData] = useState<any[]>([]);
+
   const pieData = [
-    { name: "Licence", value: stats.licenceCount || 1, fill: "#3b82f6" },
-    { name: "Master", value: stats.masterCount || 1, fill: "#fbbf24" },
+    { name: "Licence", value: stats.licenceCount || 0, fill: "#3b82f6" },
+    { name: "Master", value: stats.masterCount || 0, fill: "#fbbf24" },
   ];
 
   const areaData = [
