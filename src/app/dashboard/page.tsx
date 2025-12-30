@@ -40,6 +40,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState({
     totalStudents: 0,
     totalSoutenances: 0,
+    scheduledSoutenances: 0,
     totalDirectors: 0,
     licenceCount: 0,
     masterCount: 0,
