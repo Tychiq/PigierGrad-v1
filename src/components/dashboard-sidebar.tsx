@@ -16,7 +16,8 @@ import {
   FileText,
   LogOut,
   User,
-  Settings
+  Settings,
+  X
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -30,7 +31,7 @@ const sidebarItems = [
   { name: "Génération PV", href: "/dashboard/pv", icon: FileText },
 ];
 
-export function DashboardSidebar() {
+export function DashboardSidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const { profile } = useProfile();
@@ -41,7 +42,17 @@ export function DashboardSidebar() {
   };
 
   return (
-    <div className="flex flex-col h-full w-64 bg-white dark:bg-[#0f1629] border-r border-blue-100 dark:border-blue-900/30 transition-colors duration-300">
+    <div className="flex flex-col h-full w-64 bg-white dark:bg-[#0f1629] border-r border-blue-100 dark:border-blue-900/30 transition-colors duration-300 relative">
+      {onClose && (
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onClose}
+          className="absolute top-4 right-4 md:hidden text-blue-400 hover:text-blue-600"
+        >
+          <X className="w-5 h-5" />
+        </Button>
+      )}
       <div className="p-6">
         <div className="flex items-center gap-3 px-2 mb-8">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/30">
