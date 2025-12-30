@@ -279,17 +279,54 @@ export default function PVGenerationPage() {
                     <div className="p-4 text-center">
                       <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-600" />
                     </div>
-                  ) : filteredStudents.length === 0 ? (
+                  ) : paginatedStudents.length === 0 ? (
                     <div className="p-4 text-center text-blue-400">Aucun étudiant trouvé</div>
                   ) : (
-                    filteredStudents.map((student) => (
-                      <SelectItem key={student.id} value={student.id} className="py-3">
-                        <div className="flex flex-col">
-                          <span className="font-bold">{student.nom} {student.prenoms}</span>
-                          <span className="text-xs text-blue-400">{student.diploma_type} - {student.matricule}</span>
+                    <>
+                      {paginatedStudents.map((student) => (
+                        <SelectItem key={student.id} value={student.id} className="py-3">
+                          <div className="flex flex-col">
+                            <span className="font-bold">
+                              {student.nom} {student.prenoms}
+                              {student.nom2 && ` & ${student.nom2} ${student.prenoms2}`}
+                            </span>
+                            <span className="text-xs text-blue-400">
+                              {student.diploma_type} - {student.matricule}
+                              {student.matricule2 && ` / ${student.matricule2}`}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-between p-2 border-t border-blue-50 dark:border-blue-900/20 sticky bottom-0 bg-white dark:bg-[#0f1629]">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={currentPage === 1}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentPage(prev => prev - 1);
+                            }}
+                          >
+                            Précédent
+                          </Button>
+                          <span className="text-xs font-bold text-blue-600">
+                            {currentPage} / {totalPages}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={currentPage === totalPages}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentPage(prev => prev + 1);
+                            }}
+                          >
+                            Suivant
+                          </Button>
                         </div>
-                      </SelectItem>
-                    ))
+                      )}
+                    </>
                   )}
                 </SelectContent>
               </Select>
