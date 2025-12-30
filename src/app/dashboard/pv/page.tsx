@@ -219,24 +219,37 @@ export default function PVGenerationPage() {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     console.log("handleDownload triggered", { generatedBlob, downloadFilename });
     if (!generatedBlob) {
       toast.error("Le document n'est pas prêt.");
       return;
     }
 
+    const fileName = downloadFilename || "PV_Soutenance.docx";
+
     try {
-      const fileName = downloadFilename || "PV_Soutenance.docx";
-      
-      const blobUrl = URL.createObjectURL(generatedBlob);
+      const formData = new FormData();
+      formData.append("file", generatedBlob, fileName);
+      formData.append("filename", fileName);
+
+      const response = await fetch("/api/download", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Server error");
+      }
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
       
       const link = document.createElement("a");
       link.href = blobUrl;
       link.download = fileName;
       link.style.display = "none";
       document.body.appendChild(link);
-      
       link.click();
       
       setTimeout(() => {
@@ -245,21 +258,10 @@ export default function PVGenerationPage() {
       }, 500);
 
       toast.success("Téléchargement lancé !");
-      console.log("Download triggered via anchor click");
+      console.log("Download triggered via API");
     } catch (err) {
       console.error("Download Error:", err);
-      
-      try {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64 = reader.result as string;
-          const dataUrl = base64;
-          window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", data: { url: dataUrl } }, "*");
-        };
-        reader.readAsDataURL(generatedBlob);
-      } catch (e) {
-        toast.error("Erreur lors du téléchargement.");
-      }
+      toast.error("Erreur lors du téléchargement.");
     }
   };
 
