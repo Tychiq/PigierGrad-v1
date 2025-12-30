@@ -229,12 +229,38 @@ export default function PVGenerationPage() {
 
     try {
       const fileName = downloadFilename || "PV_Soutenance.docx";
-      saveAs(generatedBlob, fileName);
+      
+      const blobUrl = URL.createObjectURL(generatedBlob);
+      
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName;
+      link.style.display = "none";
+      document.body.appendChild(link);
+      
+      link.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      }, 500);
+
       toast.success("Téléchargement lancé !");
-      console.log("saveAs called successfully");
+      console.log("Download triggered via anchor click");
     } catch (err) {
       console.error("Download Error:", err);
-      toast.error("Erreur lors du téléchargement.");
+      
+      try {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          const dataUrl = base64;
+          window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", data: { url: dataUrl } }, "*");
+        };
+        reader.readAsDataURL(generatedBlob);
+      } catch (e) {
+        toast.error("Erreur lors du téléchargement.");
+      }
     }
   };
 
