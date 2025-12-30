@@ -152,7 +152,12 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
         const timestamp = new Date().toISOString().split('T')[0];
         const filename = `PIGIERGRAD_Directeurs_${diplomaType}_${timestamp}.pdf`;
         
-        doc.save(filename);
+        // Use postMessage to trigger download in the parent frame (most reliable in Orchids environment)
+        const pdfDataUri = doc.output('datauristring');
+        window.parent.postMessage({ 
+          type: "OPEN_EXTERNAL_URL", 
+          data: { url: pdfDataUri } 
+        }, "*");
         
         toast.success("Le PDF a été téléchargé avec succès !");
     } catch (error) {
