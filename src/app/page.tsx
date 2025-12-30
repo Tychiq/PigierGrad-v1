@@ -186,7 +186,7 @@ export default function AuthPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1">
                     <Button
                       variant="outline"
                       className="h-14 rounded-xl border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 font-bold"
@@ -194,14 +194,6 @@ export default function AuthPage() {
                     >
                       <Chrome className="w-5 h-5 mr-2 text-blue-500" />
                       Google
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-14 rounded-xl border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 font-bold"
-                      onClick={() => handleOAuthSignIn('github')}
-                    >
-                      <Github className="w-5 h-5 mr-2" />
-                      GitHub
                     </Button>
                   </div>
                 </motion.div>
