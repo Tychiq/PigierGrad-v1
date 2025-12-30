@@ -239,117 +239,174 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2 mb-1">
-            <Sparkles className="w-5 h-5 text-yellow-500" />
-            <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">Planning Académique</span>
-          </div>
-          <h1 className="text-4xl font-black tracking-tighter text-blue-900 dark:text-white uppercase">
-            Soutenances <span className={diplomaType === "Licence" ? "text-blue-500" : "text-yellow-500"}>{diplomaType}</span>
-          </h1>
-          <p className="text-blue-600/70 dark:text-blue-400 font-medium">
-            {filteredData.length} étudiant(s) {activeFiltersCount > 0 && `(filtré de ${data.length})`}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
-            <Input 
-              placeholder="Rechercher..." 
-              className="pl-10 h-12 w-64 rounded-xl border-none bg-white dark:bg-[#0f1629] shadow-lg focus:ring-2 focus:ring-blue-500"
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-            />
-          </div>
-          
-          <Button
-            variant={showFilters ? "default" : "outline"}
-            onClick={() => setShowFilters(!showFilters)}
-            className={`h-12 px-4 rounded-xl font-bold relative ${showFilters ? 'bg-blue-600 text-white' : 'border-blue-200 dark:border-blue-800'}`}
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filtres
-            {activeFiltersCount > 0 && (
-              <span className="absolute -top-2 -right-2 w-5 h-5 bg-yellow-500 rounded-full text-[10px] font-black text-blue-900 flex items-center justify-center">
-                {activeFiltersCount}
-              </span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles className="w-5 h-5 text-yellow-500" />
+              <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">Planning Académique</span>
+            </div>
+            <h1 className="text-4xl font-black tracking-tighter text-blue-900 dark:text-white uppercase">
+              Soutenances <span className={diplomaType === "Licence" ? "text-blue-500" : "text-yellow-500"}>{diplomaType}</span>
+            </h1>
+            {sessionMonth && sessionYear && (
+              <h2 className="text-lg font-bold text-blue-600/80 dark:text-blue-400/80 uppercase tracking-tight">
+                Session de {sessionMonth} {sessionYear}
+              </h2>
             )}
-          </Button>
-          
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) { setEditingItem(null); setForm({}); }
-          }}>
-            <DialogTrigger asChild>
-              <Button className="h-12 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold shadow-lg shadow-blue-600/30">
-                <Plus className="w-4 h-4 mr-2" />
-                Nouveau
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-3xl rounded-3xl border-none shadow-2xl overflow-hidden p-0 max-h-[90vh]">
-              <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6">
-                <DialogHeader>
-                  <DialogTitle className="text-white text-2xl font-black uppercase tracking-tight">
-                    {editingItem ? "Modifier la Soutenance" : "Nouvelle Soutenance"}
-                  </DialogTitle>
-                </DialogHeader>
+            <p className="text-blue-600/70 dark:text-blue-400 font-medium">
+              {filteredData.length} étudiant(s) {activeFiltersCount > 0 && `(filtré de ${data.length})`}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 p-2 rounded-xl border border-blue-100 dark:border-blue-800">
+              <div className="grid grid-cols-2 gap-2">
+                <Input 
+                  placeholder="Mois (ex: Décembre)" 
+                  value={sessionMonth} 
+                  onChange={(e) => setSessionMonth(e.target.value)}
+                  className="h-9 text-xs rounded-lg border-blue-200"
+                />
+                <Input 
+                  placeholder="Année (ex: 2024)" 
+                  value={sessionYear} 
+                  onChange={(e) => setSessionYear(e.target.value)}
+                  className="h-9 text-xs rounded-lg border-blue-200"
+                />
               </div>
-              <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
-                <div className="space-y-4">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Informations Générales</h3>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Spécialité</Label>
-                    <Select value={form.speciality || ""} onValueChange={(val) => setForm({...form, speciality: val})}>
-                      <SelectTrigger className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none">
-                        <SelectValue placeholder="Sélectionner une spécialité..." />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl">
-                        {SPECIALITIES.map(spec => (
-                          <SelectItem key={spec} value={spec}>{spec}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Étudiant 1</h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Matricule</Label>
-                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.matricule || ""} onChange={e => setForm({...form, matricule: e.target.value})} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Nom</Label>
-                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.nom || ""} onChange={e => setForm({...form, nom: e.target.value})} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Prénoms</Label>
-                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.prenoms || ""} onChange={e => setForm({...form, prenoms: e.target.value})} />
-                    </div>
-                  </div>
-                </div>
-
-                {diplomaType === "Licence" && (
-                  <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Étudiant 2 (Optionnel)</h3>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Matricule 2</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.matricule2 || ""} onChange={e => setForm({...form, matricule2: e.target.value})} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Nom 2</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.nom2 || ""} onChange={e => setForm({...form, nom2: e.target.value})} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Prénoms 2</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.prenoms2 || ""} onChange={e => setForm({...form, prenoms2: e.target.value})} />
-                      </div>
-                    </div>
-                  </div>
+              <Button size="sm" onClick={updateSessionForAll} className="h-9 px-3 text-[10px] font-bold uppercase">
+                Appliquer Session
+              </Button>
+            </div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
+                <Input 
+                  placeholder="Rechercher..." 
+                  className="pl-10 h-12 w-64 rounded-xl border-none bg-white dark:bg-[#0f1629] shadow-lg focus:ring-2 focus:ring-blue-500"
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                />
+              </div>
+              
+              <Button
+                variant={showFilters ? "default" : "outline"}
+                onClick={() => setShowFilters(!showFilters)}
+                className={`h-12 px-4 rounded-xl font-bold relative ${showFilters ? 'bg-blue-600 text-white' : 'border-blue-200 dark:border-blue-800'}`}
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Filtres
+                {activeFiltersCount > 0 && (
+                  <span className="absolute -top-2 -right-2 w-5 h-5 bg-yellow-500 rounded-full text-[10px] font-black text-blue-900 flex items-center justify-center">
+                    {activeFiltersCount}
+                  </span>
                 )}
+              </Button>
+              
+              <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) { setEditingItem(null); setForm({}); }
+              }}>
+                <DialogTrigger asChild>
+                  <Button className="h-12 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold shadow-lg shadow-blue-600/30">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Nouveau
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl rounded-3xl border-none shadow-2xl overflow-hidden p-0 max-h-[90vh]">
+                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6">
+                    <DialogHeader>
+                      <DialogTitle className="text-white text-2xl font-black uppercase tracking-tight">
+                        {editingItem ? "Modifier la Soutenance" : "Nouvelle Soutenance"}
+                      </DialogTitle>
+                    </DialogHeader>
+                  </div>
+                  <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Informations Générales</h3>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Spécialité</Label>
+                          <Select value={form.speciality || ""} onValueChange={(val) => setForm({...form, speciality: val})}>
+                            <SelectTrigger className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none">
+                              <SelectValue placeholder="Sélectionner une spécialité..." />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                              {SPECIALITIES.map(spec => (
+                                <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Session</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Mois</Label>
+                            <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.session_month || sessionMonth} onChange={e => setForm({...form, session_month: e.target.value})} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Année</Label>
+                            <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.session_year || sessionYear} onChange={e => setForm({...form, session_year: e.target.value})} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
+                      <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Étudiant 1</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Matricule</Label>
+                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.matricule || ""} onChange={e => setForm({...form, matricule: e.target.value})} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Nom</Label>
+                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.nom || ""} onChange={e => setForm({...form, nom: e.target.value})} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Prénoms</Label>
+                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.prenoms || ""} onChange={e => setForm({...form, prenoms: e.target.value})} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Date Naissance</Label>
+                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.date_naissance || ""} onChange={e => setForm({...form, date_naissance: e.target.value})} />
+                        </div>
+                        <div className="col-span-2 space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Lieu Naissance</Label>
+                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.lieu_naissance || ""} onChange={e => setForm({...form, lieu_naissance: e.target.value})} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {diplomaType === "Licence" && (
+                      <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Étudiant 2 (Optionnel)</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Matricule 2</Label>
+                            <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.matricule2 || ""} onChange={e => setForm({...form, matricule2: e.target.value})} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Nom 2</Label>
+                            <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.nom2 || ""} onChange={e => setForm({...form, nom2: e.target.value})} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Prénoms 2</Label>
+                            <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.prenoms2 || ""} onChange={e => setForm({...form, prenoms2: e.target.value})} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Date Naissance 2</Label>
+                            <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.date_naissance2 || ""} onChange={e => setForm({...form, date_naissance2: e.target.value})} />
+                          </div>
+                          <div className="col-span-2 space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Lieu Naissance 2</Label>
+                            <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.lieu_naissance2 || ""} onChange={e => setForm({...form, lieu_naissance2: e.target.value})} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
 
                 <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
                   <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Soutenance</h3>
