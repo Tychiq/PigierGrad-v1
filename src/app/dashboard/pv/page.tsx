@@ -218,6 +218,7 @@ export default function PVGenerationPage() {
   };
 
   const handleDownload = () => {
+    console.log("handleDownload triggered", { generatedBlob, downloadFilename });
     if (!generatedBlob) {
       toast.error("Le document n'est pas prêt.");
       return;
@@ -225,36 +226,12 @@ export default function PVGenerationPage() {
 
     try {
       const fileName = downloadFilename || "PV_Soutenance.docx";
-      const blobUrl = window.URL.createObjectURL(generatedBlob);
-      
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = fileName;
-      
-      // Make it hidden but part of DOM
-      link.style.display = "none";
-      document.body.appendChild(link);
-      
-      // Trigger click
-      link.click();
-      
-      // Cleanup with delay to ensure browser handles it
-      setTimeout(() => {
-        if (document.body.contains(link)) {
-          document.body.removeChild(link);
-        }
-        window.URL.revokeObjectURL(blobUrl);
-      }, 1000);
-
+      saveAs(generatedBlob, fileName);
       toast.success("Téléchargement lancé !");
+      console.log("saveAs called successfully");
     } catch (err) {
       console.error("Download Error:", err);
-      // Final fallback
-      try {
-        saveAs(generatedBlob, downloadFilename || "PV_Soutenance.docx");
-      } catch (e) {
-        toast.error("Erreur lors du téléchargement.");
-      }
+      toast.error("Erreur lors du téléchargement.");
     }
   };
 
