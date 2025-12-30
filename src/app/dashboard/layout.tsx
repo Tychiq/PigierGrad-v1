@@ -206,13 +206,18 @@ export default function DashboardLayout({
             
             <Link href="/dashboard/profile" className="flex items-center gap-2 px-1 hover:opacity-80 transition-opacity">
               <div className="hidden sm:flex flex-col items-end">
-                <span className="text-sm font-bold text-blue-900 dark:text-white leading-none">Admin</span>
+                <span className="text-sm font-bold text-blue-900 dark:text-white leading-none">
+                  {profile?.full_name || "Admin"}
+                </span>
                 <span className="text-[10px] text-blue-400 font-medium uppercase tracking-wider">Connecté</span>
               </div>
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shadow-lg shadow-blue-600/30">
-                  <span className="text-white font-black text-xs">AD</span>
-                </div>
-              </Link>
+              <Avatar className="w-10 h-10 rounded-xl shadow-lg shadow-blue-600/30">
+                <AvatarImage src={profile?.avatar_url} />
+                <AvatarFallback className="bg-gradient-to-br from-blue-600 to-blue-800 text-white font-black text-xs">
+                  {profile?.full_name?.charAt(0) || "AD"}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
 
               <div className="h-8 w-[1px] bg-blue-100 dark:bg-blue-900/30 mx-1" />
 
