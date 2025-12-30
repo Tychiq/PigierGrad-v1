@@ -27,6 +27,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { motion } from "framer-motion";
 import { formatDate } from "@/lib/utils";
+import { ResetEverythingButton } from "./reset-everything-button";
 
 interface DirectorStats {
   name: string;
