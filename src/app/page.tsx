@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { GraduationCap, Mail, Lock, User, Chrome } from "lucide-react";
+import { FooterSignature } from "@/components/footer-signature";
 
 export default function AuthPage() {
   const [loading, setLoading] = useState(false);
