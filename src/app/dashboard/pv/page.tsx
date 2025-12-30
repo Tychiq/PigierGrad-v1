@@ -162,33 +162,31 @@ export default function PVGenerationPage() {
         });
 
         // Map data to template fields
-        doc.setData({
-          Jury: selectedStudent.jury || "....................",
-          Salle: selectedStudent.salle || "....................",
-          Matricule: selectedStudent.currentMatricule || "....................",
-          Nom: (selectedStudent.currentNom || "....................").toUpperCase(),
-          Prenoms: selectedStudent.currentPrenoms || "....................",
-          DateNaiss: formatDate(selectedStudent.currentDateNaissance) || "....................",
-          LieuNaiss: selectedStudent.currentLieuNaissance || "....................",
-          Examinateur: selectedStudent.examinateur || "....................",
-          GradeExaminateur: selectedStudent.grade_examinateur || "..........",
-          Rapporteur: selectedStudent.rapporteur || "....................",
-          GradeRapporteur: selectedStudent.grade_rapporteur || "..........",
-          Président: selectedStudent.president || "....................",
-          GradePrésident: selectedStudent.grade_president || "..........",
-          // Adding extras just in case
-          Theme: selectedStudent.theme || "....................",
-          Directeur: selectedStudent.directeur || "....................",
-          GradeDirecteur: selectedStudent.grade_directeur || "..........",
-          DateSoutenance: formatDate(selectedStudent.date_soutenance) || "....................",
-          HeureSoutenance: formatTime(selectedStudent.heure_soutenance) || "....................",
-          Diplome: selectedStudent.diploma_type?.toUpperCase() || "LICENCE",
-          Specialite: selectedStudent.speciality?.toUpperCase() || "....................",
-          Session: `${selectedStudent.session_month?.toUpperCase() || "...................."} ${selectedStudent.session_year || "202..."}`
-        });
-
         try {
-          doc.render();
+          doc.render({
+            Jury: selectedStudent.jury || "....................",
+            Salle: selectedStudent.salle || "....................",
+            Matricule: selectedStudent.currentMatricule || "....................",
+            Nom: (selectedStudent.currentNom || "....................").toUpperCase(),
+            Prenoms: selectedStudent.currentPrenoms || "....................",
+            DateNaiss: formatDate(selectedStudent.currentDateNaissance) || "....................",
+            LieuNaiss: selectedStudent.currentLieuNaissance || "....................",
+            Examinateur: selectedStudent.examinateur || "....................",
+            GradeExaminateur: selectedStudent.grade_examinateur || "..........",
+            Rapporteur: selectedStudent.rapporteur || "....................",
+            GradeRapporteur: selectedStudent.grade_rapporteur || "..........",
+            Président: selectedStudent.president || "....................",
+            GradePrésident: selectedStudent.grade_president || "..........",
+            // Adding extras just in case
+            Theme: selectedStudent.theme || "....................",
+            Directeur: selectedStudent.directeur || "....................",
+            GradeDirecteur: selectedStudent.grade_directeur || "..........",
+            DateSoutenance: formatDate(selectedStudent.date_soutenance) || "....................",
+            HeureSoutenance: formatTime(selectedStudent.heure_soutenance) || "....................",
+            Diplome: selectedStudent.diploma_type?.toUpperCase() || "LICENCE",
+            Specialite: selectedStudent.speciality?.toUpperCase() || "....................",
+            Session: `${selectedStudent.session_month?.toUpperCase() || "...................."} ${selectedStudent.session_year || "202..."}`
+          });
         } catch (error: any) {
           console.error("Error rendering doc:", error);
           throw error;
@@ -208,8 +206,12 @@ export default function PVGenerationPage() {
         toast.success("Procès-Verbal généré avec succès !");
 
     } catch (err: any) {
-      console.error(err);
-      toast.error("Erreur lors de la génération : " + err.message);
+      console.error("PV Generation Error:", err);
+      if (err.message === "Failed to fetch") {
+        toast.error("Erreur réseau : Impossible de charger le modèle de PV.");
+      } else {
+        toast.error("Erreur lors de la génération : " + err.message);
+      }
     } finally {
       setGenerating(false);
     }
@@ -222,24 +224,32 @@ export default function PVGenerationPage() {
     }
 
     try {
-      // Robust download for iframe/browser
-      const url = window.URL.createObjectURL(generatedBlob);
+      const fileName = downloadFilename || "PV_Soutenance.docx";
+      const blobUrl = window.URL.createObjectURL(generatedBlob);
+      
       const link = document.createElement("a");
-      link.href = url;
-      link.download = downloadFilename || "PV_Soutenance.docx";
+      link.href = blobUrl;
+      link.download = fileName;
+      
+      // Make it hidden but part of DOM
+      link.style.display = "none";
       document.body.appendChild(link);
+      
+      // Trigger click
       link.click();
       
-      // Cleanup
+      // Cleanup with delay to ensure browser handles it
       setTimeout(() => {
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      }, 100);
+        if (document.body.contains(link)) {
+          document.body.removeChild(link);
+        }
+        window.URL.revokeObjectURL(blobUrl);
+      }, 1000);
 
       toast.success("Téléchargement lancé !");
     } catch (err) {
-      console.error("Download error:", err);
-      // Fallback to saveAs if available
+      console.error("Download Error:", err);
+      // Final fallback
       try {
         saveAs(generatedBlob, downloadFilename || "PV_Soutenance.docx");
       } catch (e) {
