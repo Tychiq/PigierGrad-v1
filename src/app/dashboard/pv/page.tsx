@@ -148,61 +148,77 @@ export default function PVGenerationPage() {
       setGenerating(true);
 
       try {
-        // Fetch the template
-        const response = await fetch("/templates/Essai-PV-SoutenanceRGL.docx");
+        // Fetch the template - trying both potential names
+        let response = await fetch("/templates/Essai-PV-SoutenanceRGL.docx");
+        if (!response.ok) {
+          response = await fetch("/templates/Essai PV-SoutenanceRGL - Final.docx");
+        }
+        
         if (!response.ok) throw new Error("Impossible de charger le modèle de PV");
         
         const arrayBuffer = await response.arrayBuffer();
         const zip = new PizZip(arrayBuffer);
         
-        const doc = new Docxtemplater(zip, {
+        const data = {
+          Jury: selectedStudent.jury || "....................",
+          Salle: selectedStudent.salle || "....................",
+          Matricule: selectedStudent.currentMatricule || "....................",
+          Nom: (selectedStudent.currentNom || "....................").toUpperCase(),
+          Prenoms: selectedStudent.currentPrenoms || "....................",
+          DateNaiss: formatDate(selectedStudent.currentDateNaissance) || "....................",
+          LieuNaiss: selectedStudent.currentLieuNaissance || "....................",
+          Examinateur: selectedStudent.examinateur || "....................",
+          GradeExaminateur: selectedStudent.grade_examinateur || "..........",
+          Rapporteur: selectedStudent.rapporteur || "....................",
+          GradeRapporteur: selectedStudent.grade_rapporteur || "..........",
+          Président: selectedStudent.president || "....................",
+          GradePrésident: selectedStudent.grade_president || "..........",
+          Theme: selectedStudent.theme || "....................",
+          Directeur: selectedStudent.directeur || "....................",
+          GradeDirecteur: selectedStudent.grade_directeur || "..........",
+          Date: formatDate(selectedStudent.date_soutenance) || "....................",
+          Heure: formatTime(selectedStudent.heure_soutenance) || "....................",
+          DateSoutenance: formatDate(selectedStudent.date_soutenance) || "....................",
+          HeureSoutenance: formatTime(selectedStudent.heure_soutenance) || "....................",
+          Diplome: selectedStudent.diploma_type?.toUpperCase() || "LICENCE",
+          Specialite: selectedStudent.speciality?.toUpperCase() || "....................",
+          Session: `${selectedStudent.session_month?.toUpperCase() || "...................."} ${selectedStudent.session_year || "202..."}`,
+          Diploma: selectedStudent.diploma_type?.toUpperCase() || "LICENCE",
+          Speciality: selectedStudent.speciality?.toUpperCase() || "....................",
+          session_month: selectedStudent.session_month?.toUpperCase() || "....................",
+          session_year: selectedStudent.session_year || "202...",
+          Session_Month: selectedStudent.session_month?.toUpperCase() || "....................",
+          Session_Year: selectedStudent.session_year || "202..."
+        };
+
+        // Pass 1: Handle « » delimiters
+        const doc1 = new Docxtemplater(zip, {
           paragraphLoop: true,
           linebreaks: true,
-          delimiters: {
-            start: "«",
-            end: "»",
-          },
+          delimiters: { start: "«", end: "»" },
         });
 
-        // Map data to template fields
         try {
-          doc.render({
-            Jury: selectedStudent.jury || "....................",
-            Salle: selectedStudent.salle || "....................",
-            Matricule: selectedStudent.currentMatricule || "....................",
-            Nom: (selectedStudent.currentNom || "....................").toUpperCase(),
-            Prenoms: selectedStudent.currentPrenoms || "....................",
-            DateNaiss: formatDate(selectedStudent.currentDateNaissance) || "....................",
-            LieuNaiss: selectedStudent.currentLieuNaissance || "....................",
-            Examinateur: selectedStudent.examinateur || "....................",
-            GradeExaminateur: selectedStudent.grade_examinateur || "..........",
-            Rapporteur: selectedStudent.rapporteur || "....................",
-            GradeRapporteur: selectedStudent.grade_rapporteur || "..........",
-            Président: selectedStudent.president || "....................",
-            GradePrésident: selectedStudent.grade_president || "..........",
-            Theme: selectedStudent.theme || "....................",
-            Directeur: selectedStudent.directeur || "....................",
-            GradeDirecteur: selectedStudent.grade_directeur || "..........",
-            Date: formatDate(selectedStudent.date_soutenance) || "....................",
-            Heure: formatTime(selectedStudent.heure_soutenance) || "....................",
-            DateSoutenance: formatDate(selectedStudent.date_soutenance) || "....................",
-            HeureSoutenance: formatTime(selectedStudent.heure_soutenance) || "....................",
-            Diplome: selectedStudent.diploma_type?.toUpperCase() || "LICENCE",
-            Specialite: selectedStudent.speciality?.toUpperCase() || "....................",
-            Session: `${selectedStudent.session_month?.toUpperCase() || "...................."} ${selectedStudent.session_year || "202..."}`,
-            Diploma: selectedStudent.diploma_type?.toUpperCase() || "LICENCE",
-            Speciality: selectedStudent.speciality?.toUpperCase() || "....................",
-            session_month: selectedStudent.session_month?.toUpperCase() || "....................",
-            session_year: selectedStudent.session_year || "202...",
-            Session_Month: selectedStudent.session_month?.toUpperCase() || "....................",
-            Session_Year: selectedStudent.session_year || "202..."
-          });
-        } catch (error: any) {
-          console.error("Error rendering doc:", error);
-          throw error;
+          doc1.render(data);
+        } catch (error) {
+          console.error("Error in pass 1:", error);
         }
 
-        const out = doc.getZip().generate({
+        // Pass 2: Handle << >> delimiters (standard angle brackets)
+        const zip2 = new PizZip(doc1.getZip().generate({ type: "arraybuffer" }));
+        const doc2 = new Docxtemplater(zip2, {
+          paragraphLoop: true,
+          linebreaks: true,
+          delimiters: { start: "<<", end: ">>" },
+        });
+
+        try {
+          doc2.render(data);
+        } catch (error) {
+          console.error("Error in pass 2:", error);
+        }
+
+        const out = doc2.getZip().generate({
           type: "blob",
           mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         });
