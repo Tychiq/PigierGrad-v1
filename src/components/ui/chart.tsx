@@ -126,7 +126,7 @@ function ChartTooltipContent(props: React.ComponentProps<typeof RechartsPrimitiv
     color,
     nameKey,
     labelKey,
-  } = props
+  } = props as any
   const { config } = useChart()
 
   const tooltipLabel = React.useMemo(() => {
