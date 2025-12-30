@@ -72,6 +72,7 @@ export default function InsertionPage() {
           grade_examinateur: row["GradeExaminateur"] || "",
           rapporteur: row["Rapporteur"] || "",
           grade_rapporteur: row["GradeRapporteur"] || "",
+          speciality: row["Specialite"] || row["Spécialité"] || row["Speciality"] || "",
           diploma_type: diplomaType,
         }));
 
