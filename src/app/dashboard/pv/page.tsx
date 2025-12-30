@@ -485,8 +485,29 @@ export default function PVGenerationPage() {
   };
 
   const handleDownload = () => {
-    if (generatedBlob && downloadFilename) {
-      saveAs(generatedBlob, downloadFilename);
+    if (!generatedBlob) {
+      toast.error("Le document n'est pas prêt pour le téléchargement.");
+      return;
+    }
+
+    try {
+      const url = window.URL.createObjectURL(generatedBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", downloadFilename || "PV_Soutenance.docx");
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+      toast.success("Téléchargement lancé !");
+    } catch (err) {
+      console.error("Download error:", err);
+      toast.error("Erreur lors du téléchargement.");
     }
   };
 
