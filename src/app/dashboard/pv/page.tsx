@@ -247,36 +247,39 @@ export default function PVGenerationPage() {
                         }),
                         new TableCell({ 
                           width: { size: 65, type: WidthType.PERCENTAGE },
-                          children: [new Paragraph({ children: [new TextRun({ text: `${selectedStudent.nom} ${selectedStudent.prenoms}`.toUpperCase(), font: "Arial", bold: true })] })] 
+                          children: [new Paragraph({ children: [new TextRun({ 
+                            text: selectedStudent.nom2 
+                              ? `${selectedStudent.nom} ${selectedStudent.prenoms} & ${selectedStudent.nom2} ${selectedStudent.prenoms2}`.toUpperCase()
+                              : `${selectedStudent.nom} ${selectedStudent.prenoms}`.toUpperCase(), 
+                            font: "Arial", 
+                            bold: true 
+                          })] })] 
                         }),
                       ],
                     }),
                     new TableRow({
                       children: [
                         new TableCell({ shading: { fill: "f8fafc" }, children: [new Paragraph({ children: [new TextRun({ text: "Numéro Matricule :", bold: true, font: "Arial" })] })] }),
-                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: selectedStudent.matricule, font: "Arial", bold: true })] })] }),
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ 
+                          text: selectedStudent.matricule2 
+                            ? `${selectedStudent.matricule} / ${selectedStudent.matricule2}` 
+                            : selectedStudent.matricule, 
+                          font: "Arial", 
+                          bold: true 
+                        })] })] }),
                       ],
                     }),
                     new TableRow({
                       children: [
                         new TableCell({ shading: { fill: "f8fafc" }, children: [new Paragraph({ children: [new TextRun({ text: "Date et Lieu de Naissance :", bold: true, font: "Arial" })] })] }),
-                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `${formatDate(selectedStudent.date_naissance)} à ${selectedStudent.lieu_naissance}`, font: "Arial" })] })] }),
+                        new TableCell({ children: [new Paragraph({ children: [
+                          new TextRun({ text: `${formatDate(selectedStudent.date_naissance)} à ${selectedStudent.lieu_naissance}`, font: "Arial" }),
+                          ...(selectedStudent.nom2 ? [
+                            new TextRun({ text: `\n${formatDate(selectedStudent.date_naissance2)} à ${selectedStudent.lieu_naissance2}`, font: "Arial" })
+                          ] : [])
+                        ] })] }),
                       ],
                     }),
-                    ...(selectedStudent.nom2 ? [
-                      new TableRow({
-                        children: [
-                          new TableCell({ shading: { fill: "f8fafc" }, children: [new Paragraph({ children: [new TextRun({ text: "Binôme (Nom & Prénoms) :", bold: true, font: "Arial" })] })] }),
-                          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `${selectedStudent.nom2} ${selectedStudent.prenoms2}`.toUpperCase(), font: "Arial", bold: true })] })] }),
-                        ],
-                      }),
-                      new TableRow({
-                        children: [
-                          new TableCell({ shading: { fill: "f8fafc" }, children: [new Paragraph({ children: [new TextRun({ text: "Matricule Binôme :", bold: true, font: "Arial" })] })] }),
-                          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: selectedStudent.matricule2 || "", font: "Arial", bold: true })] })] }),
-                        ],
-                      }),
-                    ] : []),
                   ],
                 }),
 
