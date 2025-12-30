@@ -193,7 +193,9 @@ export default function PVGenerationPage() {
             Diploma: selectedStudent.diploma_type?.toUpperCase() || "LICENCE",
             Speciality: selectedStudent.speciality?.toUpperCase() || "....................",
             session_month: selectedStudent.session_month?.toUpperCase() || "....................",
-            session_year: selectedStudent.session_year || "202..."
+            session_year: selectedStudent.session_year || "202...",
+            Session_Month: selectedStudent.session_month?.toUpperCase() || "....................",
+            Session_Year: selectedStudent.session_year || "202..."
           });
         } catch (error: any) {
           console.error("Error rendering doc:", error);
