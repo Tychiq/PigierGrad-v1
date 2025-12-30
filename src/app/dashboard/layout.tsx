@@ -52,17 +52,44 @@ interface Notification {
   created_at: string;
 }
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const { profile } = useProfile();
-  const router = useRouter();
+  export default function DashboardLayout({
+    children,
+  }: {
+    children: React.ReactNode;
+  }) {
+    const [loading, setLoading] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [globalSearch, setGlobalSearch] = useState("");
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const { profile } = useProfile();
+    const router = useRouter();
+
+    useEffect(() => {
+      const delayDebounceFn = setTimeout(() => {
+        if (globalSearch.length > 2) {
+          handleGlobalSearch();
+        } else {
+          setSearchResults([]);
+        }
+      }, 300);
+
+      return () => clearTimeout(delayDebounceFn);
+    }, [globalSearch]);
+
+    const handleGlobalSearch = async () => {
+      setIsSearching(true);
+      const { data, error } = await supabase
+        .from("soutenances")
+        .select("id, nom, prenoms, diploma_type, speciality")
+        .or(`nom.ilike.%${globalSearch}%,prenoms.ilike.%${globalSearch}%,matricule.ilike.%${globalSearch}%`)
+        .limit(5);
+      
+      if (data) setSearchResults(data);
+      setIsSearching(false);
+    };
 
   useEffect(() => {
     const checkUser = async () => {
