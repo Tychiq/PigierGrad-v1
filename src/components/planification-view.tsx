@@ -514,15 +514,16 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                       <SelectTrigger className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none">
                         <SelectValue placeholder="Toutes les spécialités" />
                       </SelectTrigger>
-                      <SelectContent className="rounded-xl">
-                        <SelectItem value="all">Toutes les spécialités</SelectItem>
-                        {SPECIALITIES.map(spec => (
-                          <SelectItem key={spec} value={spec}>{spec}</SelectItem>
-                        ))}
-                        {uniqueSpecialities.filter(s => !SPECIALITIES.includes(s as string)).map(spec => (
-                          <SelectItem key={spec} value={spec as string}>{spec}</SelectItem>
-                        ))}
-                      </SelectContent>
+                        <SelectContent className="rounded-xl">
+                          <SelectItem value="all">Toutes les spécialités</SelectItem>
+                          {activeSpecialities.map(spec => (
+                            <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                          ))}
+                          {uniqueSpecialities.filter(s => !activeSpecialities.includes(s as string)).map(spec => (
+                            <SelectItem key={spec} value={spec as string}>{spec}</SelectItem>
+                          ))}
+                        </SelectContent>
+
                     </Select>
                   </div>
                   <div className="space-y-2">
