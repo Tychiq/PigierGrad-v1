@@ -97,7 +97,8 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
       doc.setFontSize(9);
       doc.setTextColor(100, 116, 139);
       doc.setFont("helvetica", "normal");
-      doc.text(`Document généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`, 105, 62, { align: "center" });
+      const now = new Date();
+      doc.text(`Document généré le ${formatDate(now.toISOString())} à ${now.getHours().toString().padStart(2, '0')}-${now.getMinutes().toString().padStart(2, '0')}-${now.getSeconds().toString().padStart(2, '0')}`, 105, 62, { align: "center" });
       
       autoTable(doc, {
         startY: 70,
