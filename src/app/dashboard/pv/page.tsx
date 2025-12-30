@@ -34,22 +34,8 @@ import {
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDate, formatTime } from "@/lib/utils";
-import { 
-  Document, 
-  Packer, 
-  Paragraph, 
-  TextRun, 
-  AlignmentType, 
-  Table, 
-  TableRow, 
-  TableCell, 
-  WidthType,
-  BorderStyle,
-  Header,
-  Footer,
-  PageNumber,
-  NumberFormat
-} from "docx";
+import PizZip from "pizzip";
+import Docxtemplater from "docxtemplater";
 import { saveAs } from "file-saver";
 
 interface Student {
