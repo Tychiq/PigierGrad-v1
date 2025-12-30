@@ -485,26 +485,10 @@ export default function PVGenerationPage() {
   };
 
   const handleDownload = () => {
-    if (downloadUrl && downloadFilename) {
-      const a = document.createElement("a");
-      a.style.display = "none";
-      a.href = downloadUrl;
-      a.download = downloadFilename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      
-      // We don't revoke here because user might want to click again or we do it on dialog close
+    if (generatedBlob && downloadFilename) {
+      saveAs(generatedBlob, downloadFilename);
     }
   };
-
-  useEffect(() => {
-    return () => {
-      if (downloadUrl) {
-        window.URL.revokeObjectURL(downloadUrl);
-      }
-    };
-  }, [downloadUrl]);
 
   return (
     <div className="max-w-5xl mx-auto space-y-10 pb-10">
