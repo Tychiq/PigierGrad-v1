@@ -207,12 +207,24 @@ export default function DashboardLayout({
                 <span className="text-sm font-bold text-blue-900 dark:text-white leading-none">Admin</span>
                 <span className="text-[10px] text-blue-400 font-medium uppercase tracking-wider">Connecté</span>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shadow-lg shadow-blue-600/30">
-                <span className="text-white font-black text-xs">AD</span>
-              </div>
-            </Link>
-          </div>
-        </header>
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shadow-lg shadow-blue-600/30">
+                  <span className="text-white font-black text-xs">AD</span>
+                </div>
+              </Link>
+
+              <div className="h-8 w-[1px] bg-blue-100 dark:bg-blue-900/30 mx-1" />
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                className="rounded-xl hover:bg-red-50 dark:hover:bg-red-950/20 text-blue-400 hover:text-red-500 transition-all"
+                title="Déconnexion"
+              >
+                <LogOut className="w-5 h-5" />
+              </Button>
+            </div>
+          </header>
 
           <main className="flex-1 overflow-y-auto p-6 lg:p-10 relative bg-transparent">
             <div className="absolute inset-0 z-[-1] overflow-hidden pointer-events-none">
