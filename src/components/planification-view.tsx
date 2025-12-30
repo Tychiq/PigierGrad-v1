@@ -671,10 +671,11 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                               <span className="text-xs font-bold text-blue-900 dark:text-white">{item.rapporteur || "???"}</span>
                               <span className="text-[9px] text-blue-400 uppercase">{item.grade_rapporteur}</span>
                             </div>
-                              <div className="flex flex-col">
-                                <span className="text-[10px] font-black text-blue-300 uppercase">Dépôt</span>
-                                <span className="text-xs font-bold text-blue-900 dark:text-white">{formatTime(item.date_depot)}</span>
-                              </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] font-black text-blue-300 uppercase">Dépôt</span>
+                                  <span className="text-xs font-bold text-blue-900 dark:text-white">{formatDate(item.date_depot)}</span>
+                                </div>
+
                             </div>
 
                       </div>
