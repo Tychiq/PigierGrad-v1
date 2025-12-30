@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { Input } from "@/components/ui/input";
-import { Search, Bell, Menu, X, Check, LogOut } from "lucide-react";
+import { LogOut, Menu, X, Bell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { useProfile } from "@/hooks/use-profile";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Popover,
   PopoverContent,
