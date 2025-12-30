@@ -314,11 +314,12 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                           <SelectTrigger className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none">
                             <SelectValue placeholder="Sélectionner une spécialité..." />
                           </SelectTrigger>
-                          <SelectContent className="rounded-xl">
-                            {SPECIALITIES.map(spec => (
-                              <SelectItem key={spec} value={spec}>{spec}</SelectItem>
-                            ))}
-                          </SelectContent>
+                            <SelectContent className="rounded-xl">
+                              {activeSpecialities.map(spec => (
+                                <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                              ))}
+                            </SelectContent>
+
                         </Select>
                       </div>
                     </div>
