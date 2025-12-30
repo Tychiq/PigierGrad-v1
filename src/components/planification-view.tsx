@@ -98,6 +98,9 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
   const [showFilters, setShowFilters] = useState(false);
   const [sessionMonth, setSessionMonth] = useState("");
   const [sessionYear, setSessionYear] = useState("");
+  const [isBinomeDialogOpen, setIsBinomeDialogOpen] = useState(false);
+  const [targetBinomeItem, setTargetBinomeItem] = useState<Soutenance | null>(null);
+  const [binomeSearch, setBinomeSearch] = useState("");
 
   useEffect(() => {
     const urlSearch = searchParams.get("search");
