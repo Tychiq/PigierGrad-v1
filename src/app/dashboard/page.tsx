@@ -92,9 +92,11 @@ export default function DashboardPage() {
           };
         });
 
+        const scheduledCount = data.filter(s => s.date_soutenance).length;
         setStats({
           totalStudents: individualStudentsCount,
           totalSoutenances: data.length,
+          scheduledSoutenances: scheduledCount,
           totalDirectors: uniqueDirectors,
           licenceCount: licence,
           masterCount: master,
