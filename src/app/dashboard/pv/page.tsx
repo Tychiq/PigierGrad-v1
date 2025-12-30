@@ -391,10 +391,21 @@ export default function PVGenerationPage() {
         }],
       });
 
-      const blob = await Packer.toBlob(doc);
-      saveAs(blob, `PV_Soutenance_${selectedStudent.nom.replace(/\s+/g, '_')}.docx`);
-      
-      toast.success("Procès-Verbal généré avec succès !");
+        const blob = await Packer.toBlob(doc);
+        
+        // Use direct anchor download for better compatibility
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.download = `PV_Soutenance_${selectedStudent.nom.replace(/\s+/g, '_')}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        toast.success("Procès-Verbal généré avec succès !");
+
     } catch (err: any) {
       console.error(err);
       toast.error("Erreur lors de la génération : " + err.message);
