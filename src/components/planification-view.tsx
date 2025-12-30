@@ -728,14 +728,29 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                             <span className="text-[10px] font-black text-blue-300 uppercase">Dépôt</span>
                             <span className="text-xs font-bold text-blue-900 dark:text-white">{formatDate(item.date_depot)}</span>
                           </div>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="lg:col-span-3 flex flex-col justify-between items-end">
-                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button size="icon" variant="ghost" className="rounded-full w-10 h-10 hover:bg-blue-50 dark:hover:bg-blue-900/30" onClick={(e) => { e.stopPropagation(); openEditDialog(item); }}>
-                            <Edit2 className="w-4 h-4 text-blue-500" />
-                          </Button>
+                        <div className="lg:col-span-3 flex flex-col justify-between items-end">
+                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {!item.nom2 && (
+                              <Button 
+                                size="icon" 
+                                variant="outline" 
+                                className="rounded-full w-10 h-10 border-blue-200 dark:border-blue-800 hover:bg-blue-600 hover:text-white" 
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  setTargetBinomeItem(item);
+                                  setIsBinomeDialogOpen(true);
+                                }}
+                                title="Ajouter un binôme"
+                              >
+                                <UserPlus className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button size="icon" variant="ghost" className="rounded-full w-10 h-10 hover:bg-blue-50 dark:hover:bg-blue-900/30" onClick={(e) => { e.stopPropagation(); openEditDialog(item); }}>
+                              <Edit2 className="w-4 h-4 text-blue-500" />
+                            </Button>
                           <Button size="icon" variant="ghost" className="rounded-full w-10 h-10 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500" onClick={(e) => { e.stopPropagation(); handleDelete(item.id, `${item.nom} ${item.prenoms}`); }}>
                             <Trash2 className="w-4 h-4" />
                           </Button>
