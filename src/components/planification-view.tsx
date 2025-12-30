@@ -87,6 +87,14 @@ const ITEMS_PER_PAGE = 8;
     const initialSearch = searchParams.get("search") || "";
     const [search, setSearch] = useState(initialSearch);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+    useEffect(() => {
+      const urlSearch = searchParams.get("search");
+      if (urlSearch !== null) {
+        setSearch(urlSearch);
+        setCurrentPage(1);
+      }
+    }, [searchParams]);
   const [editingItem, setEditingItem] = useState<Soutenance | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [form, setForm] = useState<Partial<Soutenance>>({});
