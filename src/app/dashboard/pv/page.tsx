@@ -468,10 +468,9 @@ export default function PVGenerationPage() {
 
 
         const blob = await Packer.toBlob(doc);
-        const url = window.URL.createObjectURL(blob);
         const filename = `PV_Soutenance_${selectedStudent.currentNom.replace(/\s+/g, '_')}.docx`;
         
-        setDownloadUrl(url);
+        setGeneratedBlob(blob);
         setDownloadFilename(filename);
         setShowSuccessDialog(true);
         
