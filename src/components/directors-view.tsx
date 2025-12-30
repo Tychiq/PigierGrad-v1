@@ -77,7 +77,7 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
     d.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const downloadPDF = async () => {
+  async function downloadPDF() {
     try {
       if (filteredDirectors.length === 0) {
         toast.error("Aucune donnée à exporter.");
@@ -155,14 +155,14 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
       
       const pdfBlob = doc.output("blob");
       await triggerDownload(pdfBlob, filename);
-
       
       toast.success("Le PDF a été téléchargé avec succès !");
     } catch (error) {
       console.error("Erreur lors de la génération du PDF:", error);
       toast.error("Une erreur est survenue lors de la génération du PDF.");
     }
-  };
+  }
+
 
   const totalPages = Math.ceil(filteredDirectors.length / ITEMS_PER_PAGE);
   const paginatedDirectors = filteredDirectors.slice(
