@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { GraduationCap, Mail, Lock, User, Github, Chrome } from "lucide-react";
+import { GraduationCap, Mail, Lock, User, Chrome } from "lucide-react";
 
 export default function AuthPage() {
   const [loading, setLoading] = useState(false);
@@ -66,7 +66,7 @@ export default function AuthPage() {
     setLoading(false);
   };
 
-  const handleOAuthSignIn = async (provider: 'google' | 'github') => {
+  const handleOAuthSignIn = async (provider: 'google') => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
@@ -119,10 +119,10 @@ export default function AuthPage() {
         <div className="bg-white dark:bg-[#0f1629] rounded-3xl shadow-2xl shadow-blue-900/10 p-8">
             <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-8 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-1 h-12">
-              <TabsTrigger value="login" className="rounded-lg py-2 font-bold text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-[#0a0f1c] data-[state=active]:shadow-sm data-[state=active]:text-blue-600">
+              <TabsTrigger value="login" className="rounded-lg h-full font-bold text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-[#0a0f1c] data-[state=active]:shadow-sm data-[state=active]:text-blue-600 transition-all flex items-center justify-center">
                 Connexion
               </TabsTrigger>
-              <TabsTrigger value="signup" className="rounded-lg py-2 font-bold text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-[#0a0f1c] data-[state=active]:shadow-sm data-[state=active]:text-blue-600">
+              <TabsTrigger value="signup" className="rounded-lg h-full font-bold text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-[#0a0f1c] data-[state=active]:shadow-sm data-[state=active]:text-blue-600 transition-all flex items-center justify-center">
                 Inscription
               </TabsTrigger>
             </TabsList>
