@@ -244,9 +244,11 @@ const ITEMS_PER_PAGE = 8;
     setIsDialogOpen(true);
   };
 
-  const activeSpecialities = diplomaType === "Licence" ? LICENCE_SPECIALITIES : MASTER_SPECIALITIES;
+    const activeSpecialities = diplomaType === "Licence" ? LICENCE_SPECIALITIES : MASTER_SPECIALITIES;
+    const { ResetEverythingButton } = require("./reset-everything-button");
 
-  return (
+    return (
+
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex flex-col gap-1">
