@@ -272,7 +272,7 @@ export default function DashboardLayout({
                 </span>
                 <span className="text-[10px] text-blue-400 font-medium uppercase tracking-wider">Connecté</span>
               </div>
-              <Avatar className="w-10 h-10 rounded-xl shadow-lg shadow-blue-600/30">
+              <Avatar className="w-10 h-10 rounded-full shadow-lg shadow-blue-600/30">
                 <AvatarImage src={profile?.avatar_url} />
                 <AvatarFallback className="bg-gradient-to-br from-blue-600 to-blue-800 text-white font-black text-xs">
                   {profile?.full_name?.charAt(0) || "AD"}
