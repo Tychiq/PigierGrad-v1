@@ -119,10 +119,10 @@ export default function AuthPage() {
         <div className="bg-white dark:bg-[#0f1629] rounded-3xl shadow-2xl shadow-blue-900/10 p-8">
             <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-8 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-1 h-12">
-              <TabsTrigger value="login" className="rounded-lg h-full font-bold text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-[#0a0f1c] data-[state=active]:shadow-sm data-[state=active]:text-blue-600 transition-all flex items-center justify-center">
+              <TabsTrigger value="login" className="rounded-lg h-full font-bold text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-[#0a0f1c] data-[state=active]:shadow-sm data-[state=active]:text-blue-600 transition-all flex items-center justify-center pt-0 pb-1">
                 Connexion
               </TabsTrigger>
-              <TabsTrigger value="signup" className="rounded-lg h-full font-bold text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-[#0a0f1c] data-[state=active]:shadow-sm data-[state=active]:text-blue-600 transition-all flex items-center justify-center">
+              <TabsTrigger value="signup" className="rounded-lg h-full font-bold text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-[#0a0f1c] data-[state=active]:shadow-sm data-[state=active]:text-blue-600 transition-all flex items-center justify-center pt-0 pb-1">
                 Inscription
               </TabsTrigger>
             </TabsList>
