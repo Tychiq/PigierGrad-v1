@@ -1,8 +1,8 @@
 "use client";
 
-  import { useState, useEffect, useMemo } from "react";
-  import { useRouter, useSearchParams } from "next/navigation";
-  import { supabase } from "@/lib/supabase";
+import { useState, useEffect, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
@@ -45,7 +45,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDate, formatTime } from "@/lib/utils";
 import { LICENCE_SPECIALITIES, MASTER_SPECIALITIES } from "@/lib/constants";
-import { ResetEverythingButton } from "@/components/reset-everything-button";
+import { ResetEverythingButton } from "./reset-everything-button";
 
 interface Soutenance {
   id: string;
@@ -81,21 +81,13 @@ interface Soutenance {
 
 const ITEMS_PER_PAGE = 8;
 
-  export function PlanificationView({ diplomaType }: { diplomaType: string }) {
-    const [data, setData] = useState<Soutenance[]>([]);
-    const [loading, setLoading] = useState(true);
-    const searchParams = useSearchParams();
-    const initialSearch = searchParams.get("search") || "";
-    const [search, setSearch] = useState(initialSearch);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-    useEffect(() => {
-      const urlSearch = searchParams.get("search");
-      if (urlSearch !== null) {
-        setSearch(urlSearch);
-        setCurrentPage(1);
-      }
-    }, [searchParams]);
+export function PlanificationView({ diplomaType }: { diplomaType: string }) {
+  const [data, setData] = useState<Soutenance[]>([]);
+  const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get("search") || "";
+  const [search, setSearch] = useState(initialSearch);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Soutenance | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [form, setForm] = useState<Partial<Soutenance>>({});
@@ -105,6 +97,14 @@ const ITEMS_PER_PAGE = 8;
   const [showFilters, setShowFilters] = useState(false);
   const [sessionMonth, setSessionMonth] = useState("");
   const [sessionYear, setSessionYear] = useState("");
+
+  useEffect(() => {
+    const urlSearch = searchParams.get("search");
+    if (urlSearch !== null) {
+      setSearch(urlSearch);
+      setCurrentPage(1);
+    }
+  }, [searchParams]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -245,10 +245,9 @@ const ITEMS_PER_PAGE = 8;
     setIsDialogOpen(true);
   };
 
-    const activeSpecialities = diplomaType === "Licence" ? LICENCE_SPECIALITIES : MASTER_SPECIALITIES;
+  const activeSpecialities = diplomaType === "Licence" ? LICENCE_SPECIALITIES : MASTER_SPECIALITIES;
 
-    return (
-
+  return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex flex-col gap-1">
@@ -289,9 +288,9 @@ const ITEMS_PER_PAGE = 8;
               Appliquer Session
             </Button>
           </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <ResetEverythingButton diplomaType={diplomaType} target="planning" />
-              <div className="relative">
+          <div className="flex items-center gap-3 flex-wrap">
+            <ResetEverythingButton diplomaType={diplomaType} target="planning" />
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
               <Input 
                 placeholder="Rechercher..." 
@@ -343,12 +342,11 @@ const ITEMS_PER_PAGE = 8;
                           <SelectTrigger className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none">
                             <SelectValue placeholder="Sélectionner une spécialité..." />
                           </SelectTrigger>
-                            <SelectContent className="rounded-xl">
-                              {activeSpecialities.map(spec => (
-                                <SelectItem key={spec} value={spec}>{spec}</SelectItem>
-                              ))}
-                            </SelectContent>
-
+                          <SelectContent className="rounded-xl">
+                            {activeSpecialities.map(spec => (
+                              <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                            ))}
+                          </SelectContent>
                         </Select>
                       </div>
                     </div>
@@ -528,16 +526,15 @@ const ITEMS_PER_PAGE = 8;
                       <SelectTrigger className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none">
                         <SelectValue placeholder="Toutes les spécialités" />
                       </SelectTrigger>
-                        <SelectContent className="rounded-xl">
-                          <SelectItem value="all">Toutes les spécialités</SelectItem>
-                          {activeSpecialities.map(spec => (
-                            <SelectItem key={spec} value={spec}>{spec}</SelectItem>
-                          ))}
-                          {uniqueSpecialities.filter(s => !activeSpecialities.includes(s as string)).map(spec => (
-                            <SelectItem key={spec} value={spec as string}>{spec}</SelectItem>
-                          ))}
-                        </SelectContent>
-
+                      <SelectContent className="rounded-xl">
+                        <SelectItem value="all">Toutes les spécialités</SelectItem>
+                        {activeSpecialities.map(spec => (
+                          <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                        ))}
+                        {uniqueSpecialities.filter(s => !activeSpecialities.includes(s as string)).map(spec => (
+                          <SelectItem key={spec} value={spec as string}>{spec}</SelectItem>
+                        ))}
+                      </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
@@ -610,7 +607,6 @@ const ITEMS_PER_PAGE = 8;
                   <div className={`absolute top-0 left-0 w-2 h-full ${diplomaType === "Licence" ? "bg-gradient-to-b from-blue-500 to-blue-700" : "bg-gradient-to-b from-yellow-400 to-yellow-600"}`} />
                   <CardContent className="p-6">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                      {/* Section Étudiant */}
                       <div className="lg:col-span-4 space-y-4">
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] font-black bg-blue-600 text-white px-2 py-0.5 rounded-full uppercase tracking-tighter">
@@ -620,28 +616,26 @@ const ITEMS_PER_PAGE = 8;
                             {item.date_soutenance ? "Planifié" : "En attente"}
                           </span>
                         </div>
-                            <div className="space-y-1">
-                            <h3 className="text-2xl font-black text-blue-900 dark:text-white leading-tight uppercase">
-                              {item.nom} {item.prenoms}
-                            </h3>
-                              <div className="flex items-center gap-2 text-xs text-blue-400 font-bold">
-                                <Calendar className="w-3 h-3" />
-                                <span>Né(e) le {formatDate(item.date_naissance)} à {item.lieu_naissance || "???"}</span>
-                              </div>
-                            </div>
-                            {item.nom2 && (
-                              <div className="pt-2 border-t border-blue-50 dark:border-blue-900/10">
-                                <h4 className="text-xs font-black text-blue-300 uppercase tracking-widest mb-1">Binôme</h4>
-                                <p className="text-sm font-bold text-blue-800 dark:text-blue-100 uppercase">
-                                  {item.nom2} {item.prenoms2} ({item.matricule2})
-                                </p>
-                                <p className="text-[10px] text-blue-400">Né(e) le {formatDate(item.date_naissance2)} à {item.lieu_naissance2}</p>
-                              </div>
-                            )}
-
+                        <div className="space-y-1">
+                          <h3 className="text-2xl font-black text-blue-900 dark:text-white leading-tight uppercase">
+                            {item.nom} {item.prenoms}
+                          </h3>
+                          <div className="flex items-center gap-2 text-xs text-blue-400 font-bold">
+                            <Calendar className="w-3 h-3" />
+                            <span>Né(e) le {formatDate(item.date_naissance)} à {item.lieu_naissance || "???"}</span>
+                          </div>
+                        </div>
+                        {item.nom2 && (
+                          <div className="pt-2 border-t border-blue-50 dark:border-blue-900/10">
+                            <h4 className="text-xs font-black text-blue-300 uppercase tracking-widest mb-1">Binôme</h4>
+                            <p className="text-sm font-bold text-blue-800 dark:text-blue-100 uppercase">
+                              {item.nom2} {item.prenoms2} ({item.matricule2})
+                            </p>
+                            <p className="text-[10px] text-blue-400">Né(e) le {formatDate(item.date_naissance2)} à {item.lieu_naissance2}</p>
+                          </div>
+                        )}
                       </div>
 
-                      {/* Section Projet & Directeur */}
                       <div className="lg:col-span-5 space-y-4 lg:border-l lg:border-r border-blue-50 dark:border-blue-900/20 lg:px-6">
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
@@ -669,32 +663,29 @@ const ITEMS_PER_PAGE = 8;
                             </div>
                           </div>
                         </div>
-                          <div className="pt-3 border-t border-blue-50 dark:border-blue-900/10 grid grid-cols-2 gap-y-3">
-                            <div className="flex flex-col">
-                              <span className="text-[10px] font-black text-blue-300 uppercase">Président</span>
-                              <span className="text-xs font-bold text-blue-900 dark:text-white">{item.president || "???"}</span>
-                              <span className="text-[9px] text-blue-400 uppercase">{item.grade_president}</span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-[10px] font-black text-blue-300 uppercase">Examinateur</span>
-                              <span className="text-xs font-bold text-blue-900 dark:text-white">{item.examinateur || "???"}</span>
-                              <span className="text-[9px] text-blue-400 uppercase">{item.grade_examinateur}</span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-[10px] font-black text-blue-300 uppercase">Rapporteur</span>
-                              <span className="text-xs font-bold text-blue-900 dark:text-white">{item.rapporteur || "???"}</span>
-                              <span className="text-[9px] text-blue-400 uppercase">{item.grade_rapporteur}</span>
-                            </div>
-                                <div className="flex flex-col">
-                                  <span className="text-[10px] font-black text-blue-300 uppercase">Dépôt</span>
-                                  <span className="text-xs font-bold text-blue-900 dark:text-white">{formatDate(item.date_depot)}</span>
-                                </div>
-
-                            </div>
-
+                        <div className="pt-3 border-t border-blue-50 dark:border-blue-900/10 grid grid-cols-2 gap-y-3">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-black text-blue-300 uppercase">Président</span>
+                            <span className="text-xs font-bold text-blue-900 dark:text-white">{item.president || "???"}</span>
+                            <span className="text-[9px] text-blue-400 uppercase">{item.grade_president}</span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-black text-blue-300 uppercase">Examinateur</span>
+                            <span className="text-xs font-bold text-blue-900 dark:text-white">{item.examinateur || "???"}</span>
+                            <span className="text-[9px] text-blue-400 uppercase">{item.grade_examinateur}</span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-black text-blue-300 uppercase">Rapporteur</span>
+                            <span className="text-xs font-bold text-blue-900 dark:text-white">{item.rapporteur || "???"}</span>
+                            <span className="text-[9px] text-blue-400 uppercase">{item.grade_rapporteur}</span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-black text-blue-300 uppercase">Dépôt</span>
+                            <span className="text-xs font-bold text-blue-900 dark:text-white">{formatDate(item.date_depot)}</span>
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Section Planning & Actions */}
                       <div className="lg:col-span-3 flex flex-col justify-between items-end">
                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Button size="icon" variant="ghost" className="rounded-full w-10 h-10 hover:bg-blue-50 dark:hover:bg-blue-900/30" onClick={(e) => { e.stopPropagation(); openEditDialog(item); }}>
@@ -709,19 +700,17 @@ const ITEMS_PER_PAGE = 8;
                           <div className="flex items-center justify-end gap-3">
                             <div className="flex flex-col items-end">
                               <span className="text-[10px] font-black text-blue-300 uppercase">Date</span>
-                                <span className="text-sm font-black text-blue-900 dark:text-white">{item.date_soutenance ? formatDate(item.date_soutenance) : "À définir"}</span>
-
+                              <span className="text-sm font-black text-blue-900 dark:text-white">{item.date_soutenance ? formatDate(item.date_soutenance) : "À définir"}</span>
                             </div>
                             <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl">
                               <Calendar className="w-5 h-5 text-blue-600" />
                             </div>
                           </div>
                           <div className="flex items-center justify-end gap-3">
-                              <div className="flex flex-col items-end">
-                                <span className="text-[10px] font-black text-blue-300 uppercase">Heure & Salle</span>
-                                <span className="text-sm font-black text-blue-900 dark:text-white">{formatTime(item.heure_soutenance)} | {item.salle || "???"}</span>
-                              </div>
-
+                            <div className="flex flex-col items-end">
+                              <span className="text-[10px] font-black text-blue-300 uppercase">Heure & Salle</span>
+                              <span className="text-sm font-black text-blue-900 dark:text-white">{formatTime(item.heure_soutenance)} | {item.salle || "???"}</span>
+                            </div>
                             <div className="p-2 bg-yellow-50 dark:bg-yellow-900/30 rounded-xl">
                               <Clock className="w-5 h-5 text-yellow-600" />
                             </div>
