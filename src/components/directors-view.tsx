@@ -154,9 +154,14 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
       const filename = `PIGIERGRAD_Directeurs_${diplomaType}_${timestamp}.pdf`;
       
       const pdfBlob = doc.output("blob");
-      await triggerDownload(pdfBlob, filename);
-      
-      toast.success("Le PDF a été téléchargé avec succès !");
+      triggerDownload(pdfBlob, filename)
+        .then(() => {
+          toast.success("Le PDF a été téléchargé avec succès !");
+        })
+        .catch((error) => {
+          console.error("Erreur lors de la génération du PDF:", error);
+          toast.error("Une erreur est survenue lors de la génération du PDF.");
+        });
     } catch (error) {
       console.error("Erreur lors de la génération du PDF:", error);
       toast.error("Une erreur est survenue lors de la génération du PDF.");
