@@ -257,20 +257,9 @@ export default function PVGenerationPage() {
     const fileName = downloadFilename || "PV_Soutenance.docx";
 
     try {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64data = reader.result as string;
-        // Use window.parent.postMessage to trigger download in the parent frame
-        window.parent.postMessage({ 
-          type: "OPEN_EXTERNAL_URL", 
-          data: { url: base64data } 
-        }, "*");
-        toast.success("Téléchargement lancé !");
-      };
-      reader.onerror = () => {
-        throw new Error("Failed to read blob");
-      };
-      reader.readAsDataURL(generatedBlob);
+      toast.info("Téléchargement en cours...");
+      await triggerDownload(generatedBlob, fileName);
+      toast.success("Téléchargement lancé !");
     } catch (err) {
       console.error("Download Error:", err);
       toast.error("Erreur lors du téléchargement.");
