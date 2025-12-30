@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,7 +17,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  Users
+  Filter,
+  X
 } from "lucide-react";
 import { 
   Dialog, 
@@ -29,6 +30,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -59,9 +67,23 @@ interface Soutenance {
   rapporteur: string;
   grade_rapporteur: string;
   diploma_type: string;
+  speciality?: string;
 }
 
 const ITEMS_PER_PAGE = 8;
+
+const SPECIALITIES = [
+  "Informatique de Gestion",
+  "Réseaux & Télécommunications",
+  "Génie Logiciel",
+  "Marketing & Commerce",
+  "Comptabilité & Finance",
+  "Gestion des Ressources Humaines",
+  "Communication",
+  "Logistique & Transport",
+  "Banque & Assurance",
+  "Secrétariat de Direction",
+];
 
 export function PlanificationView({ diplomaType }: { diplomaType: string }) {
   const [data, setData] = useState<Soutenance[]>([]);
@@ -71,6 +93,10 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
   const [editingItem, setEditingItem] = useState<Soutenance | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [form, setForm] = useState<Partial<Soutenance>>({});
+  const [selectedSpeciality, setSelectedSpeciality] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [selectedDirector, setSelectedDirector] = useState<string>("all");
+  const [showFilters, setShowFilters] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -87,6 +113,16 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
   useEffect(() => {
     fetchData();
   }, [diplomaType]);
+
+  const uniqueSpecialities = useMemo(() => {
+    const specs = new Set(data.map(item => item.speciality).filter(Boolean));
+    return Array.from(specs);
+  }, [data]);
+
+  const uniqueDirectors = useMemo(() => {
+    const dirs = new Set(data.map(item => item.directeur).filter(Boolean));
+    return Array.from(dirs);
+  }, [data]);
 
   const handleSave = async () => {
     try {
@@ -140,15 +176,33 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
     }
   };
 
-  const filteredData = data.filter(item => 
-    `${item.nom} ${item.prenoms} ${item.theme} ${item.matricule}`.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredData = useMemo(() => {
+    return data.filter(item => {
+      const matchesSearch = `${item.nom} ${item.prenoms} ${item.theme} ${item.matricule} ${item.nom2 || ""} ${item.prenoms2 || ""}`.toLowerCase().includes(search.toLowerCase());
+      const matchesSpeciality = selectedSpeciality === "all" || item.speciality === selectedSpeciality;
+      const matchesStatus = selectedStatus === "all" || 
+        (selectedStatus === "planned" && item.date_soutenance) ||
+        (selectedStatus === "pending" && !item.date_soutenance);
+      const matchesDirector = selectedDirector === "all" || item.directeur === selectedDirector;
+      
+      return matchesSearch && matchesSpeciality && matchesStatus && matchesDirector;
+    });
+  }, [data, search, selectedSpeciality, selectedStatus, selectedDirector]);
 
   const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
   const paginatedData = filteredData.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
+
+  const activeFiltersCount = [selectedSpeciality, selectedStatus, selectedDirector].filter(f => f !== "all").length;
+
+  const clearFilters = () => {
+    setSelectedSpeciality("all");
+    setSelectedStatus("all");
+    setSelectedDirector("all");
+    setCurrentPage(1);
+  };
 
   const openEditDialog = (item: Soutenance) => {
     setEditingItem(item);
@@ -168,11 +222,11 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
             Soutenances <span className={diplomaType === "Licence" ? "text-blue-500" : "text-yellow-500"}>{diplomaType}</span>
           </h1>
           <p className="text-blue-600/70 dark:text-blue-400 font-medium">
-            {filteredData.length} étudiant(s) enregistré(s)
+            {filteredData.length} étudiant(s) {activeFiltersCount > 0 && `(filtré de ${data.length})`}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
             <Input 
@@ -182,6 +236,21 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
             />
           </div>
+          
+          <Button
+            variant={showFilters ? "default" : "outline"}
+            onClick={() => setShowFilters(!showFilters)}
+            className={`h-12 px-4 rounded-xl font-bold relative ${showFilters ? 'bg-blue-600 text-white' : 'border-blue-200 dark:border-blue-800'}`}
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            Filtres
+            {activeFiltersCount > 0 && (
+              <span className="absolute -top-2 -right-2 w-5 h-5 bg-yellow-500 rounded-full text-[10px] font-black text-blue-900 flex items-center justify-center">
+                {activeFiltersCount}
+              </span>
+            )}
+          </Button>
+          
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
             setIsDialogOpen(open);
             if (!open) { setEditingItem(null); setForm({}); }
@@ -200,111 +269,128 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                   </DialogTitle>
                 </DialogHeader>
               </div>
-                <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
-                  <div className="space-y-4">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Étudiant 1</h3>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Matricule</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.matricule || ""} onChange={e => setForm({...form, matricule: e.target.value})} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Nom</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.nom || ""} onChange={e => setForm({...form, nom: e.target.value})} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Prénoms</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.prenoms || ""} onChange={e => setForm({...form, prenoms: e.target.value})} />
-                      </div>
-                    </div>
+              <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+                <div className="space-y-4">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Informations Générales</h3>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Spécialité</Label>
+                    <Select value={form.speciality || ""} onValueChange={(val) => setForm({...form, speciality: val})}>
+                      <SelectTrigger className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none">
+                        <SelectValue placeholder="Sélectionner une spécialité..." />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl">
+                        {SPECIALITIES.map(spec => (
+                          <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+                </div>
 
-                  {diplomaType === "Licence" && (
-                    <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
-                      <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Étudiant 2 (Optionnel)</h3>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Matricule 2</Label>
-                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.matricule2 || ""} onChange={e => setForm({...form, matricule2: e.target.value})} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Nom 2</Label>
-                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.nom2 || ""} onChange={e => setForm({...form, nom2: e.target.value})} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Prénoms 2</Label>
-                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.prenoms2 || ""} onChange={e => setForm({...form, prenoms2: e.target.value})} />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Soutenance</h3>
+                <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Étudiant 1</h3>
+                  <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Thème</Label>
-                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.theme || ""} onChange={e => setForm({...form, theme: e.target.value})} />
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Matricule</Label>
+                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.matricule || ""} onChange={e => setForm({...form, matricule: e.target.value})} />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Directeur</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.directeur || ""} onChange={e => setForm({...form, directeur: e.target.value})} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Directeur</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_directeur || ""} onChange={e => setForm({...form, grade_directeur: e.target.value})} />
-                      </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Nom</Label>
+                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.nom || ""} onChange={e => setForm({...form, nom: e.target.value})} />
                     </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Date Soutenance</Label>
-                        <Input type="date" className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.date_soutenance || ""} onChange={e => setForm({...form, date_soutenance: e.target.value})} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Heure</Label>
-                        <Input type="time" className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.heure_soutenance || ""} onChange={e => setForm({...form, heure_soutenance: e.target.value})} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Salle</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.salle || ""} onChange={e => setForm({...form, salle: e.target.value})} />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Jury</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Président</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.president || ""} onChange={e => setForm({...form, president: e.target.value})} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Président</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_president || ""} onChange={e => setForm({...form, grade_president: e.target.value})} />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Examinateur</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.examinateur || ""} onChange={e => setForm({...form, examinateur: e.target.value})} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Examinateur</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_examinateur || ""} onChange={e => setForm({...form, grade_examinateur: e.target.value})} />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Rapporteur</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.rapporteur || ""} onChange={e => setForm({...form, rapporteur: e.target.value})} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Rapporteur</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_rapporteur || ""} onChange={e => setForm({...form, grade_rapporteur: e.target.value})} />
-                      </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Prénoms</Label>
+                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.prenoms || ""} onChange={e => setForm({...form, prenoms: e.target.value})} />
                     </div>
                   </div>
                 </div>
+
+                {diplomaType === "Licence" && (
+                  <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Étudiant 2 (Optionnel)</h3>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Matricule 2</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.matricule2 || ""} onChange={e => setForm({...form, matricule2: e.target.value})} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Nom 2</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.nom2 || ""} onChange={e => setForm({...form, nom2: e.target.value})} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Prénoms 2</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.prenoms2 || ""} onChange={e => setForm({...form, prenoms2: e.target.value})} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Soutenance</h3>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Thème</Label>
+                    <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.theme || ""} onChange={e => setForm({...form, theme: e.target.value})} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Directeur</Label>
+                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.directeur || ""} onChange={e => setForm({...form, directeur: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Directeur</Label>
+                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_directeur || ""} onChange={e => setForm({...form, grade_directeur: e.target.value})} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Date Soutenance</Label>
+                      <Input type="date" className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.date_soutenance || ""} onChange={e => setForm({...form, date_soutenance: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Heure</Label>
+                      <Input type="time" className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.heure_soutenance || ""} onChange={e => setForm({...form, heure_soutenance: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Salle</Label>
+                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.salle || ""} onChange={e => setForm({...form, salle: e.target.value})} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Jury</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Président</Label>
+                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.president || ""} onChange={e => setForm({...form, president: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Président</Label>
+                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_president || ""} onChange={e => setForm({...form, grade_president: e.target.value})} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Examinateur</Label>
+                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.examinateur || ""} onChange={e => setForm({...form, examinateur: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Examinateur</Label>
+                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_examinateur || ""} onChange={e => setForm({...form, grade_examinateur: e.target.value})} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Rapporteur</Label>
+                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.rapporteur || ""} onChange={e => setForm({...form, rapporteur: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Rapporteur</Label>
+                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_rapporteur || ""} onChange={e => setForm({...form, grade_rapporteur: e.target.value})} />
+                    </div>
+                  </div>
+                </div>
+              </div>
               <DialogFooter className="p-6 bg-blue-50 dark:bg-blue-900/20">
                 <Button variant="ghost" onClick={() => setIsDialogOpen(false)} className="h-12 px-8 rounded-xl font-bold">Annuler</Button>
                 <Button onClick={handleSave} className="h-12 px-8 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-black uppercase tracking-widest text-xs">
@@ -315,6 +401,80 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
           </Dialog>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <Card className="border-none shadow-lg bg-white dark:bg-[#0f1629] rounded-2xl">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-black text-blue-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-blue-500" />
+                    Filtres Avancés
+                  </h3>
+                  {activeFiltersCount > 0 && (
+                    <Button variant="ghost" size="sm" onClick={clearFilters} className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20">
+                      <X className="w-4 h-4 mr-1" />
+                      Réinitialiser
+                    </Button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Spécialité</Label>
+                    <Select value={selectedSpeciality} onValueChange={(val) => { setSelectedSpeciality(val); setCurrentPage(1); }}>
+                      <SelectTrigger className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none">
+                        <SelectValue placeholder="Toutes les spécialités" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl">
+                        <SelectItem value="all">Toutes les spécialités</SelectItem>
+                        {SPECIALITIES.map(spec => (
+                          <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                        ))}
+                        {uniqueSpecialities.filter(s => !SPECIALITIES.includes(s as string)).map(spec => (
+                          <SelectItem key={spec} value={spec as string}>{spec}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Statut</Label>
+                    <Select value={selectedStatus} onValueChange={(val) => { setSelectedStatus(val); setCurrentPage(1); }}>
+                      <SelectTrigger className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none">
+                        <SelectValue placeholder="Tous les statuts" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl">
+                        <SelectItem value="all">Tous les statuts</SelectItem>
+                        <SelectItem value="planned">Planifié</SelectItem>
+                        <SelectItem value="pending">En attente</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Directeur</Label>
+                    <Select value={selectedDirector} onValueChange={(val) => { setSelectedDirector(val); setCurrentPage(1); }}>
+                      <SelectTrigger className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none">
+                        <SelectValue placeholder="Tous les directeurs" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl max-h-60">
+                        <SelectItem value="all">Tous les directeurs</SelectItem>
+                        {uniqueDirectors.map(dir => (
+                          <SelectItem key={dir} value={dir as string}>{dir}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="grid grid-cols-1 gap-4">
         <AnimatePresence mode="popLayout">
@@ -327,8 +487,17 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
               <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4">
                 <GraduationCap className="w-10 h-10 text-blue-400" />
               </div>
-              <p className="text-blue-900 dark:text-white font-bold uppercase tracking-widest text-sm mb-2">Aucune donnée disponible</p>
-              <p className="text-blue-400 text-sm">Importez des données ou ajoutez manuellement</p>
+              <p className="text-blue-900 dark:text-white font-bold uppercase tracking-widest text-sm mb-2">
+                {activeFiltersCount > 0 ? "Aucun résultat pour ces filtres" : "Aucune donnée disponible"}
+              </p>
+              <p className="text-blue-400 text-sm">
+                {activeFiltersCount > 0 ? "Essayez de modifier vos critères de recherche" : "Importez des données ou ajoutez manuellement"}
+              </p>
+              {activeFiltersCount > 0 && (
+                <Button variant="outline" onClick={clearFilters} className="mt-4 rounded-xl">
+                  Réinitialiser les filtres
+                </Button>
+              )}
             </div>
           ) : (
             paginatedData.map((item, index) => (
@@ -352,15 +521,20 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                             <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${item.date_soutenance ? 'bg-green-100 dark:bg-green-900/50 text-green-600' : 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600'}`}>
                               {item.date_soutenance ? "Planifié" : "En attente"}
                             </span>
+                            {item.speciality && (
+                              <span className="text-[10px] font-black bg-purple-100 dark:bg-purple-900/50 text-purple-600 px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                                {item.speciality}
+                              </span>
+                            )}
                           </div>
-                            <h3 className="text-xl font-black text-blue-900 dark:text-white leading-tight">
-                              {item.nom} <span className="text-blue-400">{item.prenoms}</span>
-                              {item.nom2 && (
-                                <span className="block text-sm mt-1">
-                                  & {item.nom2} <span className="text-blue-400">{item.prenoms2}</span>
-                                </span>
-                              )}
-                            </h3>
+                          <h3 className="text-xl font-black text-blue-900 dark:text-white leading-tight">
+                            {item.nom} <span className="text-blue-400">{item.prenoms}</span>
+                            {item.nom2 && (
+                              <span className="block text-sm mt-1">
+                                & {item.nom2} <span className="text-blue-400">{item.prenoms2}</span>
+                              </span>
+                            )}
+                          </h3>
                           <p className="text-sm text-blue-500 dark:text-blue-400 font-medium italic line-clamp-1">
                             "{item.theme || "Thème non défini"}"
                           </p>
@@ -425,16 +599,28 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
             <ChevronLeft className="w-4 h-4" />
           </Button>
           
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-            <Button
-              key={page}
-              variant={currentPage === page ? "default" : "outline"}
-              onClick={() => setCurrentPage(page)}
-              className={`rounded-xl w-10 h-10 ${currentPage === page ? 'bg-blue-600 text-white' : 'border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30'}`}
-            >
-              {page}
-            </Button>
-          ))}
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            let page;
+            if (totalPages <= 5) {
+              page = i + 1;
+            } else if (currentPage <= 3) {
+              page = i + 1;
+            } else if (currentPage >= totalPages - 2) {
+              page = totalPages - 4 + i;
+            } else {
+              page = currentPage - 2 + i;
+            }
+            return (
+              <Button
+                key={page}
+                variant={currentPage === page ? "default" : "outline"}
+                onClick={() => setCurrentPage(page)}
+                className={`rounded-xl w-10 h-10 ${currentPage === page ? 'bg-blue-600 text-white' : 'border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30'}`}
+              >
+                {page}
+              </Button>
+            );
+          })}
           
           <Button
             variant="outline"
