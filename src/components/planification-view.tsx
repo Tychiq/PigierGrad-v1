@@ -18,7 +18,10 @@ import {
   ChevronRight,
   Sparkles,
   Filter,
-  X
+  X,
+  Users,
+  Info,
+  BadgeCheck
 } from "lucide-react";
 import { 
   Dialog, 
@@ -112,7 +115,6 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
     
     if (data && data.length > 0) {
       setData(data);
-      // Auto-fill session from first record if not set
       if (data[0].session_month) setSessionMonth(data[0].session_month);
       if (data[0].session_year) setSessionYear(data[0].session_year);
     } else if (data) {
@@ -152,10 +154,16 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
 
   const handleSave = async () => {
     try {
+      const finalForm = {
+        ...form,
+        session_month: form.session_month || sessionMonth,
+        session_year: form.session_year || sessionYear
+      };
+
       if (editingItem) {
         const { error } = await supabase
           .from("soutenances")
-          .update({ ...form })
+          .update(finalForm)
           .eq("id", editingItem.id);
         if (error) throw error;
         toast.success("Mis à jour avec succès");
@@ -168,7 +176,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
       } else {
         const { error } = await supabase
           .from("soutenances")
-          .insert({ ...form, diploma_type: diplomaType });
+          .insert({ ...finalForm, diploma_type: diplomaType });
         if (error) throw error;
         toast.success("Ajouté avec succès");
         
@@ -239,249 +247,249 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2 mb-1">
-              <Sparkles className="w-5 h-5 text-yellow-500" />
-              <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">Planning Académique</span>
-            </div>
-            <h1 className="text-4xl font-black tracking-tighter text-blue-900 dark:text-white uppercase">
-              Soutenances <span className={diplomaType === "Licence" ? "text-blue-500" : "text-yellow-500"}>{diplomaType}</span>
-            </h1>
-            {sessionMonth && sessionYear && (
-              <h2 className="text-lg font-bold text-blue-600/80 dark:text-blue-400/80 uppercase tracking-tight">
-                Session de {sessionMonth} {sessionYear}
-              </h2>
-            )}
-            <p className="text-blue-600/70 dark:text-blue-400 font-medium">
-              {filteredData.length} étudiant(s) {activeFiltersCount > 0 && `(filtré de ${data.length})`}
-            </p>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2 mb-1">
+            <Sparkles className="w-5 h-5 text-yellow-500" />
+            <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">Planning Académique</span>
           </div>
+          <h1 className="text-4xl font-black tracking-tighter text-blue-900 dark:text-white uppercase">
+            Soutenances <span className={diplomaType === "Licence" ? "text-blue-500" : "text-yellow-500"}>{diplomaType}</span>
+          </h1>
+          {sessionMonth && sessionYear && (
+            <h2 className="text-lg font-bold text-blue-600/80 dark:text-blue-400/80 uppercase tracking-tight">
+              Session de {sessionMonth} {sessionYear}
+            </h2>
+          )}
+          <p className="text-blue-600/70 dark:text-blue-400 font-medium">
+            {filteredData.length} étudiant(s) {activeFiltersCount > 0 && `(filtré de ${data.length})`}
+          </p>
+        </div>
 
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 p-2 rounded-xl border border-blue-100 dark:border-blue-800">
-              <div className="grid grid-cols-2 gap-2">
-                <Input 
-                  placeholder="Mois (ex: Décembre)" 
-                  value={sessionMonth} 
-                  onChange={(e) => setSessionMonth(e.target.value)}
-                  className="h-9 text-xs rounded-lg border-blue-200"
-                />
-                <Input 
-                  placeholder="Année (ex: 2024)" 
-                  value={sessionYear} 
-                  onChange={(e) => setSessionYear(e.target.value)}
-                  className="h-9 text-xs rounded-lg border-blue-200"
-                />
-              </div>
-              <Button size="sm" onClick={updateSessionForAll} className="h-9 px-3 text-[10px] font-bold uppercase">
-                Appliquer Session
-              </Button>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 p-2 rounded-xl border border-blue-100 dark:border-blue-800">
+            <div className="grid grid-cols-2 gap-2">
+              <Input 
+                placeholder="Mois (ex: Décembre)" 
+                value={sessionMonth} 
+                onChange={(e) => setSessionMonth(e.target.value)}
+                className="h-9 text-xs rounded-lg border-blue-200"
+              />
+              <Input 
+                placeholder="Année (ex: 2024)" 
+                value={sessionYear} 
+                onChange={(e) => setSessionYear(e.target.value)}
+                className="h-9 text-xs rounded-lg border-blue-200"
+              />
             </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
-                <Input 
-                  placeholder="Rechercher..." 
-                  className="pl-10 h-12 w-64 rounded-xl border-none bg-white dark:bg-[#0f1629] shadow-lg focus:ring-2 focus:ring-blue-500"
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                />
-              </div>
-              
-              <Button
-                variant={showFilters ? "default" : "outline"}
-                onClick={() => setShowFilters(!showFilters)}
-                className={`h-12 px-4 rounded-xl font-bold relative ${showFilters ? 'bg-blue-600 text-white' : 'border-blue-200 dark:border-blue-800'}`}
-              >
-                <Filter className="w-4 h-4 mr-2" />
-                Filtres
-                {activeFiltersCount > 0 && (
-                  <span className="absolute -top-2 -right-2 w-5 h-5 bg-yellow-500 rounded-full text-[10px] font-black text-blue-900 flex items-center justify-center">
-                    {activeFiltersCount}
-                  </span>
-                )}
-              </Button>
-              
-              <Dialog open={isDialogOpen} onOpenChange={(open) => {
-                setIsDialogOpen(open);
-                if (!open) { setEditingItem(null); setForm({}); }
-              }}>
-                <DialogTrigger asChild>
-                  <Button className="h-12 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold shadow-lg shadow-blue-600/30">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Nouveau
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl rounded-3xl border-none shadow-2xl overflow-hidden p-0 max-h-[90vh]">
-                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6">
-                    <DialogHeader>
-                      <DialogTitle className="text-white text-2xl font-black uppercase tracking-tight">
-                        {editingItem ? "Modifier la Soutenance" : "Nouvelle Soutenance"}
-                      </DialogTitle>
-                    </DialogHeader>
-                  </div>
-                  <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Informations Générales</h3>
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Spécialité</Label>
-                          <Select value={form.speciality || ""} onValueChange={(val) => setForm({...form, speciality: val})}>
-                            <SelectTrigger className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none">
-                              <SelectValue placeholder="Sélectionner une spécialité..." />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl">
-                              {SPECIALITIES.map(spec => (
-                                <SelectItem key={spec} value={spec}>{spec}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+            <Button size="sm" onClick={updateSessionForAll} className="h-9 px-3 text-[10px] font-bold uppercase">
+              Appliquer Session
+            </Button>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
+              <Input 
+                placeholder="Rechercher..." 
+                className="pl-10 h-12 w-64 rounded-xl border-none bg-white dark:bg-[#0f1629] shadow-lg focus:ring-2 focus:ring-blue-500"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+              />
+            </div>
+            
+            <Button
+              variant={showFilters ? "default" : "outline"}
+              onClick={() => setShowFilters(!showFilters)}
+              className={`h-12 px-4 rounded-xl font-bold relative ${showFilters ? 'bg-blue-600 text-white' : 'border-blue-200 dark:border-blue-800'}`}
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filtres
+              {activeFiltersCount > 0 && (
+                <span className="absolute -top-2 -right-2 w-5 h-5 bg-yellow-500 rounded-full text-[10px] font-black text-blue-900 flex items-center justify-center">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </Button>
+            
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) { setEditingItem(null); setForm({}); }
+            }}>
+              <DialogTrigger asChild>
+                <Button className="h-12 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold shadow-lg shadow-blue-600/30">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nouveau
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl rounded-3xl border-none shadow-2xl overflow-hidden p-0 max-h-[90vh]">
+                <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6">
+                  <DialogHeader>
+                    <DialogTitle className="text-white text-2xl font-black uppercase tracking-tight">
+                      {editingItem ? "Modifier la Soutenance" : "Nouvelle Soutenance"}
+                    </DialogTitle>
+                  </DialogHeader>
+                </div>
+                <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Informations Générales</h3>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Spécialité</Label>
+                        <Select value={form.speciality || ""} onValueChange={(val) => setForm({...form, speciality: val})}>
+                          <SelectTrigger className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none">
+                            <SelectValue placeholder="Sélectionner une spécialité..." />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl">
+                            {SPECIALITIES.map(spec => (
+                              <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <div className="space-y-4">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Session</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Mois</Label>
-                            <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.session_month || sessionMonth} onChange={e => setForm({...form, session_month: e.target.value})} />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Année</Label>
-                            <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.session_year || sessionYear} onChange={e => setForm({...form, session_year: e.target.value})} />
-                          </div>
+                    </div>
+                    <div className="space-y-4">
+                      <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Session</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Mois</Label>
+                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.session_month || sessionMonth} onChange={e => setForm({...form, session_month: e.target.value})} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Année</Label>
+                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.session_year || sessionYear} onChange={e => setForm({...form, session_year: e.target.value})} />
                         </div>
                       </div>
                     </div>
+                  </div>
 
+                  <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Étudiant 1</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Matricule</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.matricule || ""} onChange={e => setForm({...form, matricule: e.target.value})} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Nom</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.nom || ""} onChange={e => setForm({...form, nom: e.target.value})} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Prénoms</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.prenoms || ""} onChange={e => setForm({...form, prenoms: e.target.value})} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Date Naissance</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.date_naissance || ""} onChange={e => setForm({...form, date_naissance: e.target.value})} />
+                      </div>
+                      <div className="col-span-2 space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Lieu Naissance</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.lieu_naissance || ""} onChange={e => setForm({...form, lieu_naissance: e.target.value})} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {diplomaType === "Licence" && (
                     <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
-                      <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Étudiant 1</h3>
+                      <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Étudiant 2 (Optionnel)</h3>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Matricule</Label>
-                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.matricule || ""} onChange={e => setForm({...form, matricule: e.target.value})} />
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Matricule 2</Label>
+                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.matricule2 || ""} onChange={e => setForm({...form, matricule2: e.target.value})} />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Nom</Label>
-                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.nom || ""} onChange={e => setForm({...form, nom: e.target.value})} />
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Nom 2</Label>
+                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.nom2 || ""} onChange={e => setForm({...form, nom2: e.target.value})} />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Prénoms</Label>
-                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.prenoms || ""} onChange={e => setForm({...form, prenoms: e.target.value})} />
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Prénoms 2</Label>
+                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.prenoms2 || ""} onChange={e => setForm({...form, prenoms2: e.target.value})} />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Date Naissance</Label>
-                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.date_naissance || ""} onChange={e => setForm({...form, date_naissance: e.target.value})} />
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Date Naissance 2</Label>
+                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.date_naissance2 || ""} onChange={e => setForm({...form, date_naissance2: e.target.value})} />
                         </div>
                         <div className="col-span-2 space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Lieu Naissance</Label>
-                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.lieu_naissance || ""} onChange={e => setForm({...form, lieu_naissance: e.target.value})} />
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Lieu Naissance 2</Label>
+                          <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.lieu_naissance2 || ""} onChange={e => setForm({...form, lieu_naissance2: e.target.value})} />
                         </div>
                       </div>
                     </div>
+                  )}
 
-                    {diplomaType === "Licence" && (
-                      <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Étudiant 2 (Optionnel)</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Matricule 2</Label>
-                            <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.matricule2 || ""} onChange={e => setForm({...form, matricule2: e.target.value})} />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Nom 2</Label>
-                            <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.nom2 || ""} onChange={e => setForm({...form, nom2: e.target.value})} />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Prénoms 2</Label>
-                            <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.prenoms2 || ""} onChange={e => setForm({...form, prenoms2: e.target.value})} />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Date Naissance 2</Label>
-                            <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.date_naissance2 || ""} onChange={e => setForm({...form, date_naissance2: e.target.value})} />
-                          </div>
-                          <div className="col-span-2 space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Lieu Naissance 2</Label>
-                            <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.lieu_naissance2 || ""} onChange={e => setForm({...form, lieu_naissance2: e.target.value})} />
-                          </div>
-                        </div>
+                  <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Soutenance</h3>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Thème</Label>
+                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.theme || ""} onChange={e => setForm({...form, theme: e.target.value})} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Directeur</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.directeur || ""} onChange={e => setForm({...form, directeur: e.target.value})} />
                       </div>
-                    )}
-
-
-                <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Soutenance</h3>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Thème</Label>
-                    <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.theme || ""} onChange={e => setForm({...form, theme: e.target.value})} />
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Directeur</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_directeur || ""} onChange={e => setForm({...form, grade_directeur: e.target.value})} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Date Soutenance</Label>
+                        <Input type="date" className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.date_soutenance || ""} onChange={e => setForm({...form, date_soutenance: e.target.value})} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Heure</Label>
+                        <Input type="time" className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.heure_soutenance || ""} onChange={e => setForm({...form, heure_soutenance: e.target.value})} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Salle</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.salle || ""} onChange={e => setForm({...form, salle: e.target.value})} />
+                      </div>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Directeur</Label>
-                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.directeur || ""} onChange={e => setForm({...form, directeur: e.target.value})} />
+
+                  <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Jury</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Président</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.president || ""} onChange={e => setForm({...form, president: e.target.value})} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Président</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_president || ""} onChange={e => setForm({...form, grade_president: e.target.value})} />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Directeur</Label>
-                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_directeur || ""} onChange={e => setForm({...form, grade_directeur: e.target.value})} />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Examinateur</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.examinateur || ""} onChange={e => setForm({...form, examinateur: e.target.value})} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Examinateur</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_examinateur || ""} onChange={e => setForm({...form, grade_examinateur: e.target.value})} />
+                      </div>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Date Soutenance</Label>
-                      <Input type="date" className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.date_soutenance || ""} onChange={e => setForm({...form, date_soutenance: e.target.value})} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Heure</Label>
-                      <Input type="time" className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.heure_soutenance || ""} onChange={e => setForm({...form, heure_soutenance: e.target.value})} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Salle</Label>
-                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.salle || ""} onChange={e => setForm({...form, salle: e.target.value})} />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Rapporteur</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.rapporteur || ""} onChange={e => setForm({...form, rapporteur: e.target.value})} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Rapporteur</Label>
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_rapporteur || ""} onChange={e => setForm({...form, grade_rapporteur: e.target.value})} />
+                      </div>
                     </div>
                   </div>
                 </div>
-
-                <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Jury</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Président</Label>
-                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.president || ""} onChange={e => setForm({...form, president: e.target.value})} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Président</Label>
-                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_president || ""} onChange={e => setForm({...form, grade_president: e.target.value})} />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Examinateur</Label>
-                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.examinateur || ""} onChange={e => setForm({...form, examinateur: e.target.value})} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Examinateur</Label>
-                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_examinateur || ""} onChange={e => setForm({...form, grade_examinateur: e.target.value})} />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Rapporteur</Label>
-                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.rapporteur || ""} onChange={e => setForm({...form, rapporteur: e.target.value})} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Rapporteur</Label>
-                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_rapporteur || ""} onChange={e => setForm({...form, grade_rapporteur: e.target.value})} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <DialogFooter className="p-6 bg-blue-50 dark:bg-blue-900/20">
-                <Button variant="ghost" onClick={() => setIsDialogOpen(false)} className="h-12 px-8 rounded-xl font-bold">Annuler</Button>
-                <Button onClick={handleSave} className="h-12 px-8 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-black uppercase tracking-widest text-xs">
-                  {editingItem ? "Enregistrer" : "Créer"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                <DialogFooter className="p-6 bg-blue-50 dark:bg-blue-900/20">
+                  <Button variant="ghost" onClick={() => setIsDialogOpen(false)} className="h-12 px-8 rounded-xl font-bold">Annuler</Button>
+                  <Button onClick={handleSave} className="h-12 px-8 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-black uppercase tracking-widest text-xs">
+                    {editingItem ? "Enregistrer" : "Créer"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </div>
 
@@ -559,7 +567,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
         )}
       </AnimatePresence>
 
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-6">
         <AnimatePresence mode="popLayout">
           {loading ? (
             Array.from({ length: 3 }).map((_, i) => (
@@ -591,72 +599,103 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
               >
-                <Card className="group relative border-none bg-white dark:bg-[#0f1629] rounded-2xl hover:shadow-2xl transition-all duration-500 overflow-hidden cursor-pointer" onClick={() => openEditDialog(item)}>
-                  <div className={`absolute top-0 left-0 w-1.5 h-full ${diplomaType === "Licence" ? "bg-gradient-to-b from-blue-500 to-blue-600" : "bg-gradient-to-b from-yellow-400 to-yellow-500"}`} />
-                  <CardContent className="p-0">
-                    <div className="flex flex-col md:flex-row items-stretch">
-                      <div className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
-                        <div className="lg:col-span-2 space-y-2">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[10px] font-black bg-blue-100 dark:bg-blue-900/50 text-blue-600 px-2 py-0.5 rounded-full uppercase tracking-tighter">
-                              {item.matricule || "SANS MATRICULE"}
-                            </span>
-                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${item.date_soutenance ? 'bg-green-100 dark:bg-green-900/50 text-green-600' : 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600'}`}>
-                              {item.date_soutenance ? "Planifié" : "En attente"}
-                            </span>
-                            {item.speciality && (
-                              <span className="text-[10px] font-black bg-purple-100 dark:bg-purple-900/50 text-purple-600 px-2 py-0.5 rounded-full uppercase tracking-tighter">
-                                {item.speciality}
-                              </span>
-                            )}
-                          </div>
-                          <h3 className="text-xl font-black text-blue-900 dark:text-white leading-tight">
-                            {item.nom} <span className="text-blue-400">{item.prenoms}</span>
-                            {item.nom2 && (
-                              <span className="block text-sm mt-1">
-                                & {item.nom2} <span className="text-blue-400">{item.prenoms2}</span>
-                              </span>
-                            )}
+                <Card className="group relative border-none bg-white dark:bg-[#0f1629] rounded-3xl hover:shadow-2xl transition-all duration-500 overflow-hidden cursor-pointer border border-blue-50 dark:border-blue-900/20" onClick={() => openEditDialog(item)}>
+                  <div className={`absolute top-0 left-0 w-2 h-full ${diplomaType === "Licence" ? "bg-gradient-to-b from-blue-500 to-blue-700" : "bg-gradient-to-b from-yellow-400 to-yellow-600"}`} />
+                  <CardContent className="p-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                      {/* Section Étudiant */}
+                      <div className="lg:col-span-4 space-y-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-black bg-blue-600 text-white px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                            {item.matricule || "SANS MATRICULE"}
+                          </span>
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${item.date_soutenance ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'}`}>
+                            {item.date_soutenance ? "Planifié" : "En attente"}
+                          </span>
+                        </div>
+                        <div className="space-y-1">
+                          <h3 className="text-2xl font-black text-blue-900 dark:text-white leading-tight uppercase">
+                            {item.nom} <span className="text-blue-500">{item.prenoms}</span>
                           </h3>
-                          <p className="text-sm text-blue-500 dark:text-blue-400 font-medium italic line-clamp-1">
+                          <div className="flex items-center gap-2 text-xs text-blue-400 font-bold">
+                            <Calendar className="w-3 h-3" />
+                            <span>Né(e) le {item.date_naissance || "???"} à {item.lieu_naissance || "???"}</span>
+                          </div>
+                        </div>
+                        {item.nom2 && (
+                          <div className="pt-2 border-t border-blue-50 dark:border-blue-900/10">
+                            <h4 className="text-xs font-black text-blue-300 uppercase tracking-widest mb-1">Binôme</h4>
+                            <p className="text-sm font-bold text-blue-800 dark:text-blue-100 uppercase">
+                              {item.nom2} {item.prenoms2} ({item.matricule2})
+                            </p>
+                            <p className="text-[10px] text-blue-400">Né(e) le {item.date_naissance2} à {item.lieu_naissance2}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Section Projet & Directeur */}
+                      <div className="lg:col-span-5 space-y-4 lg:border-l lg:border-r border-blue-50 dark:border-blue-900/20 lg:px-6">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <BadgeCheck className="w-4 h-4 text-blue-500" />
+                            <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Thème du mémoire</span>
+                          </div>
+                          <p className="text-sm font-bold text-blue-900 dark:text-white leading-relaxed italic">
                             "{item.theme || "Thème non défini"}"
                           </p>
                         </div>
-
-                        <div className="space-y-3 border-l border-blue-100 dark:border-blue-900/50 pl-6 hidden lg:block">
-                          <div className="flex items-center gap-3">
-                            <User className="w-4 h-4 text-blue-400" />
-                            <div className="flex flex-col">
-                              <span className="text-[10px] font-black text-blue-300 uppercase leading-none">Directeur</span>
-                              <span className="text-sm font-bold text-blue-900 dark:text-white leading-tight">{item.directeur || "Non défini"}</span>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-black text-blue-300 uppercase">Directeur</span>
+                            <div className="flex items-center gap-2">
+                              <User className="w-3 h-3 text-blue-400" />
+                              <span className="text-xs font-bold text-blue-900 dark:text-white">{item.directeur}</span>
                             </div>
+                            <span className="text-[9px] text-blue-400 uppercase font-black">{item.grade_directeur}</span>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <Calendar className="w-4 h-4 text-blue-400" />
-                            <div className="flex flex-col">
-                              <span className="text-[10px] font-black text-blue-300 uppercase leading-none">Date</span>
-                              <span className="text-sm font-bold text-blue-900 dark:text-white leading-tight">{item.date_soutenance || "Non définie"}</span>
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-black text-blue-300 uppercase">Spécialité</span>
+                            <div className="flex items-center gap-2">
+                              <GraduationCap className="w-3 h-3 text-purple-400" />
+                              <span className="text-xs font-bold text-purple-600">{item.speciality}</span>
                             </div>
                           </div>
                         </div>
+                        <div className="pt-2 flex flex-wrap gap-2">
+                           <span className="text-[9px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 px-2 py-1 rounded-md">P: {item.president || "???"}</span>
+                           <span className="text-[9px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 px-2 py-1 rounded-md">E: {item.examinateur || "???"}</span>
+                           <span className="text-[9px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 px-2 py-1 rounded-md">R: {item.rapporteur || "???"}</span>
+                        </div>
+                      </div>
 
-                        <div className="flex flex-col justify-between items-end">
-                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button size="icon" variant="ghost" className="rounded-full w-10 h-10 hover:bg-blue-50 dark:hover:bg-blue-900/30" onClick={(e) => { e.stopPropagation(); openEditDialog(item); }}>
-                              <Edit2 className="w-4 h-4 text-blue-500" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="rounded-full w-10 h-10 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500" onClick={(e) => { e.stopPropagation(); handleDelete(item.id, `${item.nom} ${item.prenoms}`); }}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                          <div className="flex items-center gap-3 mt-4">
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 rounded-full">
-                              <Clock className="w-3 h-3 text-blue-500" />
-                              <span className="text-xs font-bold text-blue-900 dark:text-white">{item.heure_soutenance || "--:--"}</span>
+                      {/* Section Planning & Actions */}
+                      <div className="lg:col-span-3 flex flex-col justify-between items-end">
+                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button size="icon" variant="ghost" className="rounded-full w-10 h-10 hover:bg-blue-50 dark:hover:bg-blue-900/30" onClick={(e) => { e.stopPropagation(); openEditDialog(item); }}>
+                            <Edit2 className="w-4 h-4 text-blue-500" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="rounded-full w-10 h-10 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500" onClick={(e) => { e.stopPropagation(); handleDelete(item.id, `${item.nom} ${item.prenoms}`); }}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-2 w-full">
+                          <div className="flex items-center justify-end gap-3">
+                            <div className="flex flex-col items-end">
+                              <span className="text-[10px] font-black text-blue-300 uppercase">Date</span>
+                              <span className="text-sm font-black text-blue-900 dark:text-white">{item.date_soutenance || "À définir"}</span>
                             </div>
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 dark:bg-yellow-900/30 rounded-full">
-                              <MapPin className="w-3 h-3 text-yellow-600" />
-                              <span className="text-xs font-bold text-blue-900 dark:text-white uppercase">{item.salle || "???"}</span>
+                            <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl">
+                              <Calendar className="w-5 h-5 text-blue-600" />
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-end gap-3">
+                            <div className="flex flex-col items-end">
+                              <span className="text-[10px] font-black text-blue-300 uppercase">Heure & Salle</span>
+                              <span className="text-sm font-black text-blue-900 dark:text-white">{item.heure_soutenance || "--:--"} | {item.salle || "???"}</span>
+                            </div>
+                            <div className="p-2 bg-yellow-50 dark:bg-yellow-900/30 rounded-xl">
+                              <Clock className="w-5 h-5 text-yellow-600" />
                             </div>
                           </div>
                         </div>
