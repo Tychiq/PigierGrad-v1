@@ -153,8 +153,9 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
       const timestamp = new Date().toISOString().split('T')[0];
       const filename = `PIGIERGRAD_Directeurs_${diplomaType}_${timestamp}.pdf`;
       
-      const pdfBlob = doc.output('blob');
+      const pdfBlob = doc.output("blob");
       await triggerDownload(pdfBlob, filename);
+
       
       toast.success("Le PDF a été téléchargé avec succès !");
     } catch (error) {
