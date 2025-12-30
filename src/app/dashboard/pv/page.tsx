@@ -229,36 +229,20 @@ export default function PVGenerationPage() {
     const fileName = downloadFilename || "PV_Soutenance.docx";
 
     try {
-      const formData = new FormData();
-      formData.append("file", generatedBlob, fileName);
-      formData.append("filename", fileName);
-
-      const response = await fetch("/api/download", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Server error");
-      }
-
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = fileName;
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      
-      setTimeout(() => {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(blobUrl);
-      }, 500);
-
-      toast.success("Téléchargement lancé !");
-      console.log("Download triggered via API");
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64data = reader.result as string;
+        // Use window.parent.postMessage to trigger download in the parent frame
+        window.parent.postMessage({ 
+          type: "OPEN_EXTERNAL_URL", 
+          data: { url: base64data } 
+        }, "*");
+        toast.success("Téléchargement lancé !");
+      };
+      reader.onerror = () => {
+        throw new Error("Failed to read blob");
+      };
+      reader.readAsDataURL(generatedBlob);
     } catch (err) {
       console.error("Download Error:", err);
       toast.error("Erreur lors du téléchargement.");
