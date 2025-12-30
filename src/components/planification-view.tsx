@@ -264,39 +264,116 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
     );
   }, [data, targetBinomeItem, binomeSearch]);
 
-  const handleAddBinome = async (selectedStudent: Soutenance) => {
-    if (!targetBinomeItem) return;
-    
-    try {
-      const { error: updateError } = await supabase
-        .from("soutenances")
-        .update({
-          matricule2: selectedStudent.matricule,
-          nom2: selectedStudent.nom,
-          prenoms2: selectedStudent.prenoms,
-          date_naissance2: selectedStudent.date_naissance,
-          lieu_naissance2: selectedStudent.lieu_naissance
-        })
-        .eq("id", targetBinomeItem.id);
+    const handleAddBinome = async (selectedStudent: Soutenance) => {
+      if (!targetBinomeItem) return;
+      
+      try {
+        const { error: updateError } = await supabase
+          .from("soutenances")
+          .update({
+            matricule2: selectedStudent.matricule,
+            nom2: selectedStudent.nom,
+            prenoms2: selectedStudent.prenoms,
+            date_naissance2: selectedStudent.date_naissance,
+            lieu_naissance2: selectedStudent.lieu_naissance
+          })
+          .eq("id", targetBinomeItem.id);
+  
+        if (updateError) throw updateError;
+  
+        const { error: deleteError } = await supabase
+          .from("soutenances")
+          .delete()
+          .eq("id", selectedStudent.id);
+  
+        if (deleteError) throw deleteError;
+  
+        toast.success(`${selectedStudent.nom} ${selectedStudent.prenoms} a été ajouté en binôme`);
+        setIsBinomeDialogOpen(false);
+        setTargetBinomeItem(null);
+        setBinomeSearch("");
+        fetchData();
+      } catch (err: any) {
+        toast.error(err.message);
+      }
+    };
 
-      if (updateError) throw updateError;
+    const downloadPDF = async () => {
+      try {
+        if (filteredData.length === 0) {
+          toast.error("Aucune donnée à exporter.");
+          return;
+        }
 
-      const { error: deleteError } = await supabase
-        .from("soutenances")
-        .delete()
-        .eq("id", selectedStudent.id);
+        toast.info("Génération du planning PDF...");
+        const doc = new jsPDF({
+          orientation: "landscape",
+          unit: "mm",
+          format: "a4"
+        });
+        
+        doc.setDrawColor(30, 64, 175);
+        doc.setLineWidth(1);
+        doc.line(10, 10, 287, 10);
+        doc.line(10, 35, 287, 35);
 
-      if (deleteError) throw deleteError;
+        doc.setFontSize(22);
+        doc.setTextColor(30, 64, 175);
+        doc.setFont("helvetica", "bold");
+        doc.text("PIGIERGRAD - PLANNING DES SOUTENANCES", 148.5, 22, { align: "center" });
+        
+        doc.setFontSize(14);
+        doc.setTextColor(15, 23, 42);
+        doc.text(`${diplomaType.toUpperCase()} - SESSION DE ${sessionMonth.toUpperCase()} ${sessionYear}`, 148.5, 30, { align: "center" });
 
-      toast.success(`${selectedStudent.nom} ${selectedStudent.prenoms} a été ajouté en binôme`);
-      setIsBinomeDialogOpen(false);
-      setTargetBinomeItem(null);
-      setBinomeSearch("");
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message);
-    }
-  };
+        autoTable(doc, {
+          startY: 45,
+          head: [['DATE & HEURE', 'SALLE', 'ÉTUDIANT(S)', 'THÈME', 'JURY (P / E / R)']],
+          body: filteredData.map(item => [
+            `${formatDate(item.date_soutenance)} à ${formatTime(item.heure_soutenance)}`,
+            item.salle || "---",
+            `${item.nom} ${item.prenoms}${item.nom2 ? '\n' + item.nom2 + ' ' + item.prenoms2 : ''}`,
+            item.theme || "---",
+            `${item.president || '?'}\n${item.examinateur || '?'}\n${item.rapporteur || '?'}`
+          ]),
+          theme: 'grid',
+          headStyles: { 
+            fillColor: [30, 64, 175],
+            textColor: [255, 255, 255],
+            fontSize: 9,
+            fontStyle: 'bold',
+            halign: 'center'
+          },
+          bodyStyles: {
+            fontSize: 8,
+            valign: 'middle'
+          },
+          columnStyles: {
+            0: { cellWidth: 35, halign: 'center' },
+            1: { cellWidth: 20, halign: 'center' },
+            2: { cellWidth: 45 },
+            3: { cellWidth: 'auto' },
+            4: { cellWidth: 45 }
+          },
+          margin: { top: 40, left: 10, right: 10 },
+          didDrawPage: (data) => {
+            doc.setFontSize(8);
+            doc.setTextColor(148, 163, 184);
+            doc.text(`Généré par PIGIERGRAD le ${new Date().toLocaleDateString()}`, 10, 205);
+            doc.text(`Page ${data.pageNumber}`, 287, 205, { align: "right" });
+          }
+        });
+        
+        const filename = `Planning_${diplomaType}_${sessionMonth}_${sessionYear}.pdf`;
+        const pdfBlob = doc.output('blob');
+        await triggerDownload(pdfBlob, filename);
+        
+        toast.success("Planning exporté avec succès !");
+      } catch (error) {
+        console.error("PDF Export Error:", error);
+        toast.error("Erreur lors de l'export PDF.");
+      }
+    };
 
   return (
     <div className="space-y-8">
