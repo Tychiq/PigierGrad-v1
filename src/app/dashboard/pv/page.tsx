@@ -725,6 +725,53 @@ export default function PVGenerationPage() {
           </Card>
         </div>
       </div>
+
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-md rounded-3xl border-none shadow-2xl bg-white dark:bg-[#0f1629]">
+          <DialogHeader className="flex flex-col items-center justify-center pt-4">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+            </div>
+            <DialogTitle className="text-2xl font-black text-center text-blue-900 dark:text-white uppercase tracking-tight">
+              Document Prêt !
+            </DialogTitle>
+            <DialogDescription className="text-center text-blue-600/70 dark:text-blue-400 font-medium">
+              Le procès-verbal pour <span className="font-bold text-blue-900 dark:text-white">{selectedStudent?.currentNom} {selectedStudent?.currentPrenoms}</span> a été généré avec succès.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-center p-6">
+            <div className="w-full p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center gap-4 border border-blue-100 dark:border-blue-800">
+              <div className="p-3 bg-white dark:bg-blue-900/50 rounded-xl shadow-sm">
+                <FileDown className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <p className="text-sm font-bold text-blue-900 dark:text-white truncate">
+                  {downloadFilename}
+                </p>
+                <p className="text-xs text-blue-400 uppercase tracking-widest font-bold">
+                  Format DOCX
+                </p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-3 pb-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowSuccessDialog(false)}
+              className="flex-1 h-12 rounded-xl border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 font-bold hover:bg-blue-50 dark:hover:bg-blue-900/20"
+            >
+              Fermer
+            </Button>
+            <Button
+              onClick={handleDownload}
+              className="flex-1 h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-blue-600/30"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Télécharger
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
