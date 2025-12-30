@@ -69,46 +69,71 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
     fetchDirectors();
   }, [diplomaType]);
 
-  const downloadPDF = () => {
-    const doc = new jsPDF();
-    
-    doc.setFontSize(20);
-    doc.setFont("helvetica", "bold");
-    doc.text("UNIVERSITÉ PIGIER", 105, 20, { align: "center" });
-    
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Liste des Directeurs de Mémoire - ${diplomaType}`, 105, 30, { align: "center" });
-    
-    doc.setFontSize(10);
-    doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, 105, 38, { align: "center" });
-    
-    autoTable(doc, {
-      startY: 50,
-      head: [['N°', 'Nom du Directeur', 'Nombre d\'encadrements']],
-      body: filteredDirectors.map((d, i) => [i + 1, d.name, d.count]),
-      theme: 'grid',
-      headStyles: { 
-        fillColor: [30, 64, 175],
-        textColor: [255, 255, 255],
-        fontStyle: 'bold',
-        halign: 'center'
-      },
-      bodyStyles: {
-        halign: 'center'
-      },
-      alternateRowStyles: {
-        fillColor: [240, 245, 255]
-      },
-      columnStyles: {
-        0: { cellWidth: 20 },
-        1: { cellWidth: 100, halign: 'left' },
-        2: { cellWidth: 50 }
-      }
-    });
-    
-    doc.save(`Directeurs_${diplomaType}_${new Date().toISOString().split('T')[0]}.pdf`);
-  };
+    const downloadPDF = () => {
+      const doc = new jsPDF();
+      
+      // Add a header background or border
+      doc.setDrawColor(30, 64, 175); // Blue-800
+      doc.setLineWidth(1);
+      doc.line(10, 10, 200, 10);
+      doc.line(10, 45, 200, 45);
+
+      doc.setFontSize(26);
+      doc.setTextColor(30, 64, 175);
+      doc.setFont("helvetica", "bold");
+      doc.text("PIGIERGRAD", 105, 25, { align: "center" });
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.setFont("helvetica", "italic");
+      doc.text("Plateforme Officielle de Gestion des Soutenances", 105, 32, { align: "center" });
+
+      doc.setFontSize(16);
+      doc.setTextColor(15, 23, 42);
+      doc.setFont("helvetica", "bold");
+      doc.text(`LISTE DES DIRECTEURS - ${diplomaType.toUpperCase()}`, 105, 55, { align: "center" });
+      
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Document généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`, 105, 62, { align: "center" });
+      
+      autoTable(doc, {
+        startY: 70,
+        head: [['N°', 'NOM DU DIRECTEUR', 'NOMBRE D\'ENCADREMENTS']],
+        body: filteredDirectors.map((d, i) => [i + 1, d.name.toUpperCase(), d.count]),
+        theme: 'striped',
+        headStyles: { 
+          fillColor: [30, 64, 175],
+          textColor: [255, 255, 255],
+          fontSize: 10,
+          fontStyle: 'bold',
+          halign: 'center',
+          cellPadding: 4
+        },
+        bodyStyles: {
+          fontSize: 9,
+          halign: 'center',
+          cellPadding: 3
+        },
+        columnStyles: {
+          0: { cellWidth: 20 },
+          1: { cellWidth: 120, halign: 'left', fontStyle: 'bold' },
+          2: { cellWidth: 40 }
+        },
+        margin: { top: 70 },
+        didDrawPage: (data) => {
+          // Footer
+          doc.setFontSize(8);
+          doc.setTextColor(148, 163, 184);
+          doc.text("PIGIERGRAD - Tous droits réservés", 105, 285, { align: "center" });
+          doc.text(`Page ${data.pageNumber}`, 190, 285, { align: "right" });
+        }
+      });
+      
+      doc.save(`PIGIERGRAD_Directeurs_${diplomaType}_${new Date().toISOString().split('T')[0]}.pdf`);
+    };
+
 
   const filteredDirectors = directors.filter(d => 
     d.name.toLowerCase().includes(search.toLowerCase())
