@@ -137,23 +137,176 @@ export default function AuthPage() {
         </div>
 
         <div className="bg-white dark:bg-[#0f1629] rounded-3xl shadow-2xl shadow-blue-900/10 p-8">
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-1 h-12">
-              <TabsTrigger value="login" className="rounded-lg h-full font-bold text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-[#0a0f1c] data-[state=active]:shadow-sm data-[state=active]:text-blue-600 transition-all flex items-center justify-center pt-0 pb-1">
-                Connexion
-              </TabsTrigger>
-              <TabsTrigger value="signup" className="rounded-lg h-full font-bold text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-[#0a0f1c] data-[state=active]:shadow-sm data-[state=active]:text-blue-600 transition-all flex items-center justify-center pt-0 pb-1">
-                Inscription
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="login">
+          <AnimatePresence mode="wait">
+            {!isResetting ? (
               <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3 }}
+                key="auth"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
               >
-                <form onSubmit={handleSignIn} className="space-y-5">
+                <Tabs defaultValue="login" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-8 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-1 h-12">
+                    <TabsTrigger value="login" className="rounded-lg h-full font-bold text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-[#0a0f1c] data-[state=active]:shadow-sm data-[state=active]:text-blue-600 transition-all flex items-center justify-center pt-0 pb-1">
+                      Connexion
+                    </TabsTrigger>
+                    <TabsTrigger value="signup" className="rounded-lg h-full font-bold text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-[#0a0f1c] data-[state=active]:shadow-sm data-[state=active]:text-blue-600 transition-all flex items-center justify-center pt-0 pb-1">
+                      Inscription
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="login">
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <form onSubmit={handleSignIn} className="space-y-5">
+                        <div className="space-y-2">
+                          <Label className="text-xs font-black uppercase tracking-widest text-blue-400">Email</Label>
+                          <div className="relative">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
+                            <Input
+                              type="email"
+                              placeholder="admin@pigier.com"
+                              className="pl-12 h-14 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none focus:ring-2 focus:ring-blue-500 font-medium"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs font-black uppercase tracking-widest text-blue-400">Mot de passe</Label>
+                            <Button 
+                              type="button"
+                              variant="link" 
+                              className="p-0 h-auto text-xs text-blue-500 font-semibold"
+                              onClick={() => setIsResetting(true)}
+                            >
+                              Oublié ?
+                            </Button>
+                          </div>
+                          <div className="relative">
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
+                            <Input
+                              type="password"
+                              className="pl-12 h-14 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none focus:ring-2 focus:ring-blue-500 font-medium"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              required
+                            />
+                          </div>
+                        </div>
+                        <Button
+                          type="submit"
+                          className="w-full h-14 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-black uppercase tracking-widest text-sm shadow-lg shadow-blue-600/30 transition-all hover:shadow-xl hover:shadow-blue-600/40"
+                          disabled={loading}
+                        >
+                          {loading ? "Connexion..." : "Se connecter"}
+                        </Button>
+                      </form>
+
+                      <div className="relative py-6">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t border-blue-100 dark:border-blue-900" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-white dark:bg-[#0f1629] px-4 text-blue-400 font-bold tracking-widest">Ou continuer avec</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1">
+                        <Button
+                          variant="outline"
+                          className="h-14 rounded-xl border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 font-bold"
+                          onClick={() => handleOAuthSignIn('google')}
+                        >
+                          <Chrome className="w-5 h-5 mr-2 text-blue-500" />
+                          Google
+                        </Button>
+                      </div>
+                    </motion.div>
+                  </TabsContent>
+
+                  <TabsContent value="signup">
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <form onSubmit={handleSignUp} className="space-y-5">
+                        <div className="space-y-2">
+                          <Label className="text-xs font-black uppercase tracking-widest text-blue-400">Nom complet</Label>
+                          <div className="relative">
+                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
+                            <Input
+                              placeholder="Jean Dupont"
+                              className="pl-12 h-14 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none focus:ring-2 focus:ring-blue-500 font-medium"
+                              value={fullName}
+                              onChange={(e) => setFullName(e.target.value)}
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-black uppercase tracking-widest text-blue-400">Email</Label>
+                          <div className="relative">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
+                            <Input
+                              type="email"
+                              placeholder="admin@pigier.com"
+                              className="pl-12 h-14 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none focus:ring-2 focus:ring-blue-500 font-medium"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-black uppercase tracking-widest text-blue-400">Mot de passe</Label>
+                          <div className="relative">
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
+                            <Input
+                              type="password"
+                              className="pl-12 h-14 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none focus:ring-2 focus:ring-blue-500 font-medium"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              required
+                            />
+                          </div>
+                        </div>
+                        <Button
+                          type="submit"
+                          className="w-full h-14 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-black uppercase tracking-widest text-sm shadow-lg shadow-blue-600/30 transition-all hover:shadow-xl hover:shadow-blue-600/40"
+                          disabled={loading}
+                        >
+                          {loading ? "Création..." : "Créer un compte"}
+                        </Button>
+                      </form>
+                    </motion.div>
+                  </TabsContent>
+                </Tabs>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="reset"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                <div className="text-center space-y-2 mb-4">
+                  <h2 className="text-2xl font-black text-blue-900 dark:text-white uppercase tracking-tight">Réinitialisation</h2>
+                  <p className="text-sm text-blue-600/70 dark:text-blue-400 font-medium">
+                    Saisissez votre e-mail pour recevoir un lien
+                  </p>
+                </div>
+
+                <form onSubmit={handleResetPassword} className="space-y-5">
                   <div className="space-y-2">
                     <Label className="text-xs font-black uppercase tracking-widest text-blue-400">Email</Label>
                     <div className="relative">
@@ -168,119 +321,29 @@ export default function AuthPage() {
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs font-black uppercase tracking-widest text-blue-400">Mot de passe</Label>
-                      <Button 
-                        type="button"
-                        variant="link" 
-                        className="p-0 h-auto text-xs text-blue-500 font-semibold"
-                        onClick={() => setIsResetting(true)}
-                      >
-                        Oublié ?
-                      </Button>
-                    </div>
-                    <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
-                      <Input
-                        type="password"
-                        className="pl-12 h-14 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none focus:ring-2 focus:ring-blue-500 font-medium"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                    </div>
+                  
+                  <div className="space-y-3">
+                    <Button
+                      type="submit"
+                      className="w-full h-14 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-black uppercase tracking-widest text-sm shadow-lg shadow-blue-600/30 transition-all hover:shadow-xl hover:shadow-blue-600/40"
+                      disabled={loading}
+                    >
+                      {loading ? "Envoi..." : "Envoyer le lien"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full h-12 rounded-xl text-blue-500 font-bold hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                      onClick={() => setIsResetting(false)}
+                    >
+                      Retour à la connexion
+                    </Button>
                   </div>
-                  <Button
-                    type="submit"
-                    className="w-full h-14 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-black uppercase tracking-widest text-sm shadow-lg shadow-blue-600/30 transition-all hover:shadow-xl hover:shadow-blue-600/40"
-                    disabled={loading}
-                  >
-                    {loading ? "Connexion..." : "Se connecter"}
-                  </Button>
-                </form>
-
-                <div className="relative py-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-blue-100 dark:border-blue-900" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white dark:bg-[#0f1629] px-4 text-blue-400 font-bold tracking-widest">Ou continuer avec</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1">
-                  <Button
-                    variant="outline"
-                    className="h-14 rounded-xl border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 font-bold"
-                    onClick={() => handleOAuthSignIn('google')}
-                  >
-                    <Chrome className="w-5 h-5 mr-2 text-blue-500" />
-                    Google
-                  </Button>
-                </div>
-              </motion.div>
-            </TabsContent>
-
-            <TabsContent value="signup">
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <form onSubmit={handleSignUp} className="space-y-5">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-black uppercase tracking-widest text-blue-400">Nom complet</Label>
-                    <div className="relative">
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
-                      <Input
-                        placeholder="Jean Dupont"
-                        className="pl-12 h-14 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none focus:ring-2 focus:ring-blue-500 font-medium"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-black uppercase tracking-widest text-blue-400">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
-                      <Input
-                        type="email"
-                        placeholder="admin@pigier.com"
-                        className="pl-12 h-14 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none focus:ring-2 focus:ring-blue-500 font-medium"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-black uppercase tracking-widest text-blue-400">Mot de passe</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
-                      <Input
-                        type="password"
-                        className="pl-12 h-14 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none focus:ring-2 focus:ring-blue-500 font-medium"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full h-14 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-black uppercase tracking-widest text-sm shadow-lg shadow-blue-600/30 transition-all hover:shadow-xl hover:shadow-blue-600/40"
-                    disabled={loading}
-                  >
-                    {loading ? "Création..." : "Créer un compte"}
-                  </Button>
                 </form>
               </motion.div>
-            </TabsContent>
-          </Tabs>
-          </div>
+            )}
+          </AnimatePresence>
+        </div>
         </motion.div>
         <FooterSignature />
       </div>
