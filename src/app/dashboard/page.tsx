@@ -182,7 +182,7 @@ export default function DashboardPage() {
         {[
           { title: "Étudiants", value: stats.totalStudents, icon: Users, description: "Total inscrits", color: "blue", href: "/dashboard/licence" },
           { title: "Soutenances", value: stats.totalSoutenances, icon: GraduationCap, description: "Total dossiers", color: "yellow", href: "/dashboard/licence" },
-          { title: "Directeurs", value: stats.totalDirectors, icon: UserCheck, description: "Intervenants", color: "blue", href: "/dashboard/directeurs-licence" },
+          { title: "Directeurs", value: stats.totalDirectors, icon: UserCheck, description: "Total encadrants", color: "blue", href: "/dashboard/directeurs-licence" },
           { title: "Complétion", value: `${completionRate}%`, icon: TrendingUp, description: "Taux de planification", color: "green", href: "/dashboard/licence" },
         ].map((stat, i) => (
           <motion.div key={i} variants={item}>
