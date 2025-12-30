@@ -9,6 +9,9 @@ import { Toaster } from "@/components/ui/sonner";
 export const metadata: Metadata = {
   title: "PigierGrad - Gestion des Soutenances",
   description: "Plateforme de gestion des soutenances pour Pigier",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
