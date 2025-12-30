@@ -80,17 +80,17 @@ interface Notification {
       return () => clearTimeout(delayDebounceFn);
     }, [globalSearch]);
 
-    const handleGlobalSearch = async () => {
-      setIsSearching(true);
-      const { data, error } = await supabase
-        .from("soutenances")
-        .select("id, nom, prenoms, diploma_type, speciality")
-        .or(`nom.ilike.%${globalSearch}%,prenoms.ilike.%${globalSearch}%,matricule.ilike.%${globalSearch}%`)
-        .limit(5);
-      
-      if (data) setSearchResults(data);
-      setIsSearching(false);
-    };
+      const handleGlobalSearch = async () => {
+        setIsSearching(true);
+        const { data, error } = await supabase
+          .from("soutenances")
+          .select("id, nom, prenoms, diploma_type, speciality, theme")
+          .or(`nom.ilike.%${globalSearch}%,prenoms.ilike.%${globalSearch}%,matricule.ilike.%${globalSearch}%,theme.ilike.%${globalSearch}%`)
+          .limit(5);
+        
+        if (data) setSearchResults(data);
+        setIsSearching(false);
+      };
 
   useEffect(() => {
     const checkUser = async () => {
