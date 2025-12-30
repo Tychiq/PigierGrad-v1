@@ -33,6 +33,7 @@ const sidebarItems = [
 export function DashboardSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { profile } = useProfile();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
