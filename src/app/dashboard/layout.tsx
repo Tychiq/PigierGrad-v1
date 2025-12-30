@@ -34,6 +34,8 @@ import {
   ChevronRight
 } from "lucide-react";
 
+import { FooterSignature } from "@/components/footer-signature";
+
 const sidebarItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Insertion", href: "/dashboard/insertion", icon: FileUp },
