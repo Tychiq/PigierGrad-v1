@@ -43,6 +43,7 @@ import {
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDate, formatTime } from "@/lib/utils";
+import { LICENCE_SPECIALITIES, MASTER_SPECIALITIES } from "@/lib/constants";
 
 interface Soutenance {
   id: string;
