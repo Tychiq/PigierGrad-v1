@@ -78,7 +78,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 via-white to-yellow-50/30 dark:from-[#0a0f1c] dark:via-[#0f1629] dark:to-[#0a0f1c] font-sans">
+    <div className="relative min-h-screen flex items-center justify-center overflow-y-auto py-12 md:py-20 bg-gradient-to-br from-blue-50 via-white to-yellow-50/30 dark:from-[#0a0f1c] dark:via-[#0f1629] dark:to-[#0a0f1c] font-sans">
       <div className="absolute inset-0 z-0 overflow-hidden">
         <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-500/10 rounded-full blur-[150px] animate-pulse" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-yellow-500/10 rounded-full blur-[150px] animate-pulse" style={{ animationDelay: '1s' }} />
