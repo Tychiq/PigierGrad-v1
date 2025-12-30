@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/table";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { saveAs } from "file-saver";
 import { motion } from "framer-motion";
 import { formatDate } from "@/lib/utils";
 import { ResetEverythingButton } from "./reset-everything-button";
