@@ -615,10 +615,11 @@ export default function PVGenerationPage() {
                         { label: "Date de naissance", value: selectedStudent.date_naissance },
                         { label: "Lieu de naissance", value: selectedStudent.lieu_naissance },
                         { label: "Thème", value: selectedStudent.theme },
-                        { label: "Directeur", value: `${selectedStudent.directeur} (${selectedStudent.grade_directeur})` },
-                        { label: "Date de soutenance", value: selectedStudent.date_soutenance },
-                        { label: "Heure", value: selectedStudent.heure_soutenance },
-                        { label: "Salle", value: selectedStudent.salle },
+                          { label: "Directeur", value: `${selectedStudent.directeur} (${selectedStudent.grade_directeur})` },
+                          { label: "Date de soutenance", value: formatDate(selectedStudent.date_soutenance) },
+                          { label: "Heure", value: formatTime(selectedStudent.heure_soutenance) },
+                          { label: "Salle", value: selectedStudent.salle },
+
                       ].map((item, i) => (
                         <div key={i} className="flex justify-between items-start gap-4">
                           <span className="text-xs text-blue-200 uppercase tracking-wider shrink-0">{item.label}</span>
