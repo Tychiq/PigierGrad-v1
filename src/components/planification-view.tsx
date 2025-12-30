@@ -45,7 +45,6 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDate, formatTime } from "@/lib/utils";
 import { LICENCE_SPECIALITIES, MASTER_SPECIALITIES } from "@/lib/constants";
-import { ResetEverythingButton } from "./reset-everything-button";
 
 interface Soutenance {
   id: string;
@@ -291,6 +290,7 @@ const ITEMS_PER_PAGE = 8;
             </Button>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
+            <ResetEverythingButton />
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
               <Input 
