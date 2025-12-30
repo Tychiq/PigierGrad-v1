@@ -18,41 +18,70 @@ import { Trash2, AlertTriangle, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-export function ResetEverythingButton() {
+interface ResetEverythingButtonProps {
+  diplomaType: string;
+  target: "planning" | "directors";
+}
+
+export function ResetEverythingButton({ diplomaType, target }: ResetEverythingButtonProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleReset = async () => {
     setLoading(true);
     try {
-      // Delete all soutenances
-      const { error: soutenancesError } = await supabase
-        .from("soutenances")
-        .delete()
-        .neq("id", "00000000-0000-0000-0000-000000000000"); // Standard way to delete all if RLS allows or if using service role, but here we just want to clear the table. 
-        // Note: .delete().match({}) or .delete().gt('id', 0) might also work depending on ID type.
-        // Actually, in many cases .delete().neq('id', 'uuid-that-does-not-exist') is used to delete all.
-      
-      if (soutenancesError) throw soutenancesError;
+      if (target === "planning") {
+        // Delete all soutenances for this diploma type
+        const { error: soutenancesError } = await supabase
+          .from("soutenances")
+          .delete()
+          .eq("diploma_type", diplomaType);
+        
+        if (soutenancesError) throw soutenancesError;
 
-      // Delete all notifications
-      const { error: notificationsError } = await supabase
-        .from("notifications")
-        .delete()
-        .neq("id", "00000000-0000-0000-0000-000000000000");
-      
-      if (notificationsError) throw notificationsError;
+        // Also delete related notifications for this diploma type if possible, 
+        // but currently notifications don't have diploma_type. 
+        // We'll just delete notifications that mention the diploma type in the message as a best effort.
+        const { error: notificationsError } = await supabase
+          .from("notifications")
+          .delete()
+          .ilike("message", `%${diplomaType}%`);
+        
+        if (notificationsError) throw notificationsError;
 
-      toast.success("Toutes les données ont été supprimées avec succès.");
+        toast.success(`Toutes les données de planification ${diplomaType} ont été supprimées.`);
+      } else {
+        // Clear only director fields for this diploma type
+        const { error: directorsError } = await supabase
+          .from("soutenances")
+          .update({ 
+            directeur: "", 
+            grade_directeur: "" 
+          })
+          .eq("diploma_type", diplomaType);
+        
+        if (directorsError) throw directorsError;
+
+        toast.success(`Tous les directeurs assignés en ${diplomaType} ont été retirés.`);
+      }
+      
       router.refresh();
-      window.location.reload(); // Force reload to clear all states
+      window.location.reload();
     } catch (error: any) {
       console.error("Error resetting data:", error);
-      toast.error("Erreur lors de la suppression des données: " + error.message);
+      toast.error("Erreur lors de l'opération: " + error.message);
     } finally {
       setLoading(false);
     }
   };
+
+  const title = target === "planning" 
+    ? `RÉINITIALISER LE PLANNING ${diplomaType.toUpperCase()}`
+    : `RÉINITIALISER LES DIRECTEURS ${diplomaType.toUpperCase()}`;
+
+  const description = target === "planning"
+    ? `Cette action supprimera définitivement TOUS les étudiants et planifications pour le diplôme ${diplomaType}.`
+    : `Cette action retirera TOUS les directeurs assignés aux soutenances de type ${diplomaType}. Les étudiants et thèmes seront conservés.`;
 
   return (
     <AlertDialog>
@@ -62,7 +91,7 @@ export function ResetEverythingButton() {
           className="h-12 px-6 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg shadow-red-600/30 transition-all hover:shadow-xl hover:shadow-red-600/40"
         >
           <AlertTriangle className="w-4 h-4 mr-2" />
-          TOUT RÉINITIALISER
+          RÉINITIALISER
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="rounded-2xl border-none shadow-2xl">
@@ -72,7 +101,8 @@ export function ResetEverythingButton() {
             ATTENTION : ACTION IRRÉVERSIBLE
           </AlertDialogTitle>
           <AlertDialogDescription className="text-blue-900/70 dark:text-blue-400 font-medium">
-            Cette action supprimera <strong>définitivement</strong> tous les étudiants, toutes les planifications et toutes les notifications de la base de données. 
+            {description}
+            <br /><br />
             Êtes-vous absolument sûr de vouloir continuer ?
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -88,7 +118,7 @@ export function ResetEverythingButton() {
             ) : (
               <Trash2 className="w-4 h-4 mr-2" />
             )}
-            OUI, TOUT SUPPRIMER
+            OUI, CONFIRMER
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
