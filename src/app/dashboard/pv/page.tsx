@@ -758,17 +758,19 @@ export default function PVGenerationPage() {
               </div>
             </div>
           </div>
-          <DialogFooter className="flex-col sm:flex-row gap-3 pb-4">
+          <DialogFooter className="flex flex-col sm:flex-row gap-3 pb-6 px-6">
             <Button
+              type="button"
               variant="outline"
               onClick={() => setShowSuccessDialog(false)}
-              className="flex-1 h-12 rounded-xl border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 font-bold hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              className="flex-1 h-12 rounded-xl border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 font-bold hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer"
             >
               Fermer
             </Button>
             <Button
+              type="button"
               onClick={handleDownload}
-              className="flex-1 h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-blue-600/30"
+              className="flex-1 h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-blue-600/30 cursor-pointer transition-transform active:scale-95"
             >
               <Download className="w-4 h-4 mr-2" />
               Télécharger
