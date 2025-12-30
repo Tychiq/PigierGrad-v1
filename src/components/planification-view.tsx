@@ -99,6 +99,8 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedDirector, setSelectedDirector] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [sessionMonth, setSessionMonth] = useState("");
+  const [sessionYear, setSessionYear] = useState("");
 
   const fetchData = async () => {
     setLoading(true);
@@ -108,8 +110,30 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
       .eq("diploma_type", diplomaType)
       .order("created_at", { ascending: false });
     
-    if (data) setData(data);
+    if (data && data.length > 0) {
+      setData(data);
+      // Auto-fill session from first record if not set
+      if (data[0].session_month) setSessionMonth(data[0].session_month);
+      if (data[0].session_year) setSessionYear(data[0].session_year);
+    } else if (data) {
+      setData(data);
+    }
     setLoading(false);
+  };
+
+  const updateSessionForAll = async () => {
+    try {
+      const { error } = await supabase
+        .from("soutenances")
+        .update({ session_month: sessionMonth, session_year: sessionYear })
+        .eq("diploma_type", diplomaType);
+      
+      if (error) throw error;
+      toast.success("Session mise à jour pour tous les étudiants");
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
   };
 
   useEffect(() => {
