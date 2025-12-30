@@ -852,9 +852,10 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                             <Button size="icon" variant="ghost" className="rounded-full w-10 h-10 hover:bg-blue-50 dark:hover:bg-blue-900/30" onClick={(e) => { e.stopPropagation(); openEditDialog(item); }}>
                               <Edit2 className="w-4 h-4 text-blue-500" />
                             </Button>
-                          <Button size="icon" variant="ghost" className="rounded-full w-10 h-10 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500" onClick={(e) => { e.stopPropagation(); handleDelete(item.id, `${item.nom} ${item.prenoms}`); }}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                            <Button size="icon" variant="ghost" className="rounded-full w-10 h-10 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500" onClick={(e) => { e.stopPropagation(); setItemToDelete({ id: item.id, name: `${item.nom} ${item.prenoms}` }); }}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+
                         </div>
                         
                         <div className="space-y-2 w-full">
