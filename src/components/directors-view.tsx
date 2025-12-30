@@ -26,6 +26,7 @@ import {
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { motion } from "framer-motion";
+import { formatDate } from "@/lib/utils";
 
 interface DirectorStats {
   name: string;
