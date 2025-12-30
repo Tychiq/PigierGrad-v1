@@ -12,6 +12,7 @@ import {
   MapPin, 
   Clock, 
   User, 
+  UserPlus,
   Edit2, 
   Trash2, 
   GraduationCap,
