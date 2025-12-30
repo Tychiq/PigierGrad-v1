@@ -709,10 +709,11 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                             </div>
                           </div>
                           <div className="flex items-center justify-end gap-3">
-                            <div className="flex flex-col items-end">
-                              <span className="text-[10px] font-black text-blue-300 uppercase">Heure & Salle</span>
-                              <span className="text-sm font-black text-blue-900 dark:text-white">{item.heure_soutenance || "--:--"} | {item.salle || "???"}</span>
-                            </div>
+                              <div className="flex flex-col items-end">
+                                <span className="text-[10px] font-black text-blue-300 uppercase">Heure & Salle</span>
+                                <span className="text-sm font-black text-blue-900 dark:text-white">{formatTime(item.heure_soutenance)} | {item.salle || "???"}</span>
+                              </div>
+
                             <div className="p-2 bg-yellow-50 dark:bg-yellow-900/30 rounded-xl">
                               <Clock className="w-5 h-5 text-yellow-600" />
                             </div>
