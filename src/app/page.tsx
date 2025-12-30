@@ -78,9 +78,10 @@ export default function AuthPage() {
     if (error) toast.error(error.message);
   };
 
-  return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-y-auto py-12 md:py-20 bg-gradient-to-br from-blue-50 via-white to-yellow-50/30 dark:from-[#0a0f1c] dark:via-[#0f1629] dark:to-[#0a0f1c] font-sans">
-      <div className="absolute inset-0 z-0 overflow-hidden">
+    return (
+      <div className="relative min-h-screen flex flex-col items-center justify-start overflow-y-auto pt-16 pb-10 bg-gradient-to-br from-blue-50 via-white to-yellow-50/30 dark:from-[#0a0f1c] dark:via-[#0f1629] dark:to-[#0a0f1c] font-sans">
+        <div className="absolute inset-0 z-0 overflow-hidden">
+
         <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-500/10 rounded-full blur-[150px] animate-pulse" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-yellow-500/10 rounded-full blur-[150px] animate-pulse" style={{ animationDelay: '1s' }} />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-[0.03] pointer-events-none">
