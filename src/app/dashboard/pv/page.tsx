@@ -13,7 +13,8 @@ import {
   Search,
   Users,
   GraduationCap,
-  Sparkles
+  Sparkles,
+  FileDown
 } from "lucide-react";
 import { 
   Select, 
@@ -22,6 +23,14 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDate, formatTime } from "@/lib/utils";
