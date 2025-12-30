@@ -218,6 +218,21 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
     currentPage * ITEMS_PER_PAGE
   );
 
+  const activeFiltersCount = [selectedSpeciality, selectedStatus, selectedDirector].filter(f => f !== "all").length;
+
+  const clearFilters = () => {
+    setSelectedSpeciality("all");
+    setSelectedStatus("all");
+    setSelectedDirector("all");
+    setCurrentPage(1);
+  };
+
+  const openEditDialog = (item: Soutenance) => {
+    setEditingItem(item);
+    setForm(item);
+    setIsDialogOpen(true);
+  };
+
   const activeSpecialities = diplomaType === "Licence" ? LICENCE_SPECIALITIES : MASTER_SPECIALITIES;
 
   return (
