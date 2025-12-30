@@ -17,6 +17,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
