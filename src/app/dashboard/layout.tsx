@@ -30,7 +30,8 @@ import {
   Users,
   FileText,
   Settings,
-  ChevronDown
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 
 const sidebarItems = [
