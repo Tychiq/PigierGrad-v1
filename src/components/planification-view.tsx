@@ -428,21 +428,30 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
               />
             </div>
             
-            <Button
-              variant={showFilters ? "default" : "outline"}
-              onClick={() => setShowFilters(!showFilters)}
-              className={`h-12 px-4 rounded-xl font-bold relative ${showFilters ? 'bg-blue-600 text-white' : 'border-blue-200 dark:border-blue-800'}`}
-            >
-              <Filter className="w-4 h-4 mr-2" />
-              Filtres
-              {activeFiltersCount > 0 && (
-                <span className="absolute -top-2 -right-2 w-5 h-5 bg-yellow-500 rounded-full text-[10px] font-black text-blue-900 flex items-center justify-center">
-                  {activeFiltersCount}
-                </span>
-              )}
-            </Button>
-            
-            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              <Button
+                variant={showFilters ? "default" : "outline"}
+                onClick={() => setShowFilters(!showFilters)}
+                className={`h-12 px-4 rounded-xl font-bold relative ${showFilters ? 'bg-blue-600 text-white' : 'border-blue-200 dark:border-blue-800'}`}
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Filtres
+                {activeFiltersCount > 0 && (
+                  <span className="absolute -top-2 -right-2 w-5 h-5 bg-yellow-500 rounded-full text-[10px] font-black text-blue-900 flex items-center justify-center">
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </Button>
+              
+              <Button 
+                variant="outline"
+                onClick={downloadPDF}
+                className="h-12 px-4 rounded-xl border-blue-200 dark:border-blue-800 font-bold hover:bg-blue-50 dark:hover:bg-blue-900/30"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Exporter Planning
+              </Button>
+              
+              <Dialog open={isDialogOpen} onOpenChange={(open) => {
               setIsDialogOpen(open);
               if (!open) { setEditingItem(null); setForm({}); }
             }}>
