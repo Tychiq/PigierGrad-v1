@@ -353,9 +353,14 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                               {item.date_soutenance ? "Planifié" : "En attente"}
                             </span>
                           </div>
-                          <h3 className="text-xl font-black text-blue-900 dark:text-white leading-tight">
-                            {item.nom} <span className="text-blue-400">{item.prenoms}</span>
-                          </h3>
+                            <h3 className="text-xl font-black text-blue-900 dark:text-white leading-tight">
+                              {item.nom} <span className="text-blue-400">{item.prenoms}</span>
+                              {item.nom2 && (
+                                <span className="block text-sm mt-1">
+                                  & {item.nom2} <span className="text-blue-400">{item.prenoms2}</span>
+                                </span>
+                              )}
+                            </h3>
                           <p className="text-sm text-blue-500 dark:text-blue-400 font-medium italic line-clamp-1">
                             "{item.theme || "Thème non défini"}"
                           </p>
