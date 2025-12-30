@@ -24,7 +24,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { jsPDF } from "jspdf";
-import { autoTable } from "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import { motion } from "framer-motion";
 import { formatDate } from "@/lib/utils";
 import { ResetEverythingButton } from "./reset-everything-button";
@@ -76,7 +76,7 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
     d.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const downloadPDF = async () => {
+  const downloadPDF = () => {
     try {
       if (filteredDirectors.length === 0) {
         toast.error("Aucune donnée à exporter.");
@@ -152,27 +152,7 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
       const timestamp = new Date().toISOString().split('T')[0];
       const filename = `PIGIERGRAD_Directeurs_${diplomaType}_${timestamp}.pdf`;
       
-      const pdfBase64 = doc.output('datauristring');
-      
-      const response = await fetch('/api/download', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pdfBase64, filename })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to download PDF');
-      }
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      doc.save(filename);
       
       toast.success("Le PDF a été téléchargé avec succès !");
     } catch (error) {
