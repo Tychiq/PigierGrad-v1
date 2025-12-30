@@ -209,16 +209,16 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6 lg:p-10 relative">
-          <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl" />
-          </div>
-          
-          <div className="relative z-10 max-w-7xl mx-auto">
-            {children}
-          </div>
-        </main>
+          <main className="flex-1 overflow-y-auto p-6 lg:p-10 relative bg-transparent">
+            <div className="absolute inset-0 z-[-1] overflow-hidden pointer-events-none">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 left-0 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl" />
+            </div>
+            
+            <div className="relative z-10 max-w-7xl mx-auto">
+              {children}
+            </div>
+          </main>
       </div>
     </div>
   );
