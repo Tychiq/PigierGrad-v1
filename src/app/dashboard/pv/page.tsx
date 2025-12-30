@@ -468,17 +468,12 @@ export default function PVGenerationPage() {
 
 
         const blob = await Packer.toBlob(doc);
-        
-        // Use direct anchor download for better compatibility
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.style.display = "none";
-        a.href = url;
-        a.download = `PV_Soutenance_${selectedStudent.currentNom.replace(/\s+/g, '_')}.docx`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        const filename = `PV_Soutenance_${selectedStudent.currentNom.replace(/\s+/g, '_')}.docx`;
+        
+        setDownloadUrl(url);
+        setDownloadFilename(filename);
+        setShowSuccessDialog(true);
         
         toast.success("Procès-Verbal généré avec succès !");
 
@@ -489,6 +484,28 @@ export default function PVGenerationPage() {
       setGenerating(false);
     }
   };
+
+  const handleDownload = () => {
+    if (downloadUrl && downloadFilename) {
+      const a = document.createElement("a");
+      a.style.display = "none";
+      a.href = downloadUrl;
+      a.download = downloadFilename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      // We don't revoke here because user might want to click again or we do it on dialog close
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (downloadUrl) {
+        window.URL.revokeObjectURL(downloadUrl);
+      }
+    };
+  }, [downloadUrl]);
 
   return (
     <div className="max-w-5xl mx-auto space-y-10 pb-10">
