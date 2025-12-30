@@ -76,7 +76,7 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
     d.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const downloadPDF = () => {
+  const downloadPDF = async () => {
     try {
       if (filteredDirectors.length === 0) {
         toast.error("Aucune donnée à exporter.");
