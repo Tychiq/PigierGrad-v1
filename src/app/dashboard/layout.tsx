@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { Input } from "@/components/ui/input";
-import { Search, Bell, Menu, X, Check } from "lucide-react";
+import { Search, Bell, Menu, X, Check, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import {
