@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/table";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import { saveAs } from "file-saver";
+import { triggerDownload } from "@/lib/download-helper";
 import { motion } from "framer-motion";
 import { formatDate } from "@/lib/utils";
 import { ResetEverythingButton } from "./reset-everything-button";
@@ -77,7 +77,7 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
     d.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const downloadPDF = () => {
+  const downloadPDF = async () => {
     try {
       if (filteredDirectors.length === 0) {
         toast.error("Aucune donnée à exporter.");
@@ -154,7 +154,7 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
       const filename = `PIGIERGRAD_Directeurs_${diplomaType}_${timestamp}.pdf`;
       
       const pdfBlob = doc.output('blob');
-      saveAs(pdfBlob, filename);
+      await triggerDownload(pdfBlob, filename);
       
       toast.success("Le PDF a été téléchargé avec succès !");
     } catch (error) {
