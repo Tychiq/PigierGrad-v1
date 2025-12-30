@@ -104,7 +104,7 @@ export default function PVGenerationPage() {
   const itemsPerPage = 10;
 
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [generatedBlob, setGeneratedBlob] = useState<Blob | null>(null);
   const [downloadFilename, setDownloadFilename] = useState("");
 
   useEffect(() => {
