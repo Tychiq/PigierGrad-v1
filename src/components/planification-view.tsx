@@ -832,6 +832,65 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
           </Button>
         </div>
       )}
+
+      <Dialog open={isBinomeDialogOpen} onOpenChange={setIsBinomeDialogOpen}>
+        <DialogContent className="max-w-md rounded-3xl border-none shadow-2xl p-0 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6">
+            <DialogHeader>
+              <DialogTitle className="text-white text-xl font-black uppercase flex items-center gap-2">
+                <UserPlus className="w-5 h-5" />
+                Former un binôme
+              </DialogTitle>
+            </DialogHeader>
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Rechercher un étudiant</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
+                <Input 
+                  placeholder="Nom, prénoms ou matricule..." 
+                  className="pl-10 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none shadow-inner"
+                  value={binomeSearch}
+                  onChange={(e) => setBinomeSearch(e.target.value)}
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+              {binomeCandidates.length === 0 ? (
+                <div className="text-center py-8 text-blue-400 text-sm">
+                  {binomeSearch ? "Aucun étudiant trouvé" : "Commencez à taper pour rechercher"}
+                </div>
+              ) : (
+                binomeCandidates.map((student) => (
+                  <button
+                    key={student.id}
+                    onClick={() => handleAddBinome(student)}
+                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-blue-900/10 border border-blue-50 dark:border-blue-900/20 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all group text-left"
+                  >
+                    <div className="flex flex-col items-start">
+                      <span className="text-sm font-bold text-blue-900 dark:text-white group-hover:text-blue-600">
+                        {student.nom} {student.prenoms}
+                      </span>
+                      <span className="text-[10px] font-black text-blue-400 uppercase tracking-tighter">
+                        {student.matricule}
+                      </span>
+                    </div>
+                    <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Plus className="w-4 h-4 text-blue-600" />
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+          <DialogFooter className="p-6 bg-blue-50 dark:bg-blue-900/20">
+            <Button variant="ghost" onClick={() => setIsBinomeDialogOpen(false)} className="rounded-xl font-bold">Annuler</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
