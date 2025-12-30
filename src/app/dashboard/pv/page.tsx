@@ -491,19 +491,8 @@ export default function PVGenerationPage() {
     }
 
     try {
-      const url = window.URL.createObjectURL(generatedBlob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", downloadFilename || "PV_Soutenance.docx");
-      document.body.appendChild(link);
-      link.click();
-      
-      // Cleanup
-      setTimeout(() => {
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      }, 100);
-
+      // Use saveAs for more robust downloading in iframe environments
+      saveAs(generatedBlob, downloadFilename || "PV_Soutenance.docx");
       toast.success("Téléchargement lancé !");
     } catch (err) {
       console.error("Download error:", err);
