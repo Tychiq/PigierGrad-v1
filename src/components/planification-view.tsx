@@ -606,24 +606,24 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                             {item.date_soutenance ? "Planifié" : "En attente"}
                           </span>
                         </div>
-                        <div className="space-y-1">
-                          <h3 className="text-2xl font-black text-blue-900 dark:text-white leading-tight uppercase">
-                            {item.nom} <span className="text-blue-500">{item.prenoms}</span>
-                          </h3>
-                            <div className="flex items-center gap-2 text-xs text-blue-400 font-bold">
-                              <Calendar className="w-3 h-3" />
-                              <span>Né(e) le {formatDate(item.date_naissance)} à {item.lieu_naissance || "???"}</span>
+                            <div className="space-y-1">
+                            <h3 className="text-2xl font-black text-blue-900 dark:text-white leading-tight uppercase">
+                              {item.nom} {item.prenoms}
+                            </h3>
+                              <div className="flex items-center gap-2 text-xs text-blue-400 font-bold">
+                                <Calendar className="w-3 h-3" />
+                                <span>Né(e) le {formatDate(item.date_naissance)} à {item.lieu_naissance || "???"}</span>
+                              </div>
                             </div>
-                          </div>
-                          {item.nom2 && (
-                            <div className="pt-2 border-t border-blue-50 dark:border-blue-900/10">
-                              <h4 className="text-xs font-black text-blue-300 uppercase tracking-widest mb-1">Binôme</h4>
-                              <p className="text-sm font-bold text-blue-800 dark:text-blue-100 uppercase">
-                                {item.nom2} {item.prenoms2} ({item.matricule2})
-                              </p>
-                              <p className="text-[10px] text-blue-400">Né(e) le {formatDate(item.date_naissance2)} à {item.lieu_naissance2}</p>
-                            </div>
-                          )}
+                            {item.nom2 && (
+                              <div className="pt-2 border-t border-blue-50 dark:border-blue-900/10">
+                                <h4 className="text-xs font-black text-blue-300 uppercase tracking-widest mb-1">Binôme</h4>
+                                <p className="text-sm font-bold text-blue-800 dark:text-blue-100 uppercase">
+                                  {item.nom2} {item.prenoms2} ({item.matricule2})
+                                </p>
+                                <p className="text-[10px] text-blue-400">Né(e) le {formatDate(item.date_naissance2)} à {item.lieu_naissance2}</p>
+                              </div>
+                            )}
 
                       </div>
 
