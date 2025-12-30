@@ -70,6 +70,8 @@ interface Student {
   diploma_type: string;
   speciality?: string;
   date_depot?: string;
+  session_month?: string;
+  session_year?: string;
 }
 
 export default function PVGenerationPage() {
