@@ -68,6 +68,22 @@ export default function AuthPage() {
     setLoading(false);
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("E-mail de réinitialisation envoyé !");
+      setIsResetting(false);
+    }
+    setLoading(false);
+  };
+
   const handleOAuthSignIn = async (provider: 'google') => {
     console.log("OAuth Sign In clicked for:", provider);
     const { error } = await supabase.auth.signInWithOAuth({
