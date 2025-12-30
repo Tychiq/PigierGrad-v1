@@ -68,6 +68,8 @@ interface Soutenance {
   grade_rapporteur: string;
   diploma_type: string;
   speciality?: string;
+  session_month?: string;
+  session_year?: string;
 }
 
 const ITEMS_PER_PAGE = 8;
