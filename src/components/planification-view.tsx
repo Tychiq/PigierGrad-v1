@@ -39,6 +39,11 @@ interface Soutenance {
   prenoms: string;
   date_naissance: string;
   lieu_naissance: string;
+  matricule2?: string;
+  nom2?: string;
+  prenoms2?: string;
+  date_naissance2?: string;
+  lieu_naissance2?: string;
   theme: string;
   directeur: string;
   grade_directeur: string;
@@ -95,7 +100,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
         
         await supabase.from("notifications").insert({
           title: "Soutenance Modifiée",
-          message: `Les informations de ${form.nom} ${form.prenoms} ont été mises à jour.`,
+          message: `Les informations de ${form.nom} ${form.prenoms}${form.nom2 ? ' & ' + form.nom2 : ''} ont été mises à jour.`,
           type: "info"
         });
       } else {
@@ -107,7 +112,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
         
         await supabase.from("notifications").insert({
           title: "Nouvelle Inscription",
-          message: `${form.nom} ${form.prenoms} a été ajouté(e) au planning ${diplomaType}.`,
+          message: `${form.nom} ${form.prenoms}${form.nom2 ? ' & ' + form.nom2 : ''} a été ajouté(e) au planning ${diplomaType}.`,
           type: "success"
         });
       }
