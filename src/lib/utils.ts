@@ -41,3 +41,16 @@ export function formatTime(timeString: string | null | undefined): string {
     return timeString;
   }
 }
+
+export function formatFullTime(timeString: string | null | undefined): string {
+  if (!timeString) return "--:--:--";
+  try {
+    const parts = timeString.split(/[:\-h]/i);
+    const h = (parts[0] || "00").padStart(2, '0');
+    const m = (parts[1] || "00").padStart(2, '0');
+    const s = (parts[2] || "00").padStart(2, '0');
+    return `${h}-${m}-${s}`;
+  } catch {
+    return timeString || "--:--:--";
+  }
+}
