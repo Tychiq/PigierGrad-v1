@@ -3,14 +3,16 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { 
   Users, 
   Download, 
   Search, 
   UserCheck, 
   Trophy,
-  Loader2
+  ChevronLeft,
+  ChevronRight,
+  Sparkles
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { 
@@ -30,10 +32,13 @@ interface DirectorStats {
   count: number;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export function DirectorsView({ diplomaType }: { diplomaType: string }) {
   const [directors, setDirectors] = useState<DirectorStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const fetchDirectors = async () => {
@@ -66,46 +71,84 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
 
   const downloadPDF = () => {
     const doc = new jsPDF();
-    doc.text(`Liste des Directeurs - ${diplomaType}`, 14, 15);
+    
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text("UNIVERSITÉ PIGIER", 105, 20, { align: "center" });
+    
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Liste des Directeurs de Mémoire - ${diplomaType}`, 105, 30, { align: "center" });
+    
+    doc.setFontSize(10);
+    doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, 105, 38, { align: "center" });
     
     autoTable(doc, {
-      startY: 25,
-      head: [['#', 'Nom du Directeur', 'Nombre d\'encadrements']],
-      body: directors.map((d, i) => [i + 1, d.name, d.count]),
+      startY: 50,
+      head: [['N°', 'Nom du Directeur', 'Nombre d\'encadrements']],
+      body: filteredDirectors.map((d, i) => [i + 1, d.name, d.count]),
       theme: 'grid',
-      headStyles: { fillColor: [0, 0, 0] },
+      headStyles: { 
+        fillColor: [30, 64, 175],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+      bodyStyles: {
+        halign: 'center'
+      },
+      alternateRowStyles: {
+        fillColor: [240, 245, 255]
+      },
+      columnStyles: {
+        0: { cellWidth: 20 },
+        1: { cellWidth: 100, halign: 'left' },
+        2: { cellWidth: 50 }
+      }
     });
     
-    doc.save(`Directeurs_${diplomaType}.pdf`);
+    doc.save(`Directeurs_${diplomaType}_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   const filteredDirectors = directors.filter(d => 
     d.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filteredDirectors.length / ITEMS_PER_PAGE);
+  const paginatedDirectors = filteredDirectors.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
     <div className="space-y-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex flex-col gap-1">
-          <h1 className="text-4xl font-black tracking-tighter text-black dark:text-white uppercase italic">
-            Directeurs <span className="text-zinc-400 not-italic">{diplomaType}</span>
+          <div className="flex items-center gap-2 mb-1">
+            <Sparkles className="w-5 h-5 text-yellow-500" />
+            <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">Statistiques d'Encadrement</span>
+          </div>
+          <h1 className="text-4xl font-black tracking-tighter text-blue-900 dark:text-white uppercase">
+            Directeurs <span className={diplomaType === "Licence" ? "text-blue-500" : "text-yellow-500"}>{diplomaType}</span>
           </h1>
-          <p className="text-zinc-500 font-medium">Statistiques d'encadrement par enseignant</p>
+          <p className="text-blue-600/70 dark:text-blue-400 font-medium">
+            {directors.length} directeur(s) référencé(s)
+          </p>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
             <Input 
               placeholder="Rechercher un directeur..." 
-              className="pl-10 h-12 w-64 rounded-xl border-none bg-white dark:bg-black shadow-sm focus:ring-1 focus:ring-zinc-200"
+              className="pl-10 h-12 w-64 rounded-xl border-none bg-white dark:bg-[#0f1629] shadow-lg focus:ring-2 focus:ring-blue-500"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
             />
           </div>
           <Button 
             onClick={downloadPDF}
-            className="h-12 px-6 rounded-xl bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-widest text-xs hover:opacity-90 transition-opacity"
+            className="h-12 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold shadow-lg shadow-blue-600/30"
           >
             <Download className="w-4 h-4 mr-2" />
             Exporter PDF
@@ -113,41 +156,41 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <Card className="border-none shadow-sm bg-black dark:bg-white text-white dark:text-black rounded-3xl overflow-hidden group">
-          <CardContent className="p-8 flex items-center gap-6">
-            <div className="w-14 h-14 rounded-2xl bg-white/10 dark:bg-black/5 flex items-center justify-center">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="border-none shadow-lg bg-gradient-to-br from-blue-600 to-blue-800 dark:from-blue-800 dark:to-blue-950 text-white rounded-3xl overflow-hidden">
+          <CardContent className="p-6 flex items-center gap-6">
+            <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center">
               <UserCheck className="w-7 h-7" />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Total Directeurs</p>
-              <h3 className="text-3xl font-black tracking-tighter">{directors.length}</h3>
+              <p className="text-[10px] font-black uppercase tracking-widest text-blue-200">Total Directeurs</p>
+              <h3 className="text-4xl font-black tracking-tighter">{directors.length}</h3>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="border-none shadow-sm bg-white dark:bg-black rounded-3xl overflow-hidden group">
-          <CardContent className="p-8 flex items-center gap-6">
-            <div className="w-14 h-14 rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center">
-              <Trophy className="w-7 h-7 text-zinc-400" />
+        <Card className="border-none shadow-lg bg-white dark:bg-[#0f1629] rounded-3xl overflow-hidden">
+          <CardContent className="p-6 flex items-center gap-6">
+            <div className="w-14 h-14 rounded-2xl bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+              <Trophy className="w-7 h-7 text-yellow-600" />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Major d'encadrement</p>
-              <h3 className="text-xl font-black text-black dark:text-white uppercase truncate max-w-[200px]">
+              <p className="text-[10px] font-black uppercase tracking-widest text-blue-400">Top Encadreur</p>
+              <h3 className="text-xl font-black text-blue-900 dark:text-white uppercase truncate max-w-[200px]">
                 {directors[0]?.name || "N/A"}
               </h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-sm bg-white dark:bg-black rounded-3xl overflow-hidden group">
-          <CardContent className="p-8 flex items-center gap-6">
-            <div className="w-14 h-14 rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center">
-              <Users className="w-7 h-7 text-zinc-400" />
+        <Card className="border-none shadow-lg bg-white dark:bg-[#0f1629] rounded-3xl overflow-hidden">
+          <CardContent className="p-6 flex items-center gap-6">
+            <div className="w-14 h-14 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <Users className="w-7 h-7 text-blue-600" />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Total Encadrements</p>
-              <h3 className="text-3xl font-black text-black dark:text-white tracking-tighter">
+              <p className="text-[10px] font-black uppercase tracking-widest text-blue-400">Total Encadrements</p>
+              <h3 className="text-4xl font-black text-blue-900 dark:text-white tracking-tighter">
                 {directors.reduce((acc, curr) => acc + curr.count, 0)}
               </h3>
             </div>
@@ -155,66 +198,121 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
         </Card>
       </div>
 
-      <Card className="border-none shadow-sm bg-white dark:bg-black rounded-[2.5rem] overflow-hidden">
+      <Card className="border-none shadow-lg bg-white dark:bg-[#0f1629] rounded-3xl overflow-hidden">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="border-b border-zinc-100 dark:border-zinc-800 hover:bg-transparent h-16">
-                <TableHead className="w-20 text-center font-black uppercase tracking-widest text-[10px] text-zinc-400">#</TableHead>
-                <TableHead className="font-black uppercase tracking-widest text-[10px] text-zinc-400">Nom du Directeur</TableHead>
-                <TableHead className="text-right font-black uppercase tracking-widest text-[10px] text-zinc-400 pr-10">Encadrements</TableHead>
+              <TableRow className="border-b border-blue-100 dark:border-blue-900/50 hover:bg-transparent h-16">
+                <TableHead className="w-20 text-center font-black uppercase tracking-widest text-[10px] text-blue-400">#</TableHead>
+                <TableHead className="font-black uppercase tracking-widest text-[10px] text-blue-400">Nom du Directeur</TableHead>
+                <TableHead className="text-right font-black uppercase tracking-widest text-[10px] text-blue-400 pr-10">Encadrements</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i} className="h-20 animate-pulse">
-                    <TableCell colSpan={3} className="px-10"><div className="h-4 bg-zinc-50 dark:bg-zinc-900 rounded-full w-full" /></TableCell>
+                    <TableCell colSpan={3} className="px-10"><div className="h-4 bg-blue-50 dark:bg-blue-900/30 rounded-full w-full" /></TableCell>
                   </TableRow>
                 ))
-              ) : filteredDirectors.length === 0 ? (
+              ) : paginatedDirectors.length === 0 ? (
                 <TableRow className="h-64">
                   <TableCell colSpan={3} className="text-center">
                     <div className="flex flex-col items-center gap-4">
-                      <Users className="w-12 h-12 text-zinc-100" />
-                      <p className="text-zinc-400 font-bold uppercase tracking-widest text-sm">Aucun directeur trouvé</p>
+                      <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                        <Users className="w-10 h-10 text-blue-300" />
+                      </div>
+                      <p className="text-blue-900 dark:text-white font-bold uppercase tracking-widest text-sm">Aucun directeur trouvé</p>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredDirectors.map((director, index) => (
-                  <motion.tr
-                    key={director.name}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="group border-b border-zinc-50 dark:border-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-950 transition-colors h-20"
-                  >
-                    <TableCell className="text-center font-black text-zinc-300 group-hover:text-black dark:group-hover:text-white transition-colors">
-                      {index + 1}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center font-black text-xs text-zinc-500 group-hover:bg-black dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black transition-all">
-                          {director.name.charAt(0)}
+                paginatedDirectors.map((director, index) => {
+                  const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index;
+                  return (
+                    <motion.tr
+                      key={director.name}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: index * 0.03 }}
+                      className="group border-b border-blue-50 dark:border-blue-900/30 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors h-16"
+                    >
+                      <TableCell className="text-center font-black text-blue-300 group-hover:text-blue-600 transition-colors">
+                        {globalIndex + 1}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 flex items-center justify-center font-black text-sm text-blue-600 dark:text-blue-300 group-hover:from-blue-600 group-hover:to-blue-700 group-hover:text-white transition-all">
+                            {director.name.charAt(0)}
+                          </div>
+                          <span className="font-bold text-blue-900 dark:text-white group-hover:translate-x-1 transition-transform inline-block">
+                            {director.name}
+                          </span>
+                          {globalIndex === 0 && (
+                            <span className="text-[10px] font-black bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600 px-2 py-0.5 rounded-full">TOP</span>
+                          )}
                         </div>
-                        <span className="font-black text-black dark:text-white uppercase tracking-tight group-hover:translate-x-1 transition-transform inline-block">
-                          {director.name}
+                      </TableCell>
+                      <TableCell className="text-right pr-10">
+                        <span className="inline-flex items-center justify-center w-12 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 font-black text-blue-900 dark:text-white group-hover:bg-blue-600 group-hover:text-white transition-all">
+                          {director.count}
                         </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right pr-10">
-                      <span className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-zinc-50 dark:bg-zinc-900 font-black text-black dark:text-white group-hover:scale-110 transition-transform">
-                        {director.count}
-                      </span>
-                    </TableCell>
-                  </motion.tr>
-                ))
+                      </TableCell>
+                    </motion.tr>
+                  );
+                })
               )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="rounded-xl border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            let page;
+            if (totalPages <= 5) {
+              page = i + 1;
+            } else if (currentPage <= 3) {
+              page = i + 1;
+            } else if (currentPage >= totalPages - 2) {
+              page = totalPages - 4 + i;
+            } else {
+              page = currentPage - 2 + i;
+            }
+            return (
+              <Button
+                key={page}
+                variant={currentPage === page ? "default" : "outline"}
+                onClick={() => setCurrentPage(page)}
+                className={`rounded-xl w-10 h-10 ${currentPage === page ? 'bg-blue-600 text-white' : 'border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30'}`}
+              >
+                {page}
+              </Button>
+            );
+          })}
+          
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="rounded-xl border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
