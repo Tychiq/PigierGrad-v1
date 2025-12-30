@@ -175,113 +175,111 @@ export default function PVGenerationPage() {
                 ],
               }),
 
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 600 },
-                children: [
-                  new TextRun({ 
-                    text: `SESSION DE : ${selectedStudent.session_month?.toUpperCase() || "...................."} ${selectedStudent.session_year || "202..."}`, 
-                    bold: true, 
-                    size: 28,
-                    font: "Arial"
-                  }),
-                ],
-              }),
+                // Session Section
+                new Paragraph({
+                  alignment: AlignmentType.CENTER,
+                  spacing: { before: 200, after: 400 },
+                  children: [
+                    new TextRun({ 
+                      text: `SESSION DE : ${selectedStudent.session_month?.toUpperCase() || "...................."} ${selectedStudent.session_year || "202..."}`, 
+                      bold: true, 
+                      size: 28,
+                      font: "Arial",
+                      color: "1e40af"
+                    }),
+                  ],
+                }),
 
-              // Diploma & Speciality Table
-              new Table({
-                width: { size: 100, type: WidthType.PERCENTAGE },
-                borders: {
-                  top: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
-                  bottom: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
-                  left: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
-                  right: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
-                },
-                rows: [
-                  new TableRow({
-                    children: [
-                      new TableCell({
-                        width: { size: 30, type: WidthType.PERCENTAGE },
-                        shading: { fill: "f3f4f6" },
-                        children: [new Paragraph({ children: [new TextRun({ text: "DIPLÔME PRÉPARÉ", bold: true, font: "Arial" })] })]
-                      }),
-                      new TableCell({
-                        width: { size: 70, type: WidthType.PERCENTAGE },
-                        children: [new Paragraph({ children: [new TextRun({ text: selectedStudent.diploma_type?.toUpperCase() || "LICENCE", font: "Arial" })] })]
-                      }),
-                    ],
-                  }),
-                  new TableRow({
-                    children: [
-                      new TableCell({
-                        shading: { fill: "f3f4f6" },
-                        children: [new Paragraph({ children: [new TextRun({ text: "SPÉCIALITÉ", bold: true, font: "Arial" })] })]
-                      }),
-                      new TableCell({
-                        children: [new Paragraph({ children: [new TextRun({ text: selectedStudent.speciality?.toUpperCase() || "NON PRÉCISÉE", font: "Arial" })] })]
-                      }),
-                    ],
-                  }),
-                ],
-              }),
-
-              new Paragraph({ spacing: { before: 400 } }),
-
-              // Student Table
-              new Paragraph({
-                children: [new TextRun({ text: "IDENTIFICATION DU CANDIDAT", bold: true, underline: {}, font: "Arial", size: 24 })],
-                spacing: { after: 200 },
-              }),
-              new Table({
-                width: { size: 100, type: WidthType.PERCENTAGE },
-                rows: [
-                  new TableRow({
-                    children: [
-                      new TableCell({ 
-                        width: { size: 30, type: WidthType.PERCENTAGE },
-                        shading: { fill: "f3f4f6" },
-                        children: [new Paragraph({ children: [new TextRun({ text: "Nom & Prénoms", bold: true, font: "Arial" })] })] 
-                      }),
-                      new TableCell({ 
-                        width: { size: 70, type: WidthType.PERCENTAGE },
-                        children: [new Paragraph({ children: [new TextRun({ text: `${selectedStudent.nom} ${selectedStudent.prenoms}`.toUpperCase(), font: "Arial" })] })] 
-                      }),
-                    ],
-                  }),
-                  new TableRow({
-                    children: [
-                      new TableCell({ shading: { fill: "f3f4f6" }, children: [new Paragraph({ children: [new TextRun({ text: "Matricule", bold: true, font: "Arial" })] })] }),
-                      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: selectedStudent.matricule, font: "Arial" })] })] }),
-                    ],
-                  }),
-                  new TableRow({
-                    children: [
-                      new TableCell({ shading: { fill: "f3f4f6" }, children: [new Paragraph({ children: [new TextRun({ text: "Né(e) le", bold: true, font: "Arial" })] })] }),
-                      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `${formatDate(selectedStudent.date_naissance)} à ${selectedStudent.lieu_naissance}`, font: "Arial" })] })] }),
-                    ],
-                  }),
-                  ...(selectedStudent.nom2 ? [
+                // Identification Table with better styling
+                new Table({
+                  width: { size: 100, type: WidthType.PERCENTAGE },
+                  borders: {
+                    top: { style: BorderStyle.SINGLE, size: 2, color: "000000" },
+                    bottom: { style: BorderStyle.SINGLE, size: 2, color: "000000" },
+                    left: { style: BorderStyle.SINGLE, size: 2, color: "000000" },
+                    right: { style: BorderStyle.SINGLE, size: 2, color: "000000" },
+                    insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: "cccccc" },
+                  },
+                  rows: [
                     new TableRow({
                       children: [
-                        new TableCell({ shading: { fill: "f3f4f6" }, children: [new Paragraph({ children: [new TextRun({ text: "Binôme (Nom & Prénoms)", bold: true, font: "Arial" })] })] }),
-                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `${selectedStudent.nom2} ${selectedStudent.prenoms2}`.toUpperCase(), font: "Arial" })] })] }),
+                        new TableCell({
+                          width: { size: 40, type: WidthType.PERCENTAGE },
+                          shading: { fill: "f8fafc" },
+                          children: [new Paragraph({ children: [new TextRun({ text: "DIPLÔME", bold: true, font: "Arial", size: 20 })] })]
+                        }),
+                        new TableCell({
+                          width: { size: 60, type: WidthType.PERCENTAGE },
+                          children: [new Paragraph({ children: [new TextRun({ text: selectedStudent.diploma_type?.toUpperCase() || "LICENCE", font: "Arial", size: 20, bold: true })] })]
+                        }),
                       ],
                     }),
                     new TableRow({
                       children: [
-                        new TableCell({ shading: { fill: "f3f4f6" }, children: [new Paragraph({ children: [new TextRun({ text: "Matricule Binôme", bold: true, font: "Arial" })] })] }),
-                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: selectedStudent.matricule2 || "", font: "Arial" })] })] }),
+                        new TableCell({
+                          shading: { fill: "f8fafc" },
+                          children: [new Paragraph({ children: [new TextRun({ text: "SPÉCIALITÉ", bold: true, font: "Arial", size: 20 })] })]
+                        }),
+                        new TableCell({
+                          children: [new Paragraph({ children: [new TextRun({ text: selectedStudent.speciality?.toUpperCase() || "NON PRÉCISÉE", font: "Arial", size: 20, bold: true })] })]
+                        }),
+                      ],
+                    }),
+                  ],
+                }),
+
+                new Paragraph({ spacing: { before: 300 } }),
+
+                new Paragraph({
+                  children: [new TextRun({ text: "I. IDENTITÉ DU CANDIDAT", bold: true, underline: {}, font: "Arial", size: 24, color: "1e40af" })],
+                  spacing: { after: 200 },
+                }),
+                
+                new Table({
+                  width: { size: 100, type: WidthType.PERCENTAGE },
+                  rows: [
+                    new TableRow({
+                      children: [
+                        new TableCell({ 
+                          width: { size: 35, type: WidthType.PERCENTAGE },
+                          shading: { fill: "f8fafc" },
+                          children: [new Paragraph({ children: [new TextRun({ text: "Nom & Prénoms :", bold: true, font: "Arial" })] })] 
+                        }),
+                        new TableCell({ 
+                          width: { size: 65, type: WidthType.PERCENTAGE },
+                          children: [new Paragraph({ children: [new TextRun({ text: `${selectedStudent.nom} ${selectedStudent.prenoms}`.toUpperCase(), font: "Arial", bold: true })] })] 
+                        }),
                       ],
                     }),
                     new TableRow({
                       children: [
-                        new TableCell({ shading: { fill: "f3f4f6" }, children: [new Paragraph({ children: [new TextRun({ text: "Né(e) le (Binôme)", bold: true, font: "Arial" })] })] }),
-                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `${formatDate(selectedStudent.date_naissance2)} à ${selectedStudent.lieu_naissance2}`, font: "Arial" })] })] }),
+                        new TableCell({ shading: { fill: "f8fafc" }, children: [new Paragraph({ children: [new TextRun({ text: "Numéro Matricule :", bold: true, font: "Arial" })] })] }),
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: selectedStudent.matricule, font: "Arial", bold: true })] })] }),
                       ],
                     }),
-                  ] : []),
-                ],
-              }),
+                    new TableRow({
+                      children: [
+                        new TableCell({ shading: { fill: "f8fafc" }, children: [new Paragraph({ children: [new TextRun({ text: "Date et Lieu de Naissance :", bold: true, font: "Arial" })] })] }),
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `${formatDate(selectedStudent.date_naissance)} à ${selectedStudent.lieu_naissance}`, font: "Arial" })] })] }),
+                      ],
+                    }),
+                    ...(selectedStudent.nom2 ? [
+                      new TableRow({
+                        children: [
+                          new TableCell({ shading: { fill: "f8fafc" }, children: [new Paragraph({ children: [new TextRun({ text: "Binôme (Nom & Prénoms) :", bold: true, font: "Arial" })] })] }),
+                          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `${selectedStudent.nom2} ${selectedStudent.prenoms2}`.toUpperCase(), font: "Arial", bold: true })] })] }),
+                        ],
+                      }),
+                      new TableRow({
+                        children: [
+                          new TableCell({ shading: { fill: "f8fafc" }, children: [new Paragraph({ children: [new TextRun({ text: "Matricule Binôme :", bold: true, font: "Arial" })] })] }),
+                          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: selectedStudent.matricule2 || "", font: "Arial", bold: true })] })] }),
+                        ],
+                      }),
+                    ] : []),
+                  ],
+                }),
+
 
               // Theme
               new Paragraph({
