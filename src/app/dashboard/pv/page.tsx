@@ -418,8 +418,10 @@ export default function PVGenerationPage() {
 
                     <div className="space-y-3">
                         {[
-                          { label: "Diplôme", value: selectedStudent.diploma_type },
-                          { label: "Matricule", value: selectedStudent.currentMatricule },
+                            { label: "Diplôme", value: selectedStudent.diploma_type },
+                            { label: "Spécialité", value: selectedStudent.speciality },
+                            { label: "Session", value: `${selectedStudent.session_month} ${selectedStudent.session_year}` },
+                            { label: "Matricule", value: selectedStudent.currentMatricule },
                           { label: "Étudiant", value: `${selectedStudent.currentNom} ${selectedStudent.currentPrenoms}` },
                           { label: "Date de naissance", value: formatDate(selectedStudent.currentDateNaissance) },
                           { label: "Lieu de naissance", value: selectedStudent.currentLieuNaissance },
