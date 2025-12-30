@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { supabase } from "@/lib/supabase";
+  import { useState, useEffect, useMemo } from "react";
+  import { useRouter, useSearchParams } from "next/navigation";
+  import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
