@@ -79,19 +79,6 @@ interface Soutenance {
 
 const ITEMS_PER_PAGE = 8;
 
-const SPECIALITIES = [
-  "Informatique de Gestion",
-  "Réseaux & Télécommunications",
-  "Génie Logiciel",
-  "Marketing & Commerce",
-  "Comptabilité & Finance",
-  "Gestion des Ressources Humaines",
-  "Communication",
-  "Logistique & Transport",
-  "Banque & Assurance",
-  "Secrétariat de Direction",
-];
-
 export function PlanificationView({ diplomaType }: { diplomaType: string }) {
   const [data, setData] = useState<Soutenance[]>([]);
   const [loading, setLoading] = useState(true);
