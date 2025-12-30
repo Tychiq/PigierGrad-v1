@@ -35,6 +35,7 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const { profile } = useProfile();
   const router = useRouter();
 
   useEffect(() => {
