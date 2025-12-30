@@ -52,8 +52,9 @@ export default function DashboardPage() {
       const { data, error } = await supabase.from("soutenances").select("*").order("created_at", { ascending: true });
       if (data) {
         const uniqueDirectors = new Set(data.map(s => s.directeur).filter(Boolean)).size;
-        const licence = data.filter(s => s.diploma_type === "Licence").length;
-        const master = data.filter(s => s.diploma_type === "Master").length;
+        const licence = data.filter(s => s.diploma_type === "Licence").reduce((acc, s) => acc + (s.nom2 ? 2 : 1), 0);
+        const master = data.filter(s => s.diploma_type === "Master").reduce((acc, s) => acc + (s.nom2 ? 2 : 1), 0);
+        const individualStudentsCount = data.reduce((acc, s) => acc + (s.nom2 ? 2 : 1), 0);
         
         // Process monthly data for area chart
         const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
@@ -63,12 +64,12 @@ export default function DashboardPage() {
           const monthLicence = data.filter(s => {
             const date = new Date(s.created_at);
             return date.getMonth() === index && date.getFullYear() === currentYear && s.diploma_type === "Licence";
-          }).length;
+          }).reduce((acc, s) => acc + (s.nom2 ? 2 : 1), 0);
           
           const monthMaster = data.filter(s => {
             const date = new Date(s.created_at);
             return date.getMonth() === index && date.getFullYear() === currentYear && s.diploma_type === "Master";
-          }).length;
+          }).reduce((acc, s) => acc + (s.nom2 ? 2 : 1), 0);
           
           return {
             name: month,
@@ -91,8 +92,8 @@ export default function DashboardPage() {
         });
 
         setStats({
-          totalStudents: data.length,
-          totalSoutenances: data.filter(s => s.date_soutenance).length,
+          totalStudents: individualStudentsCount,
+          totalSoutenances: data.length,
           totalDirectors: uniqueDirectors,
           licenceCount: licence,
           masterCount: master,
