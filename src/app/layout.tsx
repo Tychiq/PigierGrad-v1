@@ -5,6 +5,7 @@ import ErrorReporter from "@/components/ErrorReporter";
 import Script from "next/script";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { Code2 } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "PigierGrad - Gestion des Soutenances",
