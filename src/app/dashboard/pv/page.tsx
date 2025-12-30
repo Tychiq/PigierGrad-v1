@@ -609,19 +609,19 @@ export default function PVGenerationPage() {
                     </div>
 
                     <div className="space-y-3">
-                      {[
-                        { label: "Diplôme", value: selectedStudent.diploma_type },
-                        { label: "Matricule", value: selectedStudent.matricule },
-                        { label: "Étudiant", value: `${selectedStudent.nom} ${selectedStudent.prenoms}` },
-                        { label: "Date de naissance", value: selectedStudent.date_naissance },
-                        { label: "Lieu de naissance", value: selectedStudent.lieu_naissance },
-                        { label: "Thème", value: selectedStudent.theme },
-                          { label: "Directeur", value: `${selectedStudent.directeur} (${selectedStudent.grade_directeur})` },
-                          { label: "Date de soutenance", value: formatDate(selectedStudent.date_soutenance) },
-                          { label: "Heure", value: formatTime(selectedStudent.heure_soutenance) },
-                          { label: "Salle", value: selectedStudent.salle },
+                        {[
+                          { label: "Diplôme", value: selectedStudent.diploma_type },
+                          { label: "Matricule", value: selectedStudent.matricule2 ? `${selectedStudent.matricule} / ${selectedStudent.matricule2}` : selectedStudent.matricule },
+                          { label: "Étudiant", value: selectedStudent.nom2 ? `${selectedStudent.nom} ${selectedStudent.prenoms} & ${selectedStudent.nom2} ${selectedStudent.prenoms2}` : `${selectedStudent.nom} ${selectedStudent.prenoms}` },
+                          { label: "Date de naissance", value: selectedStudent.nom2 ? `${selectedStudent.date_naissance} / ${selectedStudent.date_naissance2}` : selectedStudent.date_naissance },
+                          { label: "Lieu de naissance", value: selectedStudent.nom2 ? `${selectedStudent.lieu_naissance} / ${selectedStudent.lieu_naissance2}` : selectedStudent.lieu_naissance },
+                          { label: "Thème", value: selectedStudent.theme },
+                            { label: "Directeur", value: `${selectedStudent.directeur} (${selectedStudent.grade_directeur})` },
+                            { label: "Date de soutenance", value: formatDate(selectedStudent.date_soutenance) },
+                            { label: "Heure", value: formatTime(selectedStudent.heure_soutenance) },
+                            { label: "Salle", value: selectedStudent.salle },
 
-                      ].map((item, i) => (
+                        ].map((item, i) => (
                         <div key={i} className="flex justify-between items-start gap-4">
                           <span className="text-xs text-blue-200 uppercase tracking-wider shrink-0">{item.label}</span>
                           <span className="text-sm font-semibold text-right">{item.value || "Non défini"}</span>
