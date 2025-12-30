@@ -219,14 +219,58 @@ interface Notification {
                 </DropdownMenu>
               </div>
 
-              <div className="relative max-w-md w-full hidden sm:block">
+                <div className="relative max-w-md w-full hidden sm:block">
+                <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${isSearching ? 'text-blue-600 animate-pulse' : 'text-blue-400'}`} />
+                <Input
+                  placeholder="Rechercher un étudiant, un thème..."
+                  className="pl-10 bg-blue-50/50 dark:bg-blue-900/20 border-none rounded-xl h-10 focus-visible:ring-2 focus-visible:ring-blue-500 transition-all"
+                  value={globalSearch}
+                  onChange={(e) => setGlobalSearch(e.target.value)}
+                />
 
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
-              <Input
-                placeholder="Rechercher un étudiant, un thème..."
-                className="pl-10 bg-blue-50/50 dark:bg-blue-900/20 border-none rounded-xl h-10 focus-visible:ring-2 focus-visible:ring-blue-500 transition-all"
-              />
-            </div>
+                <AnimatePresence>
+                  {searchResults.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#0f1629] rounded-2xl shadow-2xl border border-blue-50 dark:border-blue-900/30 overflow-hidden z-50"
+                    >
+                      <div className="p-2">
+                        {searchResults.map((result) => (
+                          <button
+                            key={result.id}
+                            onClick={() => {
+                              router.push(`/dashboard/${result.diploma_type.toLowerCase()}?search=${result.nom}`);
+                              setSearchResults([]);
+                              setGlobalSearch("");
+                            }}
+                            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors text-left group"
+                          >
+                            <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 font-black text-xs uppercase group-hover:bg-blue-600 group-hover:text-white transition-all">
+                              {result.nom.charAt(0)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-sm text-blue-900 dark:text-white truncate uppercase">
+                                {result.nom} {result.prenoms}
+                              </p>
+                              <p className="text-[10px] text-blue-400 font-medium uppercase tracking-tighter">
+                                {result.diploma_type} • {result.speciality}
+                              </p>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-blue-200 group-hover:text-blue-400 transition-colors" />
+                          </button>
+                        ))}
+                      </div>
+                      <div className="bg-blue-50 dark:bg-blue-900/20 p-2 text-center">
+                        <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">
+                          {searchResults.length} résultats trouvés
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
           </div>
 
           <div className="flex items-center gap-3">
