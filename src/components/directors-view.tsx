@@ -24,10 +24,11 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+import { autoTable } from "jspdf-autotable";
 import { motion } from "framer-motion";
 import { formatDate } from "@/lib/utils";
 import { ResetEverythingButton } from "./reset-everything-button";
+import { toast } from "sonner";
 
 interface DirectorStats {
   name: string;
