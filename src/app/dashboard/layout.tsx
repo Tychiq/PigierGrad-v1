@@ -145,7 +145,7 @@ export default function DashboardLayout({
             transition={{ type: "spring", damping: 20, stiffness: 100 }}
             className="fixed inset-y-0 left-0 z-50 md:relative md:flex"
           >
-            <DashboardSidebar />
+            <DashboardSidebar onClose={() => setSidebarOpen(false)} />
           </motion.div>
         )}
       </AnimatePresence>
