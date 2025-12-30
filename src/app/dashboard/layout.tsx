@@ -344,12 +344,12 @@ interface Notification {
                 </span>
                 <span className="text-[10px] text-blue-400 font-medium uppercase tracking-wider">Connecté</span>
               </div>
-              <Avatar className="w-10 h-10 rounded-full shadow-lg shadow-blue-600/30">
-                <AvatarImage src={profile?.avatar_url} />
-                <AvatarFallback className="bg-gradient-to-br from-blue-600 to-blue-800 text-white font-black text-xs">
-                  {profile?.full_name?.charAt(0) || "AD"}
-                </AvatarFallback>
-              </Avatar>
+                <Avatar className="w-10 h-10 rounded-full shadow-lg shadow-blue-600/30 overflow-hidden">
+                  <AvatarImage src={profile?.avatar_url} className="object-cover w-full h-full" />
+                  <AvatarFallback className="bg-gradient-to-br from-blue-600 to-blue-800 text-white font-black text-xs">
+                    {profile?.full_name?.charAt(0) || "AD"}
+                  </AvatarFallback>
+                </Avatar>
             </Link>
 
               <div className="h-8 w-[1px] bg-blue-100 dark:bg-blue-900/30 mx-1" />
