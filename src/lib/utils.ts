@@ -30,7 +30,7 @@ export function formatDate(dateString: string | null | undefined): string {
 export function formatTime(timeString: string | null | undefined): string {
   if (!timeString) return "--h--";
   try {
-    const parts = timeString.split(/[:\-]/);
+    const parts = timeString.split(/[:\-h]/i);
     if (parts.length >= 2) {
       const h = parts[0].padStart(2, '0');
       const m = parts[1].padStart(2, '0');
