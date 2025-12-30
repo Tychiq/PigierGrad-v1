@@ -85,6 +85,11 @@ export default function DashboardLayout({
     setUnreadCount(0);
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/");
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-white dark:from-[#0a0f1c] dark:to-[#0f1629]">
