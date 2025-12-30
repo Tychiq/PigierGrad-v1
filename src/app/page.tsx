@@ -117,12 +117,12 @@ export default function AuthPage() {
         </div>
 
         <div className="bg-white dark:bg-[#0f1629] rounded-3xl shadow-2xl shadow-blue-900/10 p-8">
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-1.5">
-              <TabsTrigger value="login" className="rounded-lg py-3 font-bold text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-[#0a0f1c] data-[state=active]:shadow-sm data-[state=active]:text-blue-600">
+            <Tabs defaultValue="login" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-1 h-12">
+              <TabsTrigger value="login" className="rounded-lg py-2 font-bold text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-[#0a0f1c] data-[state=active]:shadow-sm data-[state=active]:text-blue-600">
                 Connexion
               </TabsTrigger>
-              <TabsTrigger value="signup" className="rounded-lg py-3 font-bold text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-[#0a0f1c] data-[state=active]:shadow-sm data-[state=active]:text-blue-600">
+              <TabsTrigger value="signup" className="rounded-lg py-2 font-bold text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-[#0a0f1c] data-[state=active]:shadow-sm data-[state=active]:text-blue-600">
                 Inscription
               </TabsTrigger>
             </TabsList>
