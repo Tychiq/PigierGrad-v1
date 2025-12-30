@@ -52,10 +52,10 @@ export default function DashboardPage() {
     async function fetchStats() {
       const { data, error } = await supabase.from("soutenances").select("*").order("created_at", { ascending: true });
       if (data) {
-        const uniqueDirectors = new Set(data.map(s => s.directeur).filter(Boolean)).size;
+        const uniqueDirectors = new Set(data.map(s => s.directeur?.trim().toLowerCase()).filter(Boolean)).size;
+        const individualStudentsCount = data.reduce((acc, s) => acc + (s.nom2 ? 2 : 1), 0);
         const licence = data.filter(s => s.diploma_type === "Licence").reduce((acc, s) => acc + (s.nom2 ? 2 : 1), 0);
         const master = data.filter(s => s.diploma_type === "Master").reduce((acc, s) => acc + (s.nom2 ? 2 : 1), 0);
-        const individualStudentsCount = data.reduce((acc, s) => acc + (s.nom2 ? 2 : 1), 0);
         
         // Process monthly data for area chart
         const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
