@@ -125,23 +125,22 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
     }
   }, [searchParams]);
 
-  const fetchData = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("soutenances")
-      .select("*")
-      .eq("diploma_type", diplomaType)
-      .order("created_at", { ascending: false });
-    
-    if (data && data.length > 0) {
-      setData(data);
-      if (data[0].session_month) setSessionMonth(data[0].session_month);
-      if (data[0].session_year) setSessionYear(data[0].session_year);
-    } else if (data) {
-      setData(data);
-    }
-    setLoading(false);
-  };
+    const fetchData = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from("soutenances")
+            .select("*")
+            .ilike("diploma_type", diplomaType)
+            .order("created_at", { ascending: false });
+
+        if (data) {
+            setData(data);
+            // Persist the session globally from the first student
+            if (data[0]?.session_month) setSessionMonth(data[0].session_month);
+            if (data[0]?.session_year) setSessionYear(data[0].session_year);
+        }
+        setLoading(false);
+    };
 
   const updateSessionForAll = async () => {
     try {
@@ -258,11 +257,14 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
     setCurrentPage(1);
   };
 
-  const openEditDialog = (item: Soutenance) => {
-    setEditingItem(item);
-    setForm(item);
-    setIsDialogOpen(true);
-  };
+    const openEditDialog = (item: Soutenance) => {
+        setEditingItem(item);
+        setForm({
+            ...item,
+            speciality: item.speciality || ""  // ensure speciality is not undefined
+        });
+        setIsDialogOpen(true);
+    };
 
   const activeSpecialities = diplomaType === "Licence" ? LICENCE_SPECIALITIES : MASTER_SPECIALITIES;
 

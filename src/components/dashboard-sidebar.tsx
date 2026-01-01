@@ -123,7 +123,7 @@ export function DashboardSidebar({ onClose }: { onClose?: () => void }) {
                   {profile?.full_name || "Admin"}
                 </span>
                 <span className="text-[10px] text-blue-400 font-medium truncate max-w-[100px]">
-                  {profile?.department || "Pigier University"}
+                  {profile?.department || "Université Pigier "}
                 </span>
               </div>
             </div>
