@@ -60,6 +60,7 @@ interface Notification {
   }: {
     children: React.ReactNode;
   }) {
+      const [userId, setUserId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -89,62 +90,101 @@ interface Notification {
           .select("id, nom, prenoms, diploma_type, speciality, theme")
           .or(`nom.ilike.%${globalSearch}%,prenoms.ilike.%${globalSearch}%,matricule.ilike.%${globalSearch}%,theme.ilike.%${globalSearch}%`)
           .limit(5);
-        
+
         if (data) setSearchResults(data);
         setIsSearching(false);
       };
 
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push("/");
-      } else {
-        setLoading(false);
-        fetchNotifications();
-      }
-    };
-    checkUser();
+      useEffect(() => {
+          const checkUser = async () => {
+              const { data: { session } } = await supabase.auth.getSession();
 
-    const channel = supabase
-      .channel('notifications')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload) => {
-        setNotifications(prev => [payload.new as Notification, ...prev]);
-        setUnreadCount(prev => prev + 1);
-      })
-      .subscribe();
+              if (!session) {
+                  router.push("/");
+                  return;
+              }
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [router]);
+              setUserId(session.user.id);
+              setLoading(false);
+              fetchNotifications(session.user.id);
+          };
 
-  const fetchNotifications = async () => {
-    const { data } = await supabase
-      .from("notifications")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(10);
-    
-    if (data) {
-      setNotifications(data);
-      setUnreadCount(data.filter(n => !n.read).length);
-    }
-  };
+          checkUser();
+      }, [router]);
 
-  const markAsRead = async (id: string) => {
-    await supabase.from("notifications").update({ read: true }).eq("id", id);
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-    setUnreadCount(prev => Math.max(0, prev - 1));
-  };
+      useEffect(() => {
+          if (!userId) return;
 
-  const markAllAsRead = async () => {
-    await supabase.from("notifications").update({ read: true }).eq("read", false);
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    setUnreadCount(0);
-  };
+          const channel = supabase
+              .channel("notifications-user")
+              .on(
+                  "postgres_changes",
+                  {
+                      event: "INSERT",
+                      schema: "public",
+                      table: "notifications",
+                      filter: `user_id=eq.${userId}`,
+                  },
+                  (payload) => {
+                      const notif = payload.new as Notification;
+                      setNotifications(prev => [notif, ...prev]);
+                      setUnreadCount(prev => prev + 1);
+                  }
+              )
+              .subscribe();
 
-  const handleLogout = async () => {
+          return () => {
+              supabase.removeChannel(channel);
+          };
+      }, [userId]);
+
+
+      const fetchNotifications = async (uid: string) => {
+          const { data } = await supabase
+              .from("notifications")
+              .select("*")
+              .eq("user_id", uid)
+              .order("created_at", { ascending: false })
+              .limit(10);
+
+          if (data) {
+              setNotifications(data);
+              setUnreadCount(data.filter(n => !n.read).length);
+          }
+      };
+
+
+      const markAsRead = async (id: string) => {
+          if (!userId) return;
+
+          await supabase
+              .from("notifications")
+              .update({ read: true })
+              .eq("id", id)
+              .eq("user_id", userId);
+
+          setNotifications(prev =>
+              prev.map(n => n.id === id ? { ...n, read: true } : n)
+          );
+          setUnreadCount(prev => Math.max(0, prev - 1));
+      };
+
+
+      const markAllAsRead = async () => {
+          if (!userId) return;
+
+          await supabase
+              .from("notifications")
+              .update({ read: true })
+              .eq("user_id", userId)
+              .eq("read", false);
+
+          setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+          setUnreadCount(0);
+      };
+
+
+      const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/");
   };
@@ -336,9 +376,9 @@ interface Notification {
                 </div>
               </PopoverContent>
             </Popover>
-            
+
             <div className="h-8 w-[1px] bg-blue-100 dark:bg-blue-900/30 mx-2" />
-            
+
             <Link href="/dashboard/profile" className="flex items-center gap-2 px-1 hover:opacity-80 transition-opacity">
               <div className="hidden sm:flex flex-col items-end">
                 <span className="text-sm font-bold text-blue-900 dark:text-white leading-none">
@@ -373,7 +413,7 @@ interface Notification {
               <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
               <div className="absolute bottom-0 left-0 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl" />
             </div>
-            
+
               <div className="relative z-10 max-w-7xl mx-auto">
                 {children}
               </div>

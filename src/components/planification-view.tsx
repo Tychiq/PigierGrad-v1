@@ -130,6 +130,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
         const { data, error } = await supabase
             .from("soutenances")
             .select("*")
+            .eq("is_merged", false)
             .ilike("diploma_type", diplomaType)
             .order("created_at", { ascending: false });
 
@@ -268,48 +269,55 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
 
   const activeSpecialities = diplomaType === "Licence" ? LICENCE_SPECIALITIES : MASTER_SPECIALITIES;
 
-  const binomeCandidates = useMemo(() => {
-    if (!targetBinomeItem) return [];
-    return data.filter(item => 
-      item.id !== targetBinomeItem.id && 
-      !item.nom2 && 
-      (`${item.nom} ${item.prenoms} ${item.matricule}`.toLowerCase().includes(binomeSearch.toLowerCase()))
-    );
-  }, [data, targetBinomeItem, binomeSearch]);
+    const binomeCandidates = useMemo(() => {
+        if (!targetBinomeItem) return [];
+
+        return data.filter(item =>
+            item.id !== targetBinomeItem.id &&
+            !item.is_merged &&
+            !item.matricule2 &&
+            (`${item.nom} ${item.prenoms} ${item.matricule}`.toLowerCase().includes(binomeSearch.toLowerCase()))
+        );
+    }, [data, targetBinomeItem, binomeSearch]);
+
 
     const handleAddBinome = async (selectedStudent: Soutenance) => {
-      if (!targetBinomeItem) return;
-      
-      try {
-        const { error: updateError } = await supabase
-          .from("soutenances")
-          .update({
-            matricule2: selectedStudent.matricule,
-            nom2: selectedStudent.nom,
-            prenoms2: selectedStudent.prenoms,
-            date_naissance2: selectedStudent.date_naissance,
-            lieu_naissance2: selectedStudent.lieu_naissance
-          })
-          .eq("id", targetBinomeItem.id);
-  
-        if (updateError) throw updateError;
-  
-        const { error: deleteError } = await supabase
-          .from("soutenances")
-          .delete()
-          .eq("id", selectedStudent.id);
-  
-        if (deleteError) throw deleteError;
-  
-        toast.success(`${selectedStudent.nom} ${selectedStudent.prenoms} a été ajouté en binôme`);
-        setIsBinomeDialogOpen(false);
-        setTargetBinomeItem(null);
-        setBinomeSearch("");
-        fetchData();
-      } catch (err: any) {
-        toast.error(err.message);
-      }
+        if (!targetBinomeItem) return;
+
+        try {
+            // 1) Add second student to the target card
+            const { error: updateTargetError } = await supabase
+                .from("soutenances")
+                .update({
+                    matricule2: selectedStudent.matricule,
+                    nom2: selectedStudent.nom,
+                    prenoms2: selectedStudent.prenoms,
+                    date_naissance2: selectedStudent.date_naissance,
+                    lieu_naissance2: selectedStudent.lieu_naissance
+                })
+                .eq("id", targetBinomeItem.id);
+
+            if (updateTargetError) throw updateTargetError;
+
+            // 2) Mark second student as merged (DO NOT DELETE)
+            const { error: mergeError } = await supabase
+                .from("soutenances")
+                .update({ is_merged: true })
+                .eq("id", selectedStudent.id);
+
+            if (mergeError) throw mergeError;
+
+            toast.success(`${selectedStudent.nom} ${selectedStudent.prenoms} ajouté en binôme`);
+
+            setIsBinomeDialogOpen(false);
+            setTargetBinomeItem(null);
+            setBinomeSearch("");
+            fetchData();
+        } catch (err: any) {
+            toast.error(err.message);
+        }
     };
+
 
     const downloadPDF = async () => {
       try {
