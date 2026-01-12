@@ -4,13 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2f4ce161-c92f-4698-8da4-b74296395695" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.orchids/orchids.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/dashboard/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/dashboard/layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/planification-view.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/planification-view.tsx" afterDir="false" />
-    </list>
+    <list default="true" id="2f4ce161-c92f-4698-8da4-b74296395695" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -96,7 +90,7 @@
       <workItem from="1767710853183" duration="2757000" />
       <workItem from="1767894870431" duration="1574000" />
       <workItem from="1768067962667" duration="4252000" />
-      <workItem from="1768233386241" duration="4078000" />
+      <workItem from="1768233386241" duration="4608000" />
     </task>
     <servers />
   </component>
