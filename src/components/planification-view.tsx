@@ -92,6 +92,7 @@ interface Soutenance {
   speciality?: string;
   session_month?: string;
   session_year?: string;
+  is_merged?: boolean;
 }
 
 const ITEMS_PER_PAGE = 8;
@@ -129,7 +130,39 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
         setLoading(true);
         const { data, error } = await supabase
             .from("soutenances")
-            .select("*")
+            .select(`
+    id,
+    matricule,
+    nom,
+    prenoms,
+    date_naissance,
+    lieu_naissance,
+    matricule2,
+    nom2,
+    prenoms2,
+    date_naissance2,
+    lieu_naissance2,
+    theme,
+    directeur,
+    grade_directeur,
+    date_depot,
+    jury,
+    salle,
+    date_soutenance,
+    heure_soutenance,
+    president,
+    grade_president,
+    examinateur,
+    grade_examinateur,
+    rapporteur,
+    grade_rapporteur,
+    diploma_type,
+    speciality,
+    session_month,
+    session_year,
+    is_merged,
+    created_at
+  `)
             .eq("is_merged", false)
             .ilike("diploma_type", diplomaType)
             .order("created_at", { ascending: false });
@@ -172,48 +205,50 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
     return Array.from(dirs);
   }, [data]);
 
-  const handleSave = async () => {
-    try {
-      const finalForm = {
-        ...form,
-        session_month: form.session_month || sessionMonth,
-        session_year: form.session_year || sessionYear
-      };
+    const handleSave = async () => {
+      try {
+          const finalForm = {
+              ...form,
+              speciality: form.speciality || null,
+              session_month: form.session_month || sessionMonth,
+              session_year: form.session_year || sessionYear
+          };
 
-      if (editingItem) {
-        const { error } = await supabase
-          .from("soutenances")
-          .update(finalForm)
-          .eq("id", editingItem.id);
-        if (error) throw error;
-        toast.success("Mis à jour avec succès");
-        
-        await supabase.from("notifications").insert({
-          title: "Soutenance Modifiée",
-          message: `Les informations de ${form.nom} ${form.prenoms}${form.nom2 ? ' & ' + form.nom2 : ''} ont été mises à jour.`,
-          type: "info"
-        });
-      } else {
-        const { error } = await supabase
-          .from("soutenances")
-          .insert({ ...finalForm, diploma_type: diplomaType });
-        if (error) throw error;
-        toast.success("Ajouté avec succès");
-        
-        await supabase.from("notifications").insert({
-          title: "Nouvelle Inscription",
-          message: `${form.nom} ${form.prenoms}${form.nom2 ? ' & ' + form.nom2 : ''} a été ajouté(e) au planning ${diplomaType}.`,
-          type: "success"
-        });
+        if (editingItem) {
+          const { error } = await supabase
+            .from("soutenances")
+            .update(finalForm)
+            .eq("id", editingItem.id);
+          if (error) throw error;
+          toast.success("Mis à jour avec succès");
+          
+          await supabase.from("notifications").insert({
+            title: "Soutenance Modifiée",
+            message: `Les informations de ${form.nom} ${form.prenoms}${form.nom2 ? ' & ' + form.nom2 : ''} ont été mises à jour.`,
+            type: "info"
+          });
+        } else {
+          const { error } = await supabase
+            .from("soutenances")
+            .insert({ ...finalForm, diploma_type: diplomaType });
+          if (error) throw error;
+          toast.success("Ajouté avec succès");
+          
+          await supabase.from("notifications").insert({
+            title: "Nouvelle Inscription",
+            message: `${form.nom} ${form.prenoms}${form.nom2 ? ' & ' + form.nom2 : ''} a été ajouté(e) au planning ${diplomaType}.`,
+            type: "success"
+          });
+        }
+        setIsDialogOpen(false);
+        setEditingItem(null);
+        setForm({});
+        await fetchData();
+      } catch (err: any) {
+        toast.error(err.message);
       }
-      setIsDialogOpen(false);
-      setEditingItem(null);
-      setForm({});
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message);
-    }
-  };
+    };
+
 
   const handleDelete = async (id: string, name: string) => {
     const { error } = await supabase.from("soutenances").delete().eq("id", id);
@@ -262,7 +297,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
         setEditingItem(item);
         setForm({
             ...item,
-            speciality: item.speciality || ""  // ensure speciality is not undefined
+            speciality: item.speciality ?? ""
         });
         setIsDialogOpen(true);
     };
@@ -283,6 +318,24 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
 
     const handleAddBinome = async (selectedStudent: Soutenance) => {
         if (!targetBinomeItem) return;
+
+        // Optimistic update
+        const previousData = [...data];
+        const updatedData = data.map(item => {
+            if (item.id === targetBinomeItem.id) {
+                return {
+                    ...item,
+                    matricule2: selectedStudent.matricule,
+                    nom2: selectedStudent.nom,
+                    prenoms2: selectedStudent.prenoms,
+                    date_naissance2: selectedStudent.date_naissance,
+                    lieu_naissance2: selectedStudent.lieu_naissance
+                };
+            }
+            return item;
+        }).filter(item => item.id !== selectedStudent.id);
+        
+        setData(updatedData);
 
         try {
             // 1) Add second student to the target card
@@ -312,8 +365,9 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
             setIsBinomeDialogOpen(false);
             setTargetBinomeItem(null);
             setBinomeSearch("");
-            fetchData();
+            await fetchData();
         } catch (err: any) {
+            setData(previousData); // Rollback
             toast.error(err.message);
         }
     };
@@ -781,15 +835,16 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                             <span>Né(e) le {formatDate(item.date_naissance)} à {item.lieu_naissance || "???"}</span>
                           </div>
                         </div>
-                        {item.nom2 && (
-                          <div className="pt-2 border-t border-blue-50 dark:border-blue-900/10">
-                            <h4 className="text-xs font-black text-blue-300 uppercase tracking-widest mb-1">Binôme</h4>
-                            <p className="text-sm font-bold text-blue-800 dark:text-blue-100 uppercase">
-                              {item.nom2} {item.prenoms2} ({item.matricule2})
-                            </p>
-                            <p className="text-[10px] text-blue-400">Né(e) le {formatDate(item.date_naissance2)} à {item.lieu_naissance2}</p>
-                          </div>
-                        )}
+                          {item.nom2 && item.nom2.trim() !== '' && (
+                            <div className="pt-2 border-t border-blue-50 dark:border-blue-900/10">
+                              <h4 className="text-xs font-black text-blue-300 uppercase tracking-widest mb-1">Binôme</h4>
+                              <p className="text-sm font-bold text-blue-800 dark:text-blue-100 uppercase">
+                                {item.nom2} {item.prenoms2} ({item.matricule2})
+                              </p>
+                              <p className="text-[10px] text-blue-400">Né(e) le {formatDate(item.date_naissance2)} à {item.lieu_naissance2}</p>
+                            </div>
+                          )}
+
                       </div>
 
                       <div className="lg:col-span-5 space-y-4 lg:border-l lg:border-r border-blue-50 dark:border-blue-900/20 lg:px-6">
