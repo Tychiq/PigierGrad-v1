@@ -206,47 +206,41 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
   }, [data]);
 
     const handleSave = async () => {
-      try {
-          const finalForm = {
-              ...form,
-              speciality: form.speciality || null,
-              session_month: form.session_month || sessionMonth,
-              session_year: form.session_year || sessionYear
-          };
+        try {
+            const finalForm = {
+                ...form,
+                diploma_type: diplomaType, // 🔥 THIS FIXES MASTER
+                session_month: form.session_month || sessionMonth,
+                session_year: form.session_year || sessionYear
+            };
 
-        if (editingItem) {
-          const { error } = await supabase
-            .from("soutenances")
-            .update(finalForm)
-            .eq("id", editingItem.id);
-          if (error) throw error;
-          toast.success("Mis à jour avec succès");
-          
-          await supabase.from("notifications").insert({
-            title: "Soutenance Modifiée",
-            message: `Les informations de ${form.nom} ${form.prenoms}${form.nom2 ? ' & ' + form.nom2 : ''} ont été mises à jour.`,
-            type: "info"
-          });
-        } else {
-          const { error } = await supabase
-            .from("soutenances")
-            .insert({ ...finalForm, diploma_type: diplomaType });
-          if (error) throw error;
-          toast.success("Ajouté avec succès");
-          
-          await supabase.from("notifications").insert({
-            title: "Nouvelle Inscription",
-            message: `${form.nom} ${form.prenoms}${form.nom2 ? ' & ' + form.nom2 : ''} a été ajouté(e) au planning ${diplomaType}.`,
-            type: "success"
-          });
+            if (editingItem) {
+                const { error } = await supabase
+                    .from("soutenances")
+                    .update(finalForm)
+                    .eq("id", editingItem.id);
+                if (error) throw error;
+                toast.success("Mis à jour avec succès");
+            } else {
+                const { error } = await supabase
+                    .from("soutenances")
+                    .insert({ ...finalForm, diploma_type: diplomaType });
+                if (error) throw error;
+                toast.success("Ajouté avec succès");
+            }
+
+            setIsDialogOpen(false);
+            setEditingItem(null);
+            setForm({});
+
+            await fetchData();
+            // Reset filter so the updated item shows
+            setSelectedSpeciality("all");
+            setCurrentPage(1);
+
+        } catch (err: any) {
+            toast.error(err.message);
         }
-        setIsDialogOpen(false);
-        setEditingItem(null);
-        setForm({});
-        await fetchData();
-      } catch (err: any) {
-        toast.error(err.message);
-      }
     };
 
 
@@ -870,7 +864,9 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                             <span className="text-[10px] font-black text-blue-300 uppercase">Spécialité</span>
                             <div className="flex items-center gap-2">
                               <GraduationCap className="w-3 h-3 text-purple-400" />
-                              <span className="text-xs font-bold text-purple-600">{item.speciality}</span>
+                                <span className="text-xs font-bold text-purple-600">
+                                    {item.speciality || "Non définie"}
+                                </span>
                             </div>
                           </div>
                         </div>
