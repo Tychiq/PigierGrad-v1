@@ -34,7 +34,20 @@ export default function InsertionPage() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [importCount, setImportCount] = useState(0);
 
-  const processExcel = async (file: File) => {
+
+    function excelDateToISO(value: any): string | null {
+        if (typeof value !== "number") return null;
+
+        const ms = (value - 25569) * 86400 * 1000;
+        const date = new Date(ms);
+
+        if (isNaN(date.getTime())) return null;
+
+        return date.toISOString().split("T")[0]; // YYYY-MM-DD
+    }
+
+
+    const processExcel = async (file: File) => {
     setLoading(true);
     setFileName(file.name);
     
@@ -51,20 +64,20 @@ export default function InsertionPage() {
           matricule: row["Matricule"] || "",
           nom: row["Nom"] || "",
           prenoms: row["Prenoms"] || "",
-          date_naissance: row["DateNaiss"] || "",
+            date_naissance: excelDateToISO(row["DateNaiss"]),
           lieu_naissance: row["LieuNaiss"] || "",
           matricule2: row["Matricule2"] || "",
           nom2: row["Nom2"] || "",
           prenoms2: row["Prenoms2"] || "",
-          date_naissance2: row["DateNaiss2"] || "",
+            date_naissance2: excelDateToISO(row["DateNaiss2"]),
           lieu_naissance2: row["LieuNaiss2"] || "",
           theme: row["Theme"] || "",
           directeur: row["Directeur"] || "",
           grade_directeur: row["GradeDirecteur"] || "",
-          date_depot: row["DateDepot"] || "",
+            date_depot: excelDateToISO(row["DateDepot"]),
           jury: row["Jury"] || "",
           salle: row["Salle"] || "",
-          date_soutenance: row["Date"] || "",
+            date_soutenance: excelDateToISO(row["Date"]),
           heure_soutenance: row["Heure"] || "",
           president: row["Président"] || row["President"] || "",
           grade_president: row["GradePrésident"] || row["GradePresident"] || "",
