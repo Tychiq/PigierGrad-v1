@@ -1,32 +1,35 @@
 export function formatDate(
     value: string | number | null | undefined
 ): string {
-    if (!value) return "......../......../202...";
+    if (value === null || value === undefined || value === "") {
+        return "......../......../202...";
+    }
 
     try {
-        // ✅ CASE 1: Excel numeric date (e.g. 44927)
+        // ✅ Excel numeric date (e.g. 48756)
         if (typeof value === "number") {
-            const excelEpoch = new Date(1899, 11, 30);
-            const date = new Date(excelEpoch.getTime() + value * 86400000);
-            return date.toLocaleDateString("fr-FR");
-        }
+            const excelEpochOffset = 25569; // days between 1899-12-30 and 1970-01-01
+            const ms = (value - excelEpochOffset) * 86400 * 1000;
+            const date = new Date(ms);
 
-        // ✅ CASE 2: DD/MM/YYYY or DD-MM-YYYY (Excel text)
-        if (typeof value === "string" && /\/|-/.test(value)) {
-            const parts = value.split(/[-/]/);
-            if (parts.length === 3 && parts[0].length <= 2) {
-                const [d, m, y] = parts;
-                return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
+            if (!isNaN(date.getTime())) {
+                return date.toLocaleDateString("fr-FR");
             }
         }
 
-        // ✅ CASE 3: ISO or valid JS date
+        // ✅ Excel text date (DD/MM/YYYY or DD-MM-YYYY)
+        if (typeof value === "string" && /^[0-9]{1,2}[\/-][0-9]{1,2}[\/-][0-9]{4}$/.test(value)) {
+            const [d, m, y] = value.split(/[-/]/);
+            return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
+        }
+
+        // ✅ ISO / JS date string
         const date = new Date(value);
         if (!isNaN(date.getTime())) {
             return date.toLocaleDateString("fr-FR");
         }
 
-        return value;
+        return String(value);
     } catch {
         return String(value);
     }
