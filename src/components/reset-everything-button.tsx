@@ -19,8 +19,8 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 interface ResetEverythingButtonProps {
-  diplomaType: string;
-  target: "planning" | "directors";
+    diplomaType: string;
+    target: "planning" | "directors" | "jury"; // add "jury" here
 }
 
 export function ResetEverythingButton({ diplomaType = "", target }: ResetEverythingButtonProps) {

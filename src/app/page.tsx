@@ -18,6 +18,7 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [isResetting, setIsResetting] = useState(false);
+    const [role, setRole] = useState<"admin" | "collaborator">("collaborator");
   const router = useRouter();
 
   useEffect(() => {
@@ -30,26 +31,29 @@ export default function AuthPage() {
     checkUser();
   }, [router]);
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
-      },
-    });
+    const handleSignUp = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
 
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Inscription réussie ! Veuillez vérifier votre e-mail.");
-    }
-    setLoading(false);
-  };
+        const { error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    full_name: fullName,
+                    role: role, // ✅ IMPORTANT
+                },
+            },
+        });
+
+        if (error) {
+            toast.error(error.message);
+        } else {
+            toast.success("Inscription réussie !");
+        }
+
+        setLoading(false);
+    };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -248,6 +252,37 @@ export default function AuthPage() {
                             />
                           </div>
                         </div>
+                          <div className="space-y-2">
+                              <Label className="text-xs font-black uppercase tracking-widest text-blue-400">
+                                  Rôle
+                              </Label>
+
+                              <div className="flex gap-3">
+                                  <button
+                                      type="button"
+                                      onClick={() => setRole("admin")}
+                                      className={`flex-1 h-12 rounded-xl font-bold text-sm transition-all ${
+                                          role === "admin"
+                                              ? "bg-blue-600 text-white"
+                                              : "bg-blue-50 dark:bg-blue-900/20 text-blue-600"
+                                      }`}
+                                  >
+                                      Admin
+                                  </button>
+
+                                  <button
+                                      type="button"
+                                      onClick={() => setRole("collaborator")}
+                                      className={`flex-1 h-12 rounded-xl font-bold text-sm transition-all ${
+                                          role === "collaborator"
+                                              ? "bg-blue-600 text-white"
+                                              : "bg-blue-50 dark:bg-blue-900/20 text-blue-600"
+                                      }`}
+                                  >
+                                      Collaborateur
+                                  </button>
+                              </div>
+                          </div>
                         <Button
                           type="submit"
                           className="w-full h-14 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-black uppercase tracking-widest text-sm shadow-lg shadow-blue-600/30 transition-all hover:shadow-xl hover:shadow-blue-600/40"

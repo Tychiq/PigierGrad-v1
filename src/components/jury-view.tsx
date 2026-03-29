@@ -8,11 +8,10 @@ import {
     Users,
     Download,
     Search,
-    UserCheck,
     Trophy,
+    Sparkles,
     ChevronLeft,
-    ChevronRight,
-    Sparkles
+    ChevronRight
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -31,7 +30,7 @@ import { formatDate } from "@/lib/utils";
 import { ResetEverythingButton } from "./reset-everything-button";
 import { toast } from "sonner";
 
-interface DirectorStats {
+interface JuryMemberStats {
     name: string;
     grade: string;
     count: number;
@@ -39,72 +38,86 @@ interface DirectorStats {
 
 const ITEMS_PER_PAGE = 10;
 
-export function DirectorsView({ diplomaType }: { diplomaType: string }) {
-    const [directors, setDirectors] = useState<DirectorStats[]>([]);
+export function JuryView({ diplomaType }: { diplomaType: string }) {
+    const [members, setMembers] = useState<JuryMemberStats[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
-        const fetchDirectors = async () => {
+        const fetchMembers = async () => {
             setLoading(true);
 
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from("soutenances")
-                .select("directeur, grade_directeur")
-                .eq("diploma_type", diplomaType);
+                .select(`
+    id,
+    nom,
+    prenoms,
+    president,
+    grade_president,
+    examinateur,
+    grade_examinateur,
+    rapporteur,
+    grade_rapporteur
+  `)
+                .eq("diploma_type", "Licence")
+                .order("date_soutenance", { ascending: true });
 
             if (data) {
-                const counts: Record<string, DirectorStats> = {};
+                const counts: Record<string, JuryMemberStats> = {};
 
                 data.forEach(item => {
-                    if (item.directeur) {
-                        const key = `${item.directeur}__${item.grade_directeur || ""}`;
+                    const roles = [
+                        { name: item.president, grade: item.grade_president },
+                        { name: item.examinateur, grade: item.grade_examinateur },
+                        { name: item.rapporteur, grade: item.grade_rapporteur }
+                    ];
 
-                        if (!counts[key]) {
-                            counts[key] = {
-                                name: item.directeur,
-                                grade: item.grade_directeur || "",
-                                count: 0
-                            };
+                    roles.forEach(role => {
+                        if (role.name) {
+                            const key = `${role.name}__${role.grade || ""}`;
+                            if (!counts[key]) {
+                                counts[key] = {
+                                    name: role.name,
+                                    grade: role.grade || "",
+                                    count: 0
+                                };
+                            }
+                            counts[key].count += 1;
                         }
-
-                        counts[key].count += 1;
-                    }
+                    });
                 });
 
                 const stats = Object.values(counts).sort((a, b) => b.count - a.count);
-                setDirectors(stats);
+                setMembers(stats);
             }
 
             setLoading(false);
         };
 
-        fetchDirectors();
+        fetchMembers();
     }, [diplomaType]);
 
-    const filteredDirectors = directors.filter(d =>
-        d.name.toLowerCase().includes(search.toLowerCase())
+    const filteredMembers = members.filter(m =>
+        m.name.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const totalPages = Math.ceil(filteredMembers.length / ITEMS_PER_PAGE);
+    const paginatedMembers = filteredMembers.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
     );
 
     async function downloadPDF() {
         try {
-            if (filteredDirectors.length === 0) {
+            if (filteredMembers.length === 0) {
                 toast.error("Aucune donnée à exporter.");
                 return;
             }
 
             toast.info("Génération du PDF en cours...");
-            const doc = new jsPDF({
-                orientation: "portrait",
-                unit: "mm",
-                format: "a4"
-            });
-
-            doc.setDrawColor(30, 64, 175);
-            doc.setLineWidth(1);
-            doc.line(10, 10, 200, 10);
-            doc.line(10, 45, 200, 45);
+            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
             doc.setFontSize(26);
             doc.setTextColor(30, 64, 175);
@@ -119,14 +132,14 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
             doc.setFontSize(16);
             doc.setTextColor(15, 23, 42);
             doc.setFont("helvetica", "bold");
-            doc.text(`LISTE DES DIRECTEURS - ${diplomaType.toUpperCase()}`, 105, 55, { align: "center" });
+            doc.text(`LISTE DES MEMBRES DU JURY - ${diplomaType.toUpperCase()}`, 105, 55, { align: "center" });
 
             doc.setFontSize(9);
             doc.setTextColor(100, 116, 139);
             doc.setFont("helvetica", "normal");
             const now = new Date();
             doc.text(
-                `Document généré le ${formatDate(now.toISOString())} à ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`,
+                `Document généré le ${formatDate(now.toISOString())} à ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`,
                 105,
                 62,
                 { align: "center" }
@@ -134,67 +147,30 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
 
             autoTable(doc, {
                 startY: 70,
-                head: [['N°', 'NOM DU DIRECTEUR', 'GRADE', 'NOMBRE D\'ENCADREMENTS']],
-                body: filteredDirectors.map((d, i) => [
+                head: [['N°', 'NOM DU MEMBRE', 'GRADE', 'NOMBRE D\'SOUTENANCES']],
+                body: filteredMembers.map((m, i) => [
                     i + 1,
-                    d.name.toUpperCase(),
-                    d.grade || "-",
-                    d.count
+                    m.name.toUpperCase(),
+                    m.grade || "-",
+                    m.count
                 ]),
                 theme: 'striped',
-                headStyles: {
-                    fillColor: [30, 64, 175],
-                    textColor: [255, 255, 255],
-                    fontSize: 10,
-                    fontStyle: 'bold',
-                    halign: 'center',
-                    cellPadding: 4
-                },
-                bodyStyles: {
-                    fontSize: 9,
-                    halign: 'center',
-                    cellPadding: 3,
-                    textColor: [51, 65, 85]
-                },
-                columnStyles: {
-                    0: { cellWidth: 20, halign: 'center' },
-                    1: { cellWidth: 'auto', halign: 'left', fontStyle: 'bold' },
-                    2: { cellWidth: 40, halign: 'center' },
-                    3: { cellWidth: 40, halign: 'center' }
-                },
-                margin: { top: 70, left: 15, right: 15 },
-                didDrawPage: (data) => {
-                    doc.setFontSize(8);
-                    doc.setTextColor(148, 163, 184);
-                    doc.text("PIGIERGRAD - Plateforme de gestion des soutenances", 105, 285, { align: "center" });
-                    doc.text(`Page ${data.pageNumber}`, 195, 285, { align: "right" });
-                }
+                headStyles: { fillColor: [30, 64, 175], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold', halign: 'center' },
+                bodyStyles: { fontSize: 9, halign: 'center', textColor: [51, 65, 85] }
             });
 
             const timestamp = new Date().toISOString().split('T')[0];
-            const filename = `PIGIERGRAD_Directeurs_${diplomaType}_${timestamp}.pdf`;
-
+            const filename = `PIGIERGRAD_Jury_${diplomaType}_${timestamp}.pdf`;
             const pdfBlob = doc.output("blob");
             triggerDownload(pdfBlob, filename)
-                .then(() => {
-                    toast.success("Le PDF a été téléchargé avec succès !");
-                })
-                .catch((error) => {
-                    console.error(error);
-                    toast.error("Erreur lors du téléchargement.");
-                });
+                .then(() => toast.success("Le PDF a été téléchargé avec succès !"))
+                .catch(() => toast.error("Erreur lors du téléchargement."));
 
         } catch (error) {
             console.error(error);
             toast.error("Une erreur est survenue.");
         }
     }
-
-    const totalPages = Math.ceil(filteredDirectors.length / ITEMS_PER_PAGE);
-    const paginatedDirectors = filteredDirectors.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
-        currentPage * ITEMS_PER_PAGE
-    );
 
     return (
         <div className="space-y-10">
@@ -204,26 +180,26 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
                     <div className="flex items-center gap-2 mb-1">
                         <Sparkles className="w-5 h-5 text-yellow-500" />
                         <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">
-                        Statistiques d'Encadrement
-                    </span>
+                            Statistiques des Membres du Jury
+                        </span>
                     </div>
                     <h1 className="text-4xl font-black tracking-tighter text-blue-900 dark:text-white uppercase">
-                        Directeurs{' '}
+                        Jury{' '}
                         <span className={diplomaType === "Licence" ? "text-blue-500" : "text-yellow-500"}>
-                        {diplomaType}
-                    </span>
+                            {diplomaType}
+                        </span>
                     </h1>
                     <p className="text-blue-600/70 dark:text-blue-400 font-medium">
-                        {directors.length} directeur(s) référencé(s)
+                        {members.length} membre(s) référencé(s)
                     </p>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <ResetEverythingButton diplomaType={diplomaType} target="directors" />
+                    <ResetEverythingButton diplomaType={diplomaType} target="jury" />
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
                         <Input
-                            placeholder="Rechercher un directeur..."
+                            placeholder="Rechercher un jury..."
                             className="pl-10 h-12 w-64 rounded-xl border-none bg-white dark:bg-[#0f1629] shadow-lg focus:ring-2 focus:ring-blue-500"
                             value={search}
                             onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
@@ -244,13 +220,13 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
                 <Card className="border-none shadow-lg bg-gradient-to-br from-blue-600 to-blue-800 dark:from-blue-800 dark:to-blue-950 text-white rounded-3xl overflow-hidden">
                     <CardContent className="p-6 flex items-center gap-6">
                         <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center">
-                            <UserCheck className="w-7 h-7" />
+                            <Users className="w-7 h-7" />
                         </div>
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-widest text-blue-200">
-                                Total Directeurs
+                                Total Jurys
                             </p>
-                            <h3 className="text-4xl font-black tracking-tighter">{directors.length}</h3>
+                            <h3 className="text-4xl font-black tracking-tighter">{members.length}</h3>
                         </div>
                     </CardContent>
                 </Card>
@@ -262,10 +238,10 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
                         </div>
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-widest text-blue-400">
-                                Top Encadreur
+                                Top Jury
                             </p>
                             <h3 className="text-xl font-black text-blue-900 dark:text-white uppercase truncate max-w-[200px]">
-                                {directors[0]?.name || "N/A"}
+                                {members[0]?.name || "N/A"}
                             </h3>
                         </div>
                     </CardContent>
@@ -278,10 +254,10 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
                         </div>
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-widest text-blue-400">
-                                Total Encadrements
+                                Total Soutenances
                             </p>
                             <h3 className="text-4xl font-black text-blue-900 dark:text-white tracking-tighter">
-                                {directors.reduce((acc, curr) => acc + curr.count, 0)}
+                                {members.reduce((acc, curr) => acc + curr.count, 0)}
                             </h3>
                         </div>
                     </CardContent>
@@ -298,10 +274,10 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
                                     #
                                 </TableHead>
                                 <TableHead className="font-black uppercase tracking-widest text-[10px] text-blue-400">
-                                    Nom du Directeur
+                                    Nom du Jury
                                 </TableHead>
                                 <TableHead className="text-right font-black uppercase tracking-widest text-[10px] text-blue-400 pr-10">
-                                    Encadrements
+                                    Soutenances
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
@@ -314,7 +290,7 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
                                         </TableCell>
                                     </TableRow>
                                 ))
-                            ) : paginatedDirectors.length === 0 ? (
+                            ) : paginatedMembers.length === 0 ? (
                                 <TableRow className="h-64">
                                     <TableCell colSpan={3} className="text-center">
                                         <div className="flex flex-col items-center gap-4">
@@ -322,17 +298,17 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
                                                 <Users className="w-10 h-10 text-blue-300" />
                                             </div>
                                             <p className="text-blue-900 dark:text-white font-bold uppercase tracking-widest text-sm">
-                                                Aucun directeur trouvé
+                                                Aucun jury trouvé
                                             </p>
                                         </div>
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                paginatedDirectors.map((director, index) => {
+                                paginatedMembers.map((member, index) => {
                                     const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index;
                                     return (
                                         <motion.tr
-                                            key={director.name}
+                                            key={member.name}
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
                                             transition={{ delay: index * 0.03 }}
@@ -344,24 +320,24 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
                                             <TableCell>
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 flex items-center justify-center font-black text-sm text-blue-600 dark:text-blue-300 group-hover:from-blue-600 group-hover:to-blue-700 group-hover:text-white transition-all">
-                                                        {director.name.charAt(0)}
+                                                        {member.name.charAt(0)}
                                                     </div>
                                                     <span className="font-bold text-blue-900 dark:text-white group-hover:translate-x-1 transition-transform inline-block">
-                                                    {director.name}
-                                                        {director.grade && (
-                                                            <span className="ml-2 text-xs text-blue-400">({director.grade})</span>
+                                                        {member.name}
+                                                        {member.grade && (
+                                                            <span className="ml-2 text-xs text-blue-400">({member.grade})</span>
                                                         )}
-                                                </span>
+                                                    </span>
                                                     {globalIndex === 0 && (
                                                         <span className="text-[10px] font-black bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600 px-2 py-0.5 rounded-full">
-                                                        TOP
-                                                    </span>
+                                                            TOP
+                                                        </span>
                                                     )}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right pr-10">
                                             <span className="inline-flex items-center justify-center w-12 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 font-black text-blue-900 dark:text-white group-hover:bg-blue-600 group-hover:text-white transition-all">
-                                                {director.count}
+                                                {member.count}
                                             </span>
                                             </TableCell>
                                         </motion.tr>
@@ -388,25 +364,17 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
 
                     {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                         let page;
-                        if (totalPages <= 5) {
-                            page = i + 1;
-                        } else if (currentPage <= 3) {
-                            page = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                            page = totalPages - 4 + i;
-                        } else {
-                            page = currentPage - 2 + i;
-                        }
+                        if (totalPages <= 5) page = i + 1;
+                        else if (currentPage <= 3) page = i + 1;
+                        else if (currentPage >= totalPages - 2) page = totalPages - 4 + i;
+                        else page = currentPage - 2 + i;
+
                         return (
                             <Button
                                 key={page}
                                 variant={currentPage === page ? "default" : "outline"}
                                 onClick={() => setCurrentPage(page)}
-                                className={`rounded-xl w-10 h-10 ${
-                                    currentPage === page
-                                        ? "bg-blue-600 text-white"
-                                        : "border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30"
-                                }`}
+                                className={`rounded-xl w-10 h-10 ${currentPage === page ? 'bg-blue-600 text-white' : 'border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30'}`}
                             >
                                 {page}
                             </Button>

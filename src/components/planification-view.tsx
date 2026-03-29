@@ -5,16 +5,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { 
-  Plus, 
-  Search, 
-  Calendar, 
-  MapPin, 
-  Clock, 
-  User, 
+import {
+  Plus,
+  Search,
+  Calendar,
+  MapPin,
+  Clock,
+  User,
   UserPlus,
-  Edit2, 
-  Trash2, 
+  Edit2,
+  Trash2,
   GraduationCap,
   ChevronLeft,
   ChevronRight,
@@ -25,11 +25,11 @@ import {
   Info,
   BadgeCheck
 } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
   DialogFooter
 } from "@/components/ui/dialog";
@@ -45,12 +45,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -61,6 +61,7 @@ import { formatDate, formatTime } from "@/lib/utils";
 import { LICENCE_SPECIALITIES, MASTER_SPECIALITIES } from "@/lib/constants";
 import { ResetEverythingButton } from "./reset-everything-button";
 import { Download } from "lucide-react";
+import { useUserRole } from "@/lib/useUserRole";
 
 interface Soutenance {
   id: string;
@@ -107,16 +108,24 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
   const [editingItem, setEditingItem] = useState<Soutenance | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [form, setForm] = useState<Partial<Soutenance>>({});
+
   const [selectedSpeciality, setSelectedSpeciality] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedDirector, setSelectedDirector] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
   const [sessionMonth, setSessionMonth] = useState("");
   const [sessionYear, setSessionYear] = useState("");
+
   const [isBinomeDialogOpen, setIsBinomeDialogOpen] = useState(false);
   const [targetBinomeItem, setTargetBinomeItem] = useState<Soutenance | null>(null);
   const [binomeSearch, setBinomeSearch] = useState("");
   const [itemToDelete, setItemToDelete] = useState<{ id: string, name: string } | null>(null);
+    const role = useUserRole();
+
+    const [selectedSoutenances, setSelectedSoutenances] = useState<Set<string>>(new Set());
+    const [juryNumber, setJuryNumber] = useState<number | "">("");
+
+    const [selectedJury, setSelectedJury] = useState("all");
 
   useEffect(() => {
     const urlSearch = searchParams.get("search");
@@ -125,6 +134,69 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
       setCurrentPage(1);
     }
   }, [searchParams]);
+
+    const toggleSelection = (id: string) => {
+        setSelectedSoutenances(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) newSet.delete(id);
+            else newSet.add(id);
+            return newSet;
+        });
+    };
+
+
+    // Update session for selected or all
+    const updateSession = async () => {
+        const query = supabase.from("soutenances").update({
+            session_month: sessionMonth,
+            session_year: sessionYear
+        });
+
+        if (selectedSoutenances.size > 0) {
+            query.in("id", Array.from(selectedSoutenances));
+        } else {
+            query.eq("diploma_type", diplomaType);
+        }
+
+        const { error } = await query;
+
+        if (error) {
+            toast.error(error.message);
+        } else {
+            toast.success("Session mise à jour");
+            fetchData();
+            setSelectedSoutenances(new Set());
+        }
+    };
+
+// Update jury for selected or all
+    const updateJury = async () => {
+        if (juryNumber === "") {
+            toast.error("Entrer un numéro de jury");
+            return;
+        }
+
+        const query = supabase
+            .from("soutenances")
+            .update({ jury: Number(juryNumber) });
+
+        if (selectedSoutenances.size > 0) {
+            query.in("id", Array.from(selectedSoutenances));
+        } else {
+            query.eq("diploma_type", diplomaType);
+        }
+
+        const { error } = await query;
+
+        if (error) {
+            toast.error(error.message);
+        } else {
+            toast.success("Jury mis à jour");
+            fetchData();
+            setJuryNumber("");
+            setSelectedSoutenances(new Set());
+        }
+    };
 
     const fetchData = async () => {
         setLoading(true);
@@ -176,21 +248,6 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
         setLoading(false);
     };
 
-  const updateSessionForAll = async () => {
-    try {
-      const { error } = await supabase
-        .from("soutenances")
-        .update({ session_month: sessionMonth, session_year: sessionYear })
-        .eq("diploma_type", diplomaType);
-      
-      if (error) throw error;
-      toast.success("Session mise à jour pour tous les étudiants");
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message);
-    }
-  };
-
   useEffect(() => {
     fetchData();
   }, [diplomaType]);
@@ -205,26 +262,60 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
     return Array.from(dirs);
   }, [data]);
 
+    const uniqueJuries = useMemo(() => {
+        const juries = new Set(
+            data.map(item => item.jury).filter(j => j !== null && j !== undefined)
+        );
+        return Array.from(juries);
+    }, [data]);
+
     const handleSave = async () => {
         try {
-            const finalForm = {
+            // 🔐 Role-based field filtering
+            let finalForm: any = {
                 ...form,
-                diploma_type: diplomaType, // 🔥 THIS FIXES MASTER
+                diploma_type: diplomaType,
                 session_month: form.session_month || sessionMonth,
                 session_year: form.session_year || sessionYear
             };
+
+            // 🚫 If collaborator → restrict sensitive fields
+            if (role !== "admin") {
+                finalForm = {
+                    // ONLY allowed fields
+                    matricule: form.matricule,
+                    nom: form.nom,
+                    prenoms: form.prenoms,
+                    date_naissance: form.date_naissance,
+                    lieu_naissance: form.lieu_naissance,
+
+                    matricule2: form.matricule2,
+                    nom2: form.nom2,
+                    prenoms2: form.prenoms2,
+                    date_naissance2: form.date_naissance2,
+                    lieu_naissance2: form.lieu_naissance2,
+
+                    speciality: form.speciality,
+
+                    diploma_type: diplomaType,
+                    session_month: form.session_month || sessionMonth,
+                    session_year: form.session_year || sessionYear
+                };
+            }
 
             if (editingItem) {
                 const { error } = await supabase
                     .from("soutenances")
                     .update(finalForm)
                     .eq("id", editingItem.id);
+
                 if (error) throw error;
                 toast.success("Mis à jour avec succès");
             } else {
                 const { error } = await supabase
                     .from("soutenances")
-                    .insert({ ...finalForm, diploma_type: diplomaType });
+                    .insert(finalForm);
+
                 if (error) throw error;
                 toast.success("Ajouté avec succès");
             }
@@ -234,11 +325,11 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
             setForm({});
 
             await fetchData();
-            // Reset filter so the updated item shows
             setSelectedSpeciality("all");
             setCurrentPage(1);
 
         } catch (err: any) {
+            console.error(err);
             toast.error(err.message);
         }
     };
@@ -263,14 +354,13 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
     return data.filter(item => {
       const matchesSearch = `${item.nom} ${item.prenoms} ${item.theme} ${item.matricule} ${item.nom2 || ""} ${item.prenoms2 || ""}`.toLowerCase().includes(search.toLowerCase());
       const matchesSpeciality = selectedSpeciality === "all" || item.speciality === selectedSpeciality;
-      const matchesStatus = selectedStatus === "all" || 
-        (selectedStatus === "planned" && item.date_soutenance) ||
-        (selectedStatus === "pending" && !item.date_soutenance);
+        const matchesJury =
+            selectedJury === "all" || item.jury?.toString() === selectedJury;
       const matchesDirector = selectedDirector === "all" || item.directeur === selectedDirector;
-      
-      return matchesSearch && matchesSpeciality && matchesStatus && matchesDirector;
+
+        return matchesSearch && matchesSpeciality && matchesDirector && matchesJury;
     });
-  }, [data, search, selectedSpeciality, selectedStatus, selectedDirector]);
+  }, [data, search, selectedSpeciality, selectedJury, selectedDirector]);
 
   const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
   const paginatedData = filteredData.slice(
@@ -278,11 +368,11 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const activeFiltersCount = [selectedSpeciality, selectedStatus, selectedDirector].filter(f => f !== "all").length;
+  const activeFiltersCount = [selectedSpeciality, selectedJury, selectedDirector].filter(f => f !== "all").length;
 
   const clearFilters = () => {
     setSelectedSpeciality("all");
-    setSelectedStatus("all");
+    setSelectedJury("all");
     setSelectedDirector("all");
     setCurrentPage(1);
   };
@@ -328,7 +418,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
             }
             return item;
         }).filter(item => item.id !== selectedStudent.id);
-        
+
         setData(updatedData);
 
         try {
@@ -380,7 +470,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
           unit: "mm",
           format: "a4"
         });
-        
+
         doc.setDrawColor(30, 64, 175);
         doc.setLineWidth(1);
         doc.line(10, 10, 287, 10);
@@ -390,7 +480,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
         doc.setTextColor(30, 64, 175);
         doc.setFont("helvetica", "bold");
         doc.text("PIGIERGRAD - PLANNING DES SOUTENANCES", 148.5, 22, { align: "center" });
-        
+
         doc.setFontSize(14);
         doc.setTextColor(15, 23, 42);
         doc.text(`${diplomaType.toUpperCase()} - SESSION DE ${sessionMonth.toUpperCase()} ${sessionYear}`, 148.5, 30, { align: "center" });
@@ -406,7 +496,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
             `${item.president || '?'}\n${item.examinateur || '?'}\n${item.rapporteur || '?'}`
           ]),
           theme: 'grid',
-          headStyles: { 
+          headStyles: {
             fillColor: [30, 64, 175],
             textColor: [255, 255, 255],
             fontSize: 9,
@@ -432,11 +522,11 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
             doc.text(`Page ${data.pageNumber}`, 287, 205, { align: "right" });
           }
         });
-        
+
         const filename = `Planning_${diplomaType}_${sessionMonth}_${sessionYear}.pdf`;
         const pdfBlob = doc.output('blob');
         await triggerDownload(pdfBlob, filename);
-        
+
         toast.success("Planning exporté avec succès !");
       } catch (error) {
         console.error("PDF Export Error:", error);
@@ -461,7 +551,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
             </h2>
           )}
           <p className="text-blue-600/70 dark:text-blue-400 font-medium">
-            {filteredData.length} étudiant(s) {activeFiltersCount > 0 && `(filtré de ${data.length})`}
+            {filteredData.length} soutenance(s) {activeFiltersCount > 0 && `(filtré de ${data.length})`}
           </p>
         </div>
 
@@ -475,16 +565,33 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                 className="h-9 text-xs rounded-lg border-blue-200"
               />
               <Input 
-                placeholder="Année (ex: 2024)" 
+                placeholder="Année (ex: 2025)"
                 value={sessionYear} 
                 onChange={(e) => setSessionYear(e.target.value)}
                 className="h-9 text-xs rounded-lg border-blue-200"
               />
             </div>
-            <Button size="sm" onClick={updateSessionForAll} className="h-9 px-3 text-[10px] font-bold uppercase">
+            <Button size="sm" onClick={updateSession} className="h-9 px-3 text-[10px] font-bold uppercase">
               Appliquer Session
             </Button>
+
+              <Input
+                  type="number"
+                  placeholder="Numéro Jury"
+                  value={juryNumber}
+                  disabled={role !== "admin"}
+                  onChange={(e) => {
+                      const val = e.target.value;
+                      setJuryNumber(val === "" ? "" : Number(val));
+                  }}
+                  className="h-9 text-xs"
+              />
+
+              <Button onClick={updateJury}>
+                  Appliquer Jury
+              </Button>
           </div>
+
           <div className="flex items-center gap-3 flex-wrap">
             <ResetEverythingButton diplomaType={diplomaType} target="planning" />
             <div className="relative">
@@ -623,35 +730,49 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                     </div>
                   </div>
 
+
+                    {role !== "admin" && (
+                        <p className="text-sm text-red-500 font-medium">
+                            ⚠️ Vous êtes collaborateur : certaines modifications sont limitées.
+                        </p>
+                    )}
                   <div className="space-y-4 pt-4 border-t border-blue-50 dark:border-blue-900/20">
                     <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Soutenance</h3>
                     <div className="space-y-2">
                       <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Thème</Label>
-                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.theme || ""} onChange={e => setForm({...form, theme: e.target.value})} />
+                      <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.theme || ""} onChange={e => setForm({...form, theme: e.target.value})} disabled={role !== "admin"} />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Directeur</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.directeur || ""} onChange={e => setForm({...form, directeur: e.target.value})} />
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.directeur || ""} onChange={e => setForm({...form, directeur: e.target.value})} disabled={role !== "admin"} />
                       </div>
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Directeur</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_directeur || ""} onChange={e => setForm({...form, grade_directeur: e.target.value})} />
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_directeur || ""} onChange={e => setForm({...form, grade_directeur: e.target.value})} disabled={role !== "admin"} />
                       </div>
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Date Soutenance</Label>
-                        <Input type="date" className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.date_soutenance || ""} onChange={e => setForm({...form, date_soutenance: e.target.value})} />
+                        <Input type="date" className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.date_soutenance || ""} onChange={e => setForm({...form, date_soutenance: e.target.value})} disabled={role !== "admin"} />
                       </div>
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Heure</Label>
-                        <Input type="time" className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.heure_soutenance || ""} onChange={e => setForm({...form, heure_soutenance: e.target.value})} />
+                        <Input type="time" className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.heure_soutenance || ""} onChange={e => setForm({...form, heure_soutenance: e.target.value})} disabled={role !== "admin"} />
                       </div>
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Salle</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.salle || ""} onChange={e => setForm({...form, salle: e.target.value})} />
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.salle || ""} onChange={e => setForm({...form, salle: e.target.value})} disabled={role !== "admin"} />
                       </div>
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Jury</Label>
+                            <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.jury || ""} onChange={e => setForm({...form, jury: e.target.value})} disabled={role !== "admin"} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Date de dépot</Label>
+                            <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.date_depot || ""} onChange={e => setForm({...form, date_depot: e.target.value})} disabled={role !== "admin"} />
+                        </div>
                     </div>
                   </div>
 
@@ -660,31 +781,31 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Président</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.president || ""} onChange={e => setForm({...form, president: e.target.value})} />
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.president || ""} onChange={e => setForm({...form, president: e.target.value})} disabled={role !== "admin"} />
                       </div>
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Président</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_president || ""} onChange={e => setForm({...form, grade_president: e.target.value})} />
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_president || ""} onChange={e => setForm({...form, grade_president: e.target.value})} disabled={role !== "admin"} />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Examinateur</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.examinateur || ""} onChange={e => setForm({...form, examinateur: e.target.value})} />
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.examinateur || ""} onChange={e => setForm({...form, examinateur: e.target.value})} disabled={role !== "admin"} />
                       </div>
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Examinateur</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_examinateur || ""} onChange={e => setForm({...form, grade_examinateur: e.target.value})} />
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_examinateur || ""} onChange={e => setForm({...form, grade_examinateur: e.target.value})} disabled={role !== "admin"} />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Rapporteur</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.rapporteur || ""} onChange={e => setForm({...form, rapporteur: e.target.value})} />
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.rapporteur || ""} onChange={e => setForm({...form, rapporteur: e.target.value})} disabled={role !== "admin"} />
                       </div>
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Grade Rapporteur</Label>
-                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_rapporteur || ""} onChange={e => setForm({...form, grade_rapporteur: e.target.value})} />
+                        <Input className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none" value={form.grade_rapporteur || ""} onChange={e => setForm({...form, grade_rapporteur: e.target.value})} disabled={role !== "admin"} />
                       </div>
                     </div>
                   </div>
@@ -742,17 +863,34 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Statut</Label>
-                    <Select value={selectedStatus} onValueChange={(val) => { setSelectedStatus(val); setCurrentPage(1); }}>
-                      <SelectTrigger className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none">
-                        <SelectValue placeholder="Tous les statuts" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl">
-                        <SelectItem value="all">Tous les statuts</SelectItem>
-                        <SelectItem value="planned">Planifié</SelectItem>
-                        <SelectItem value="pending">En attente</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Jury</Label>
+                      <Select
+                          value={selectedJury}
+                          onValueChange={setSelectedJury}
+                      >
+                          <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Filtrer par jury" />
+                          </SelectTrigger>
+
+                          <SelectContent>
+
+                              {/* ✅ NEVER empty string */}
+                              <SelectItem value="all">Tous les jurys</SelectItem>
+
+                              {Array.from(
+                                  new Set(
+                                      data
+                                          .map(item => item.jury)
+                                          .filter(j => j !== null && j !== undefined && j !== "")
+                                  )
+                              ).map(jury => (
+                                  <SelectItem key={jury} value={String(jury)}>
+                                      Jury {jury}
+                                  </SelectItem>
+                              ))}
+
+                          </SelectContent>
+                      </Select>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Directeur</Label>
@@ -774,6 +912,27 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+        <div className="flex items-center gap-2 mb-3">
+            <input
+                type="checkbox"
+                checked={
+                    paginatedData.length > 0 &&
+                    paginatedData.every(item => selectedSoutenances.has(item.id))
+                }
+                onChange={(e) => {
+                    if (e.target.checked) {
+                        setSelectedSoutenances(new Set(paginatedData.map(item => item.id)));
+                    } else {
+                        setSelectedSoutenances(new Set());
+                    }
+                }}
+                className="w-5 h-5 rounded-md border border-gray-300 dark:border-gray-600 accent-blue-600"
+            />
+            <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">
+    Sélectionner tout
+  </span>
+        </div>
 
       <div className="grid grid-cols-1 gap-6">
         <AnimatePresence mode="popLayout">
@@ -807,142 +966,158 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
               >
-                <Card className="group relative border-none bg-white dark:bg-[#0f1629] rounded-3xl hover:shadow-2xl transition-all duration-500 overflow-hidden cursor-pointer border border-blue-50 dark:border-blue-900/20" onClick={() => openEditDialog(item)}>
-                  <div className={`absolute top-0 left-0 w-2 h-full ${diplomaType === "Licence" ? "bg-gradient-to-b from-blue-500 to-blue-700" : "bg-gradient-to-b from-yellow-400 to-yellow-600"}`} />
-                  <CardContent className="p-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                      <div className="lg:col-span-4 space-y-4">
-                        <div className="flex items-center gap-2">
+                  <div className="flex items-start gap-3 w-full">
+                      <input
+                          type="checkbox"
+                          className="mt-3 accent-blue-600 w-4 h-4"
+                          checked={selectedSoutenances.has(item.id)}
+                          onChange={() => toggleSelection(item.id)}
+                      />
+                      <Card
+                          className={`group relative w-full border-none bg-white dark:bg-[#0f1629] rounded-3xl hover:shadow-2xl transition-all duration-500 overflow-hidden cursor-pointer border border-blue-50 dark:border-blue-900/20 ${
+                              selectedSoutenances.has(item.id)
+                                  ? "ring-1 ring-blue-300 dark:ring-blue-700"
+                                  : ""
+                          }`}
+                          onClick={() => openEditDialog(item)}
+                      >
+                          <div className={`absolute top-0 left-0 w-2 h-full ${diplomaType === "Licence" ? "bg-gradient-to-b from-blue-500 to-blue-700" : "bg-gradient-to-b from-yellow-400 to-yellow-600"}`} />
+                          <CardContent className="p-6">
+                              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                                  <div className="lg:col-span-4 space-y-4">
+                                      <div className="flex items-center gap-2">
                           <span className="text-[10px] font-black bg-blue-600 text-white px-2 py-0.5 rounded-full uppercase tracking-tighter">
                             {item.matricule || "SANS MATRICULE"}
                           </span>
-                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${item.date_soutenance ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'}`}>
+                                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${item.date_soutenance ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'}`}>
                             {item.date_soutenance ? "Planifié" : "En attente"}
                           </span>
-                        </div>
-                        <div className="space-y-1">
-                          <h3 className="text-2xl font-black text-blue-900 dark:text-white leading-tight uppercase">
-                            {item.nom} {item.prenoms}
-                          </h3>
-                          <div className="flex items-center gap-2 text-xs text-blue-400 font-bold">
-                            <Calendar className="w-3 h-3" />
-                            <span>Né(e) le {formatDate(item.date_naissance)} à {item.lieu_naissance || "???"}</span>
-                          </div>
-                        </div>
-                          {item.nom2 && item.nom2.trim() !== '' && (
-                            <div className="pt-2 border-t border-blue-50 dark:border-blue-900/10">
-                              <h4 className="text-xs font-black text-blue-300 uppercase tracking-widest mb-1">Binôme</h4>
-                              <p className="text-sm font-bold text-blue-800 dark:text-blue-100 uppercase">
-                                {item.nom2} {item.prenoms2} ({item.matricule2})
-                              </p>
-                              <p className="text-[10px] text-blue-400">Né(e) le {formatDate(item.date_naissance2)} à {item.lieu_naissance2}</p>
-                            </div>
-                          )}
+                                      </div>
+                                      <div className="space-y-1">
+                                          <h3 className="text-2xl font-black text-blue-900 dark:text-white leading-tight uppercase">
+                                              {item.nom} {item.prenoms}
+                                          </h3>
+                                          <div className="flex items-center gap-2 text-xs text-blue-400 font-bold">
+                                              <Calendar className="w-3 h-3" />
+                                              <span>Né(e) le {formatDate(item.date_naissance)} à {item.lieu_naissance || "???"}</span>
+                                          </div>
+                                      </div>
+                                      {item.nom2 && item.nom2.trim() !== '' && (
+                                          <div className="pt-2 border-t border-blue-50 dark:border-blue-900/10">
+                                              <h4 className="text-xs font-black text-blue-300 uppercase tracking-widest mb-1">Binôme</h4>
+                                              <p className="text-sm font-bold text-blue-800 dark:text-blue-100 uppercase">
+                                                  {item.nom2} {item.prenoms2} ({item.matricule2})
+                                              </p>
+                                              <p className="text-[10px] text-blue-400">Né(e) le {formatDate(item.date_naissance2)} à {item.lieu_naissance2}</p>
+                                          </div>
+                                      )}
 
-                      </div>
+                                  </div>
 
-                      <div className="lg:col-span-5 space-y-4 lg:border-l lg:border-r border-blue-50 dark:border-blue-900/20 lg:px-6">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <BadgeCheck className="w-4 h-4 text-blue-500" />
-                            <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Thème du mémoire</span>
-                          </div>
-                          <p className="text-sm font-bold text-blue-900 dark:text-white leading-relaxed italic">
-                            "{item.theme || "Thème non défini"}"
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <span className="text-[10px] font-black text-blue-300 uppercase">Directeur</span>
-                            <div className="flex items-center gap-2">
-                              <User className="w-3 h-3 text-blue-400" />
-                              <span className="text-xs font-bold text-blue-900 dark:text-white">{item.directeur}</span>
-                            </div>
-                            <span className="text-[9px] text-blue-400 uppercase font-black">{item.grade_directeur}</span>
-                          </div>
-                          <div className="space-y-1">
-                            <span className="text-[10px] font-black text-blue-300 uppercase">Spécialité</span>
-                            <div className="flex items-center gap-2">
-                              <GraduationCap className="w-3 h-3 text-purple-400" />
-                                <span className="text-xs font-bold text-purple-600">
+                                  <div className="lg:col-span-5 space-y-4 lg:border-l lg:border-r border-blue-50 dark:border-blue-900/20 lg:px-6">
+                                      <div className="space-y-2">
+                                          <div className="flex items-center gap-2">
+                                              <BadgeCheck className="w-4 h-4 text-blue-500" />
+                                              <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Thème du mémoire</span>
+                                          </div>
+                                          <p className="text-sm font-bold text-blue-900 dark:text-white leading-relaxed italic">
+                                              "{item.theme || "Thème non défini"}"
+                                          </p>
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-4">
+                                          <div className="space-y-1">
+                                              <span className="text-[10px] font-black text-blue-300 uppercase">Directeur</span>
+                                              <div className="flex items-center gap-2">
+                                                  <User className="w-3 h-3 text-blue-400" />
+                                                  <span className="text-xs font-bold text-blue-900 dark:text-white">{item.directeur}</span>
+                                              </div>
+                                              <span className="text-[9px] text-blue-400 uppercase font-black">{item.grade_directeur}</span>
+                                          </div>
+                                          <div className="space-y-1">
+                                              <span className="text-[10px] font-black text-blue-300 uppercase">Spécialité</span>
+                                              <div className="flex items-center gap-2">
+                                                  <GraduationCap className="w-3 h-3 text-purple-400" />
+                                                  <span className="text-xs font-bold text-purple-600">
                                     {item.speciality || "Non définie"}
                                 </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="pt-3 border-t border-blue-50 dark:border-blue-900/10 grid grid-cols-2 gap-y-3">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-blue-300 uppercase">Président</span>
-                            <span className="text-xs font-bold text-blue-900 dark:text-white">{item.president || "???"}</span>
-                            <span className="text-[9px] text-blue-400 uppercase">{item.grade_president}</span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-blue-300 uppercase">Examinateur</span>
-                            <span className="text-xs font-bold text-blue-900 dark:text-white">{item.examinateur || "???"}</span>
-                            <span className="text-[9px] text-blue-400 uppercase">{item.grade_examinateur}</span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-blue-300 uppercase">Rapporteur</span>
-                            <span className="text-xs font-bold text-blue-900 dark:text-white">{item.rapporteur || "???"}</span>
-                            <span className="text-[9px] text-blue-400 uppercase">{item.grade_rapporteur}</span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-blue-300 uppercase">Dépôt</span>
-                            <span className="text-xs font-bold text-blue-900 dark:text-white">{formatDate(item.date_depot)}</span>
-                          </div>
-                          </div>
-                        </div>
+                                              </div>
+                                          </div>
+                                      </div>
+                                      <div className="pt-3 border-t border-blue-50 dark:border-blue-900/10 grid grid-cols-2 gap-y-3">
+                                          <div className="flex flex-col">
+                                              <span className="text-[10px] font-black text-blue-300 uppercase">Président</span>
+                                              <span className="text-xs font-bold text-blue-900 dark:text-white">{item.president || "???"}</span>
+                                              <span className="text-[9px] text-blue-400 uppercase">{item.grade_president}</span>
+                                          </div>
+                                          <div className="flex flex-col">
+                                              <span className="text-[10px] font-black text-blue-300 uppercase">Examinateur</span>
+                                              <span className="text-xs font-bold text-blue-900 dark:text-white">{item.examinateur || "???"}</span>
+                                              <span className="text-[9px] text-blue-400 uppercase">{item.grade_examinateur}</span>
+                                          </div>
+                                          <div className="flex flex-col">
+                                              <span className="text-[10px] font-black text-blue-300 uppercase">Rapporteur</span>
+                                              <span className="text-xs font-bold text-blue-900 dark:text-white">{item.rapporteur || "???"}</span>
+                                              <span className="text-[9px] text-blue-400 uppercase">{item.grade_rapporteur}</span>
+                                          </div>
+                                          <div className="flex flex-col">
+                                              <span className="text-[10px] font-black text-blue-300 uppercase">Dépôt</span>
+                                              <span className="text-xs font-bold text-blue-900 dark:text-white">{formatDate(item.date_depot)}</span>
+                                          </div>
+                                      </div>
+                                  </div>
 
-                        <div className="lg:col-span-3 flex flex-col justify-between items-end">
-                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {!item.nom2 && (
-                              <Button 
-                                size="icon" 
-                                variant="outline" 
-                                className="rounded-full w-10 h-10 border-blue-200 dark:border-blue-800 hover:bg-blue-600 hover:text-white" 
-                                onClick={(e) => { 
-                                  e.stopPropagation(); 
-                                  setTargetBinomeItem(item);
-                                  setIsBinomeDialogOpen(true);
-                                }}
-                                title="Ajouter un binôme"
-                              >
-                                <UserPlus className="w-4 h-4" />
-                              </Button>
-                            )}
-                            <Button size="icon" variant="ghost" className="rounded-full w-10 h-10 hover:bg-blue-50 dark:hover:bg-blue-900/30" onClick={(e) => { e.stopPropagation(); openEditDialog(item); }}>
-                              <Edit2 className="w-4 h-4 text-blue-500" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="rounded-full w-10 h-10 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500" onClick={(e) => { e.stopPropagation(); setItemToDelete({ id: item.id, name: `${item.nom} ${item.prenoms}` }); }}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                                  <div className="lg:col-span-3 flex flex-col justify-between items-end">
+                                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                          {!item.nom2 && (
+                                              <Button
+                                                  size="icon"
+                                                  variant="outline"
+                                                  className="rounded-full w-10 h-10 border-blue-200 dark:border-blue-800 hover:bg-blue-600 hover:text-white"
+                                                  onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      setTargetBinomeItem(item);
+                                                      setIsBinomeDialogOpen(true);
+                                                  }}
+                                                  title="Ajouter un binôme"
+                                              >
+                                                  <UserPlus className="w-4 h-4" />
+                                              </Button>
+                                          )}
+                                          <Button size="icon" variant="ghost" className="rounded-full w-10 h-10 hover:bg-blue-50 dark:hover:bg-blue-900/30" onClick={(e) => { e.stopPropagation(); openEditDialog(item); }}>
+                                              <Edit2 className="w-4 h-4 text-blue-500" />
+                                          </Button>
+                                          <Button size="icon" variant="ghost" className="rounded-full w-10 h-10 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500" onClick={(e) => { e.stopPropagation(); setItemToDelete({ id: item.id, name: `${item.nom} ${item.prenoms}` }); }}>
+                                              <Trash2 className="w-4 h-4" />
+                                          </Button>
 
-                        </div>
-                        
-                        <div className="space-y-2 w-full">
-                          <div className="flex items-center justify-end gap-3">
-                            <div className="flex flex-col items-end">
-                              <span className="text-[10px] font-black text-blue-300 uppercase">Date</span>
-                              <span className="text-sm font-black text-blue-900 dark:text-white">{item.date_soutenance ? formatDate(item.date_soutenance) : "À définir"}</span>
-                            </div>
-                            <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl">
-                              <Calendar className="w-5 h-5 text-blue-600" />
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-end gap-3">
-                            <div className="flex flex-col items-end">
-                              <span className="text-[10px] font-black text-blue-300 uppercase">Heure & Salle</span>
-                              <span className="text-sm font-black text-blue-900 dark:text-white">{formatTime(item.heure_soutenance)} | {item.salle || "???"}</span>
-                            </div>
-                            <div className="p-2 bg-yellow-50 dark:bg-yellow-900/30 rounded-xl">
-                              <Clock className="w-5 h-5 text-yellow-600" />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                                      </div>
+
+                                      <div className="space-y-2 w-full">
+                                          <div className="flex items-center justify-end gap-3">
+                                              <div className="flex flex-col items-end">
+                                                  <span className="text-[10px] font-black text-blue-300 uppercase">Date</span>
+                                                  <span className="text-sm font-black text-blue-900 dark:text-white">{item.date_soutenance ? formatDate(item.date_soutenance) : "À définir"}</span>
+                                              </div>
+                                              <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl">
+                                                  <Calendar className="w-5 h-5 text-blue-600" />
+                                              </div>
+                                          </div>
+                                          <div className="flex items-center justify-end gap-3">
+                                              <div className="flex flex-col items-end">
+                                                  <span className="text-[10px] font-black text-blue-300 uppercase">Heure & Salle</span>
+                                                  <span className="text-sm font-black text-blue-900 dark:text-white">{formatTime(item.heure_soutenance)} | {item.salle || "???"}</span>
+                                              </div>
+                                              <div className="p-2 bg-yellow-50 dark:bg-yellow-900/30 rounded-xl">
+                                                  <Clock className="w-5 h-5 text-yellow-600" />
+                                              </div>
+                                          </div>
+                                      </div>
+                                  </div>
+                              </div>
+                          </CardContent>
+                      </Card>
+                  </div>
+
               </motion.div>
             ))
           )}

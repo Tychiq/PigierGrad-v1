@@ -36,14 +36,24 @@ export default function InsertionPage() {
 
 
     function excelDateToISO(value: any): string | null {
-        if (typeof value !== "number") return null;
+        if (typeof value === "number") {
+            const utcDays = value - 25569;
+            const utcValue = utcDays * 86400; // seconds
+            const date = new Date(utcValue * 1000);
 
-        const ms = (value - 25569) * 86400 * 1000;
-        const date = new Date(ms);
+            if (isNaN(date.getTime())) return null;
 
-        if (isNaN(date.getTime())) return null;
+            return date.toISOString().split("T")[0]; // YYYY-MM-DD
+        }
 
-        return date.toISOString().split("T")[0]; // YYYY-MM-DD
+        if (typeof value === "string" && value.trim()) {
+            const d = new Date(value);
+            if (!isNaN(d.getTime())) {
+                return d.toISOString().split("T")[0];
+            }
+        }
+
+        return null;
     }
 
 
