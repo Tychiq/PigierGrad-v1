@@ -87,7 +87,20 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
         d.name.toLowerCase().includes(search.toLowerCase())
     );
 
-    async function downloadPDF() {
+
+    const getBase64FromUrl = async (url: string): Promise<string> => {
+        const response = await fetch(url);
+        const blob = await response.blob();
+
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    };
+
+    const downloadPDF = async () => {
         try {
             if (filteredDirectors.length === 0) {
                 toast.error("Aucune donnée à exporter.");
@@ -95,100 +108,154 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
             }
 
             toast.info("Génération du PDF en cours...");
+
             const doc = new jsPDF({
                 orientation: "portrait",
                 unit: "mm",
                 format: "a4"
             });
 
+            const now = new Date();
+
+            // ================= LOGO =================
+            const logoBase64 = await getBase64FromUrl("/logo-pigier.png");
+
+            // CLEAN TOP-LEFT (NO OVERLAP)
+            doc.addImage(logoBase64, "PNG", 10, 4, 26, 16);
+
+            // ================= HEADER LINE (ONLY ONCE) =================
             doc.setDrawColor(30, 64, 175);
             doc.setLineWidth(1);
-            doc.line(10, 10, 200, 10);
-            doc.line(10, 45, 200, 45);
+            doc.line(10, 22, 200, 22);
 
-            doc.setFontSize(26);
+            // ================= TITLE =================
+            doc.setFontSize(20);
             doc.setTextColor(30, 64, 175);
             doc.setFont("helvetica", "bold");
-            doc.text("PIGIERGRAD", 105, 25, { align: "center" });
+            doc.text("PIGIERGRAD", 105, 30, { align: "center" });
 
-            doc.setFontSize(10);
-            doc.setTextColor(100, 116, 139);
+            // ================= SUBTITLE =================
+            doc.setFontSize(11);
+            doc.setTextColor(90, 90, 90);
             doc.setFont("helvetica", "italic");
-            doc.text("Plateforme Officielle de Gestion des Soutenances", 105, 32, { align: "center" });
+            doc.text("Plateforme Officielle de Gestion des Soutenances", 105, 36, {
+                align: "center"
+            });
 
-            doc.setFontSize(16);
+            // ================= PAGE TITLE =================
+            doc.setFontSize(14);
             doc.setTextColor(15, 23, 42);
             doc.setFont("helvetica", "bold");
-            doc.text(`LISTE DES DIRECTEURS - ${diplomaType.toUpperCase()}`, 105, 55, { align: "center" });
-
-            doc.setFontSize(9);
-            doc.setTextColor(100, 116, 139);
-            doc.setFont("helvetica", "normal");
-            const now = new Date();
             doc.text(
-                `Document généré le ${formatDate(now.toISOString())} à ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`,
+                `LISTE DES DIRECTEURS - ${diplomaType.toUpperCase()}`,
                 105,
-                62,
+                48,
                 { align: "center" }
             );
 
+            // ================= DATE =================
+            doc.setFontSize(9);
+            doc.setTextColor(120, 120, 120);
+            doc.setFont("helvetica", "normal");
+
+            doc.text(
+                `Document généré le ${formatDate(now.toISOString())} à ${now
+                    .getHours()
+                    .toString()
+                    .padStart(2, "0")}:${now
+                    .getMinutes()
+                    .toString()
+                    .padStart(2, "0")}`,
+                105,
+                55,
+                { align: "center" }
+            );
+
+            // ================= TABLE =================
             autoTable(doc, {
-                startY: 70,
-                head: [['N°', 'NOM DU DIRECTEUR', 'GRADE', 'NOMBRE D\'ENCADREMENTS']],
+                startY: 62,
+
+                head: [["N°", "DIRECTEUR", "GRADE", "ENCADREMENTS"]],
+
                 body: filteredDirectors.map((d, i) => [
                     i + 1,
                     d.name.toUpperCase(),
                     d.grade || "-",
                     d.count
                 ]),
-                theme: 'striped',
+
+                theme: "striped",
+
                 headStyles: {
                     fillColor: [30, 64, 175],
                     textColor: [255, 255, 255],
                     fontSize: 10,
-                    fontStyle: 'bold',
-                    halign: 'center',
-                    cellPadding: 4
+                    fontStyle: "bold",
+                    halign: "center"
                 },
+
                 bodyStyles: {
                     fontSize: 9,
-                    halign: 'center',
-                    cellPadding: 3,
-                    textColor: [51, 65, 85]
+                    halign: "center",
+                    textColor: [40, 40, 40]
                 },
+
                 columnStyles: {
-                    0: { cellWidth: 20, halign: 'center' },
-                    1: { cellWidth: 'auto', halign: 'left', fontStyle: 'bold' },
-                    2: { cellWidth: 40, halign: 'center' },
-                    3: { cellWidth: 40, halign: 'center' }
+                    0: { cellWidth: 15 },
+                    1: { cellWidth: "auto", halign: "left" },
+                    2: { cellWidth: 40 },
+                    3: { cellWidth: 40 }
                 },
-                margin: { top: 70, left: 15, right: 15 },
-                didDrawPage: (data) => {
-                    doc.setFontSize(8);
-                    doc.setTextColor(148, 163, 184);
-                    doc.text("PIGIERGRAD - Plateforme de gestion des soutenances", 105, 285, { align: "center" });
-                    doc.text(`Page ${data.pageNumber}`, 195, 285, { align: "right" });
-                }
+
+                margin: { left: 15, right: 15 }
             });
 
-            const timestamp = new Date().toISOString().split('T')[0];
+            // ================= SIGNATURE =================
+            const finalY = (doc as any).lastAutoTable.finalY || 180;
+            const pageHeight = doc.internal.pageSize.height;
+
+            let signatureY = finalY + 25;
+
+            if (signatureY > pageHeight - 50) {
+                doc.addPage();
+                signatureY = 40;
+            }
+
+            const formattedDate = now.toLocaleDateString("fr-FR", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric"
+            });
+
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(30, 30, 30);
+
+            // left-aligned signature block
+            doc.text(`Cotonou, le ${formattedDate}`, 130, signatureY);
+            doc.text("Le Directeur des Etudes", 130, signatureY + 10);
+
+            const name = "Dr Arsène VIGAN";
+
+            doc.setFont("helvetica", "bold");
+            doc.text(name, 130, signatureY + 22);
+
+            const w = doc.getTextWidth(name);
+            doc.line(130, signatureY + 23, 130 + w, signatureY + 23);
+
+            // ================= DOWNLOAD =================
+            const timestamp = new Date().toISOString().split("T")[0];
             const filename = `PIGIERGRAD_Directeurs_${diplomaType}_${timestamp}.pdf`;
 
             const pdfBlob = doc.output("blob");
-            triggerDownload(pdfBlob, filename)
-                .then(() => {
-                    toast.success("Le PDF a été téléchargé avec succès !");
-                })
-                .catch((error) => {
-                    console.error(error);
-                    toast.error("Erreur lors du téléchargement.");
-                });
+            await triggerDownload(pdfBlob, filename);
 
+            toast.success("PDF généré avec succès !");
         } catch (error) {
-            console.error(error);
-            toast.error("Une erreur est survenue.");
+            console.error("PDF ERROR:", error);
+            toast.error("Erreur lors de l'export PDF.");
         }
-    }
+    };
 
     const totalPages = Math.ceil(filteredDirectors.length / ITEMS_PER_PAGE);
     const paginatedDirectors = filteredDirectors.slice(

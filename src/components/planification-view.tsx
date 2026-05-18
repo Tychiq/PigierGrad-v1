@@ -456,82 +456,215 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
         }
     };
 
+    const getBase64FromUrl = async (url: string): Promise<string> => {
+        const response = await fetch(url);
+        const blob = await response.blob();
+
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    };
 
     const downloadPDF = async () => {
-      try {
-        if (filteredData.length === 0) {
-          toast.error("Aucune donnée à exporter.");
-          return;
+        try {
+            if (filteredData.length === 0) {
+                toast.error("Aucune donnée à exporter.");
+                return;
+            }
+
+            toast.info("Génération du planning PDF...");
+
+            const doc = new jsPDF({
+                orientation: "landscape",
+                unit: "mm",
+                format: "a4"
+            });
+
+            const logoBase64 = await getBase64FromUrl("/logo-pigier.png");
+            const today = new Date();
+            const year = today.getFullYear();
+
+            // ===== SPECIALITY CODE =====
+            const hasSpecialityFilter =
+                selectedSpeciality &&
+                selectedSpeciality !== "all";
+
+            const specialityAcronym = hasSpecialityFilter
+                ? (selectedSpeciality.match(/\((.*?)\)/)?.[1] || "")
+                : "";
+
+            const docCode =
+                diplomaType === "Licence"
+                    ? `DOC-PR-FOR_L/01/13${specialityAcronym ? `/${specialityAcronym}` : ""}/${year}`
+                    : `DOC-PR-FOR_M/01/13${specialityAcronym ? `/${specialityAcronym}` : ""}/${year}`;
+
+            // ===== DOCUMENT CODE =====
+            doc.setFontSize(10);
+            doc.setTextColor(80, 80, 80);
+            doc.setFont("helvetica", "normal");
+            doc.text(docCode, 285, 8, { align: "right" });
+
+            // ===== LOGO TOP LEFT =====
+            // small logo completely above first line
+            doc.addImage(logoBase64, "PNG", 12, 6, 22, 14);
+
+            // ===== HEADER LINES =====
+            doc.setDrawColor(30, 64, 175);
+            doc.setLineWidth(1);
+            doc.line(10, 24, 287, 24);
+            doc.line(10, 40, 287, 40);
+
+            // ===== TITLE =====
+            doc.setFontSize(20);
+            doc.setTextColor(30, 64, 175);
+            doc.setFont("helvetica", "bold");
+            doc.text("PIGIERGRAD - PLANNING DES SOUTENANCES", 148.5, 30, {
+                align: "center"
+            });
+
+            // ===== SUBTITLE =====
+            doc.setFontSize(13);
+            doc.setTextColor(15, 23, 42);
+            doc.setFont("helvetica", "bold");
+            doc.text(
+                `${diplomaType.toUpperCase()}${
+                    selectedSpeciality !== "all" ? ` - ${selectedSpeciality}` : ""
+                } - SESSION DE ${sessionMonth.toUpperCase()} ${sessionYear}`,
+                148.5,
+                37,
+                { align: "center" }
+            );
+
+            // ===== TABLE =====
+            autoTable(doc, {
+                startY: 46,
+                head: [[
+                    'JURY',
+                    'DATE & HEURE',
+                    'SALLE',
+                    'ÉTUDIANT(S)',
+                    'THÈME',
+                    'DIRECTEUR',
+                    'PRÉSIDENT',
+                    'EXAMINATEUR',
+                    'RAPPORTEUR'
+                ]],
+                body: filteredData.map(item => [
+                    item.jury || "---",
+                    `${formatDate(item.date_soutenance)}\n${formatTime(item.heure_soutenance)}`,
+                    item.salle || "---",
+                    `${item.nom} ${item.prenoms}${item.nom2 ? '\n' + item.nom2 + ' ' + item.prenoms2 : ''}`,
+                    item.theme || "---",
+                    `${item.directeur || "---"}\n${item.grade_directeur || ""}`,
+                    `${item.president || "---"}\n${item.grade_president || ""}`,
+                    `${item.examinateur || "---"}\n${item.grade_examinateur || ""}`,
+                    `${item.rapporteur || "---"}\n${item.grade_rapporteur || ""}`
+                ]),
+                theme: "grid",
+                margin: { top: 46, left: 10, right: 10 },
+
+                headStyles: {
+                    fillColor: [30, 64, 175],
+                    textColor: [255, 255, 255],
+                    fontSize: 8,
+                    fontStyle: "bold",
+                    halign: "center",
+                    valign: "middle"
+                },
+
+                bodyStyles: {
+                    fontSize: 7.5,
+                    valign: "middle",
+                    textColor: [20, 20, 20]
+                },
+
+                styles: {
+                    overflow: "linebreak",
+                    cellPadding: 2,
+                    fontSize: 7.5
+                },
+
+                columnStyles: {
+                    0: { cellWidth: 15, halign: "center" },
+                    1: { cellWidth: 27, halign: "center" },
+                    2: { cellWidth: 18, halign: "center" },
+                    3: { cellWidth: 35 },
+                    4: { cellWidth: 48 },
+                    5: { cellWidth: 30 },
+                    6: { cellWidth: 28 },
+                    7: { cellWidth: 28 },
+                    8: { cellWidth: 28 }
+                },
+
+                tableWidth: 267,
+
+                didDrawPage: (data) => {
+                    doc.setFontSize(8);
+                    doc.setTextColor(148, 163, 184);
+                    doc.setFont("helvetica", "normal");
+
+                    doc.text(
+                        `Généré par PIGIERGRAD le ${today.toLocaleDateString("fr-FR")}`,
+                        10,
+                        205
+                    );
+
+                    doc.text(`Page ${data.pageNumber}`, 287, 205, {
+                        align: "right"
+                    });
+                }
+            });
+
+            // ===== SIGNATURE =====
+            const totalPages = doc.getNumberOfPages();
+            doc.setPage(totalPages);
+
+            const finalY = (doc as any).lastAutoTable.finalY || 170;
+            const pageHeight = doc.internal.pageSize.height;
+
+            let signatureY = finalY + 20;
+
+            if (signatureY > pageHeight - 45) {
+                doc.addPage();
+                doc.setPage(doc.getNumberOfPages());
+                signatureY = 40;
+            }
+
+            const formattedDate = today.toLocaleDateString("fr-FR", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric"
+            });
+
+            doc.setFontSize(11);
+            doc.setTextColor(30, 30, 30);
+            doc.setFont("helvetica", "normal");
+
+            doc.text(`Cotonou, le ${formattedDate}`, 220, signatureY);
+            doc.text("Le Directeur des Etudes", 220, signatureY + 12);
+
+            const directorName = "Dr Arsène VIGAN";
+
+            doc.setFont("helvetica", "bold");
+            doc.text(directorName, 220, signatureY + 32);
+
+            const textWidth = doc.getTextWidth(directorName);
+            doc.line(220, signatureY + 33, 220 + textWidth, signatureY + 33);
+
+            // ===== SAVE =====
+            const filename = `Planning_${diplomaType}_${sessionMonth}_${sessionYear}.pdf`;
+            const pdfBlob = doc.output("blob");
+
+            await triggerDownload(pdfBlob, filename);
+
+            toast.success("Planning exporté avec succès !");
+        } catch (error) {
+            console.error("PDF Export Error:", error);
+            toast.error("Erreur lors de l'export PDF.");
         }
-
-        toast.info("Génération du planning PDF...");
-        const doc = new jsPDF({
-          orientation: "landscape",
-          unit: "mm",
-          format: "a4"
-        });
-
-        doc.setDrawColor(30, 64, 175);
-        doc.setLineWidth(1);
-        doc.line(10, 10, 287, 10);
-        doc.line(10, 35, 287, 35);
-
-        doc.setFontSize(22);
-        doc.setTextColor(30, 64, 175);
-        doc.setFont("helvetica", "bold");
-        doc.text("PIGIERGRAD - PLANNING DES SOUTENANCES", 148.5, 22, { align: "center" });
-
-        doc.setFontSize(14);
-        doc.setTextColor(15, 23, 42);
-        doc.text(`${diplomaType.toUpperCase()} - SESSION DE ${sessionMonth.toUpperCase()} ${sessionYear}`, 148.5, 30, { align: "center" });
-
-        autoTable(doc, {
-          startY: 45,
-          head: [['DATE & HEURE', 'SALLE', 'ÉTUDIANT(S)', 'THÈME', 'JURY (P / E / R)']],
-          body: filteredData.map(item => [
-            `${formatDate(item.date_soutenance)} à ${formatTime(item.heure_soutenance)}`,
-            item.salle || "---",
-            `${item.nom} ${item.prenoms}${item.nom2 ? '\n' + item.nom2 + ' ' + item.prenoms2 : ''}`,
-            item.theme || "---",
-            `${item.president || '?'}\n${item.examinateur || '?'}\n${item.rapporteur || '?'}`
-          ]),
-          theme: 'grid',
-          headStyles: {
-            fillColor: [30, 64, 175],
-            textColor: [255, 255, 255],
-            fontSize: 9,
-            fontStyle: 'bold',
-            halign: 'center'
-          },
-          bodyStyles: {
-            fontSize: 8,
-            valign: 'middle'
-          },
-          columnStyles: {
-            0: { cellWidth: 35, halign: 'center' },
-            1: { cellWidth: 20, halign: 'center' },
-            2: { cellWidth: 45 },
-            3: { cellWidth: 'auto' },
-            4: { cellWidth: 45 }
-          },
-          margin: { top: 40, left: 10, right: 10 },
-          didDrawPage: (data) => {
-            doc.setFontSize(8);
-            doc.setTextColor(148, 163, 184);
-            doc.text(`Généré par PIGIERGRAD le ${new Date().toLocaleDateString()}`, 10, 205);
-            doc.text(`Page ${data.pageNumber}`, 287, 205, { align: "right" });
-          }
-        });
-
-        const filename = `Planning_${diplomaType}_${sessionMonth}_${sessionYear}.pdf`;
-        const pdfBlob = doc.output('blob');
-        await triggerDownload(pdfBlob, filename);
-
-        toast.success("Planning exporté avec succès !");
-      } catch (error) {
-        console.error("PDF Export Error:", error);
-        toast.error("Erreur lors de l'export PDF.");
-      }
     };
 
   return (

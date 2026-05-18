@@ -109,6 +109,18 @@ export function JuryView({ diplomaType }: { diplomaType: string }) {
         currentPage * ITEMS_PER_PAGE
     );
 
+    const getBase64FromUrl = async (url: string): Promise<string> => {
+        const response = await fetch(url);
+        const blob = await response.blob();
+
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    };
+
     async function downloadPDF() {
         try {
             if (filteredMembers.length === 0) {
@@ -117,55 +129,154 @@ export function JuryView({ diplomaType }: { diplomaType: string }) {
             }
 
             toast.info("Génération du PDF en cours...");
-            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-            doc.setFontSize(26);
+            const doc = new jsPDF({
+                orientation: "portrait",
+                unit: "mm",
+                format: "a4"
+            });
+
+            const logoBase64 = await getBase64FromUrl("/logo-pigier.png");
+            const today = new Date();
+
+            // ================= LOGO (TOP LEFT CLEAN) =================
+            doc.addImage(logoBase64, "PNG", 12, 6, 22, 14);
+
+            // ================= HEADER LINES =================
+            doc.setDrawColor(30, 64, 175);
+            doc.setLineWidth(1);
+            doc.line(10, 24, 200, 24);
+            doc.line(10, 40, 200, 40);
+
+            // ================= TITLE =================
+            doc.setFontSize(22);
             doc.setTextColor(30, 64, 175);
             doc.setFont("helvetica", "bold");
-            doc.text("PIGIERGRAD", 105, 25, { align: "center" });
+            doc.text("PIGIERGRAD", 105, 30, { align: "center" });
 
+            // ================= SUBTITLE =================
             doc.setFontSize(10);
             doc.setTextColor(100, 116, 139);
             doc.setFont("helvetica", "italic");
-            doc.text("Plateforme Officielle de Gestion des Soutenances", 105, 32, { align: "center" });
+            doc.text(
+                "Plateforme Officielle de Gestion des Soutenances",
+                105,
+                36,
+                { align: "center" }
+            );
 
-            doc.setFontSize(16);
+            // ================= DOCUMENT TITLE =================
+            doc.setFontSize(15);
             doc.setTextColor(15, 23, 42);
             doc.setFont("helvetica", "bold");
-            doc.text(`LISTE DES MEMBRES DU JURY - ${diplomaType.toUpperCase()}`, 105, 55, { align: "center" });
+            doc.text(
+                `LISTE DES MEMBRES DU JURY - ${diplomaType.toUpperCase()}`,
+                105,
+                55,
+                { align: "center" }
+            );
 
+            // ================= DATE INFO =================
             doc.setFontSize(9);
             doc.setTextColor(100, 116, 139);
             doc.setFont("helvetica", "normal");
-            const now = new Date();
+
             doc.text(
-                `Document généré le ${formatDate(now.toISOString())} à ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`,
+                `Document généré le ${formatDate(today.toISOString())} à ${today
+                    .getHours()
+                    .toString()
+                    .padStart(2, "0")}:${today
+                    .getMinutes()
+                    .toString()
+                    .padStart(2, "0")}`,
                 105,
                 62,
                 { align: "center" }
             );
 
+            // ================= TABLE =================
             autoTable(doc, {
                 startY: 70,
-                head: [['N°', 'NOM DU MEMBRE', 'GRADE', 'NOMBRE D\'SOUTENANCES']],
+                head: [["N°", "NOM DU MEMBRE", "GRADE", "NOMBRE DE SOUTENANCES"]],
                 body: filteredMembers.map((m, i) => [
                     i + 1,
                     m.name.toUpperCase(),
                     m.grade || "-",
                     m.count
                 ]),
-                theme: 'striped',
-                headStyles: { fillColor: [30, 64, 175], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold', halign: 'center' },
-                bodyStyles: { fontSize: 9, halign: 'center', textColor: [51, 65, 85] }
+
+                theme: "striped",
+
+                headStyles: {
+                    fillColor: [30, 64, 175],
+                    textColor: [255, 255, 255],
+                    fontSize: 10,
+                    fontStyle: "bold",
+                    halign: "center"
+                },
+
+                bodyStyles: {
+                    fontSize: 9,
+                    halign: "center",
+                    textColor: [51, 65, 85]
+                },
+
+                columnStyles: {
+                    0: { cellWidth: 20, halign: "center" },
+                    1: { cellWidth: "auto", halign: "left" },
+                    2: { cellWidth: 40, halign: "center" },
+                    3: { cellWidth: 50, halign: "center" }
+                },
+
+                margin: { top: 70, left: 15, right: 15 }
             });
 
-            const timestamp = new Date().toISOString().split('T')[0];
-            const filename = `PIGIERGRAD_Jury_${diplomaType}_${timestamp}.pdf`;
-            const pdfBlob = doc.output("blob");
-            triggerDownload(pdfBlob, filename)
-                .then(() => toast.success("Le PDF a été téléchargé avec succès !"))
-                .catch(() => toast.error("Erreur lors du téléchargement."));
+            // ================= SIGNATURE =================
+            const finalY = (doc as any).lastAutoTable.finalY || 170;
+            const pageHeight = doc.internal.pageSize.height;
 
+            let signatureY = finalY + 20;
+
+            if (signatureY > pageHeight - 45) {
+                doc.addPage();
+                signatureY = 40;
+            }
+
+            const formattedDate = today.toLocaleDateString("fr-FR", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric"
+            });
+
+            doc.setFontSize(11);
+            doc.setTextColor(30, 30, 30);
+            doc.setFont("helvetica", "normal");
+
+            doc.text(`Cotonou, le ${formattedDate}`, 120, signatureY);
+            doc.text("Le Directeur des Etudes", 120, signatureY + 12);
+
+            const directorName = "Dr Arsène VIGAN";
+
+            doc.setFont("helvetica", "bold");
+            doc.text(directorName, 120, signatureY + 32);
+
+            const textWidth = doc.getTextWidth(directorName);
+            doc.line(
+                120,
+                signatureY + 33,
+                120 + textWidth,
+                signatureY + 33
+            );
+
+            // ================= SAVE =================
+            const timestamp = new Date().toISOString().split("T")[0];
+            const filename = `PIGIERGRAD_Jury_${diplomaType}_${timestamp}.pdf`;
+
+            const pdfBlob = doc.output("blob");
+
+            await triggerDownload(pdfBlob, filename);
+
+            toast.success("Le PDF a été téléchargé avec succès !");
         } catch (error) {
             console.error(error);
             toast.error("Une erreur est survenue.");
