@@ -136,34 +136,17 @@ export function JuryView({ diplomaType }: { diplomaType: string }) {
                 format: "a4"
             });
 
-            const logoBase64 = await getBase64FromUrl("/logo-pigier.png");
+            const logoBase64 = await getBase64FromUrl("/logo-pigier.jpeg");
             const today = new Date();
 
             // ================= LOGO (TOP LEFT CLEAN) =================
-            doc.addImage(logoBase64, "PNG", 12, 6, 22, 14);
+            doc.addImage(logoBase64, "JPEG", 10, 4, 34, 16);
 
             // ================= HEADER LINES =================
             doc.setDrawColor(30, 64, 175);
             doc.setLineWidth(1);
             doc.line(10, 24, 200, 24);
             doc.line(10, 40, 200, 40);
-
-            // ================= TITLE =================
-            doc.setFontSize(22);
-            doc.setTextColor(30, 64, 175);
-            doc.setFont("helvetica", "bold");
-            doc.text("PIGIERGRAD", 105, 30, { align: "center" });
-
-            // ================= SUBTITLE =================
-            doc.setFontSize(10);
-            doc.setTextColor(100, 116, 139);
-            doc.setFont("helvetica", "italic");
-            doc.text(
-                "Plateforme Officielle de Gestion des Soutenances",
-                105,
-                36,
-                { align: "center" }
-            );
 
             // ================= DOCUMENT TITLE =================
             doc.setFontSize(15);
@@ -172,31 +155,13 @@ export function JuryView({ diplomaType }: { diplomaType: string }) {
             doc.text(
                 `LISTE DES MEMBRES DU JURY - ${diplomaType.toUpperCase()}`,
                 105,
-                55,
+                34,
                 { align: "center" }
             );
 
-            // ================= DATE INFO =================
-            doc.setFontSize(9);
-            doc.setTextColor(100, 116, 139);
-            doc.setFont("helvetica", "normal");
-
-            doc.text(
-                `Document généré le ${formatDate(today.toISOString())} à ${today
-                    .getHours()
-                    .toString()
-                    .padStart(2, "0")}:${today
-                    .getMinutes()
-                    .toString()
-                    .padStart(2, "0")}`,
-                105,
-                62,
-                { align: "center" }
-            );
-
-            // ================= TABLE =================
+// ================= TABLE =================
             autoTable(doc, {
-                startY: 70,
+                startY: 42,
                 head: [["N°", "NOM DU MEMBRE", "GRADE", "NOMBRE DE SOUTENANCES"]],
                 body: filteredMembers.map((m, i) => [
                     i + 1,
@@ -231,42 +196,32 @@ export function JuryView({ diplomaType }: { diplomaType: string }) {
                 margin: { top: 70, left: 15, right: 15 }
             });
 
-            // ================= SIGNATURE =================
-            const finalY = (doc as any).lastAutoTable.finalY || 170;
+            // ================= SIGNATURE FIXED AT BOTTOM =================
+            const totalPages = doc.getNumberOfPages();
+            doc.setPage(totalPages); // go to last page
+
             const pageHeight = doc.internal.pageSize.height;
-
-            let signatureY = finalY + 20;
-
-            if (signatureY > pageHeight - 45) {
-                doc.addPage();
-                signatureY = 40;
-            }
-
-            const formattedDate = today.toLocaleDateString("fr-FR", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric"
-            });
+            const signatureY = pageHeight - 45; // fixed bottom position
 
             doc.setFontSize(11);
-            doc.setTextColor(30, 30, 30);
             doc.setFont("helvetica", "normal");
+            doc.setTextColor(30, 30, 30);
 
-            doc.text(`Cotonou, le ${formattedDate}`, 120, signatureY);
-            doc.text("Le Directeur des Etudes", 120, signatureY + 12);
+// blank date line for handwriting
+            doc.text("Cotonou, le ", 130, signatureY);
 
-            const directorName = "Dr Arsène VIGAN";
+// role
+            doc.text("Le Directeur des Etudes", 130, signatureY + 12);
 
+// name
+            const name = "Dr Arsène VIGAN";
             doc.setFont("helvetica", "bold");
-            doc.text(directorName, 120, signatureY + 32);
+            doc.text(name, 130, signatureY + 32);
 
-            const textWidth = doc.getTextWidth(directorName);
-            doc.line(
-                120,
-                signatureY + 33,
-                120 + textWidth,
-                signatureY + 33
-            );
+// underline only text
+            const w = doc.getTextWidth(name);
+            doc.line(130, signatureY + 33, 130 + w, signatureY + 33);
+
 
             // ================= SAVE =================
             const timestamp = new Date().toISOString().split("T")[0];

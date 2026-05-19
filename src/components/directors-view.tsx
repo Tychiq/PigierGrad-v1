@@ -118,29 +118,15 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
             const now = new Date();
 
             // ================= LOGO =================
-            const logoBase64 = await getBase64FromUrl("/logo-pigier.png");
+            const logoBase64 = await getBase64FromUrl("/logo-pigier.jpeg");
 
             // CLEAN TOP-LEFT (NO OVERLAP)
-            doc.addImage(logoBase64, "PNG", 10, 4, 26, 16);
+            doc.addImage(logoBase64, "JPEG", 10, 4, 34, 16);
 
             // ================= HEADER LINE (ONLY ONCE) =================
             doc.setDrawColor(30, 64, 175);
             doc.setLineWidth(1);
             doc.line(10, 22, 200, 22);
-
-            // ================= TITLE =================
-            doc.setFontSize(20);
-            doc.setTextColor(30, 64, 175);
-            doc.setFont("helvetica", "bold");
-            doc.text("PIGIERGRAD", 105, 30, { align: "center" });
-
-            // ================= SUBTITLE =================
-            doc.setFontSize(11);
-            doc.setTextColor(90, 90, 90);
-            doc.setFont("helvetica", "italic");
-            doc.text("Plateforme Officielle de Gestion des Soutenances", 105, 36, {
-                align: "center"
-            });
 
             // ================= PAGE TITLE =================
             doc.setFontSize(14);
@@ -149,31 +135,12 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
             doc.text(
                 `LISTE DES DIRECTEURS - ${diplomaType.toUpperCase()}`,
                 105,
-                48,
+                34,
                 { align: "center" }
             );
 
-            // ================= DATE =================
-            doc.setFontSize(9);
-            doc.setTextColor(120, 120, 120);
-            doc.setFont("helvetica", "normal");
-
-            doc.text(
-                `Document généré le ${formatDate(now.toISOString())} à ${now
-                    .getHours()
-                    .toString()
-                    .padStart(2, "0")}:${now
-                    .getMinutes()
-                    .toString()
-                    .padStart(2, "0")}`,
-                105,
-                55,
-                { align: "center" }
-            );
-
-            // ================= TABLE =================
             autoTable(doc, {
-                startY: 62,
+                startY: 42,
 
                 head: [["N°", "DIRECTEUR", "GRADE", "ENCADREMENTS"]],
 
@@ -210,38 +177,31 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
                 margin: { left: 15, right: 15 }
             });
 
-            // ================= SIGNATURE =================
-            const finalY = (doc as any).lastAutoTable.finalY || 180;
+            // ================= SIGNATURE FIXED AT BOTTOM =================
+            const totalPages = doc.getNumberOfPages();
+            doc.setPage(totalPages); // go to last page
+
             const pageHeight = doc.internal.pageSize.height;
-
-            let signatureY = finalY + 25;
-
-            if (signatureY > pageHeight - 50) {
-                doc.addPage();
-                signatureY = 40;
-            }
-
-            const formattedDate = now.toLocaleDateString("fr-FR", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric"
-            });
+            const signatureY = pageHeight - 45; // fixed bottom position
 
             doc.setFontSize(11);
             doc.setFont("helvetica", "normal");
             doc.setTextColor(30, 30, 30);
 
-            // left-aligned signature block
-            doc.text(`Cotonou, le ${formattedDate}`, 130, signatureY);
-            doc.text("Le Directeur des Etudes", 130, signatureY + 10);
+// blank date line for handwriting
+            doc.text("Cotonou, le ", 130, signatureY);
 
+// role
+            doc.text("Le Directeur des Etudes", 130, signatureY + 12);
+
+// name
             const name = "Dr Arsène VIGAN";
-
             doc.setFont("helvetica", "bold");
-            doc.text(name, 130, signatureY + 22);
+            doc.text(name, 130, signatureY + 32);
 
+// underline only text
             const w = doc.getTextWidth(name);
-            doc.line(130, signatureY + 23, 130 + w, signatureY + 23);
+            doc.line(130, signatureY + 33, 130 + w, signatureY + 33);
 
             // ================= DOWNLOAD =================
             const timestamp = new Date().toISOString().split("T")[0];

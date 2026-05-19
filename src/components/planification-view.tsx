@@ -483,7 +483,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                 format: "a4"
             });
 
-            const logoBase64 = await getBase64FromUrl("/logo-pigier.png");
+            const logoBase64 = await getBase64FromUrl("/logo-pigier.jpeg");
             const today = new Date();
             const year = today.getFullYear();
 
@@ -509,7 +509,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
 
             // ===== LOGO TOP LEFT =====
             // small logo completely above first line
-            doc.addImage(logoBase64, "PNG", 12, 6, 22, 14);
+            doc.addImage(logoBase64, "JPEG", 10, 4, 34, 16);
 
             // ===== HEADER LINES =====
             doc.setDrawColor(30, 64, 175);
@@ -521,7 +521,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
             doc.setFontSize(20);
             doc.setTextColor(30, 64, 175);
             doc.setFont("helvetica", "bold");
-            doc.text("PIGIERGRAD - PLANNING DES SOUTENANCES", 148.5, 30, {
+            doc.text(" PLANNING DES SOUTENANCES", 148.5, 30, {
                 align: "center"
             });
 
@@ -531,7 +531,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
             doc.setFont("helvetica", "bold");
             doc.text(
                 `${diplomaType.toUpperCase()}${
-                    selectedSpeciality !== "all" ? ` - ${selectedSpeciality}` : ""
+                    selectedSpeciality !== "all" ? ` EN ${selectedSpeciality}` : ""
                 } - SESSION DE ${sessionMonth.toUpperCase()} ${sessionYear}`,
                 148.5,
                 37,
@@ -545,7 +545,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                     'JURY',
                     'DATE & HEURE',
                     'SALLE',
-                    'ÉTUDIANT(S)',
+                    'NOM & PRÉNOMS',
                     'THÈME',
                     'DIRECTEUR',
                     'PRÉSIDENT',
@@ -606,11 +606,6 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                     doc.setTextColor(148, 163, 184);
                     doc.setFont("helvetica", "normal");
 
-                    doc.text(
-                        `Généré par PIGIERGRAD le ${today.toLocaleDateString("fr-FR")}`,
-                        10,
-                        205
-                    );
 
                     doc.text(`Page ${data.pageNumber}`, 287, 205, {
                         align: "right"
@@ -643,7 +638,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
             doc.setTextColor(30, 30, 30);
             doc.setFont("helvetica", "normal");
 
-            doc.text(`Cotonou, le ${formattedDate}`, 220, signatureY);
+            doc.text("Cotonou, le ", 220, signatureY);
             doc.text("Le Directeur des Etudes", 220, signatureY + 12);
 
             const directorName = "Dr Arsène VIGAN";
