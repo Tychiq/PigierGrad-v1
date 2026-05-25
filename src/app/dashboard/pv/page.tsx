@@ -37,6 +37,8 @@ import { formatDate, formatTime } from "@/lib/utils";
 import { triggerDownload } from "@/lib/download-helper";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
+import JSZip from "jszip";
+import { LICENCE_SPECIALITIES, MASTER_SPECIALITIES } from "@/lib/constants";
 
 interface Student {
   id: string;
@@ -86,12 +88,22 @@ export default function PVGenerationPage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+    const [numeroArrete, setNumeroArrete] = useState(() => {
+        if (typeof window !== "undefined") {
+            return localStorage.getItem("numeroArrete") || "";
+        }
+        return "";
+    });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [generatedBlob, setGeneratedBlob] = useState<Blob | null>(null);
   const [downloadFilename, setDownloadFilename] = useState("");
+
+    const [bulkDiplomaType, setBulkDiplomaType] = useState("");
+    const [bulkSpeciality, setBulkSpeciality] = useState("");
+    const [bulkGenerating, setBulkGenerating] = useState(false);
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -189,7 +201,8 @@ export default function PVGenerationPage() {
           session_month: selectedStudent.session_month?.toUpperCase() || "....................",
           session_year: selectedStudent.session_year || "202...",
           Session_Month: selectedStudent.session_month?.toUpperCase() || "....................",
-          Session_Year: selectedStudent.session_year || "202..."
+            Session_Year: selectedStudent.session_year || "202...",
+            NumeroArrete: numeroArrete || "................................"
         };
 
         // Pass 1: Handle « » delimiters
@@ -247,6 +260,194 @@ export default function PVGenerationPage() {
     }
   };
 
+
+    const generateAllPVs = async () => {
+
+        if (!bulkDiplomaType || !bulkSpeciality) {
+            toast.error("Missing selection");
+            return;
+        }
+
+        const { data } = await supabase
+            .from("soutenances")
+            .select("*")
+            .eq("diploma_type", bulkDiplomaType)
+            .ilike("speciality", `%${bulkSpeciality}%`);
+
+
+        try {
+
+            const studentsToGenerate = flattenedStudents.filter(
+                s =>
+                    s.diploma_type === bulkDiplomaType &&
+                    s.speciality === bulkSpeciality
+            );
+
+            if (studentsToGenerate.length === 0) {
+                toast.error("Aucun étudiant trouvé");
+                return;
+            }
+
+            toast.info(`Génération de ${studentsToGenerate.length} PV...`);
+
+            const zipFile = new JSZip();
+
+            const normalize = (s: string) =>
+                (s || "").trim().replace(/\s+/g, " ").toUpperCase();
+
+
+            // ===== LOAD TEMPLATE ONCE =====
+            let response = await fetch("/templates/Essai-PV-SoutenanceRGL.docx");
+
+            if (!response.ok) {
+                response = await fetch("/templates/Essai PV-SoutenanceRGL - Final.docx");
+            }
+
+            if (!response.ok) {
+                throw new Error("Impossible de charger le modèle");
+            }
+
+            const templateBuffer = await response.arrayBuffer();
+
+            // ===== GENERATE EACH DOC =====
+            for (const student of studentsToGenerate) {
+
+                const zip = new PizZip(templateBuffer);
+
+                const data = {
+
+                    Jury: student.jury || "....................",
+                    Salle: student.salle || "....................",
+
+                    Matricule: student.currentMatricule || "....................",
+
+                    Nom: (student.currentNom || "").toUpperCase(),
+                    Prenoms: student.currentPrenoms || "",
+
+                    DateNaiss:
+                        formatDate(student.currentDateNaissance),
+
+                    LieuNaiss:
+                        student.currentLieuNaissance || "",
+
+                    Examinateur:
+                        student.examinateur || "",
+
+                    GradeExaminateur:
+                        student.grade_examinateur || "",
+
+                    Rapporteur:
+                        student.rapporteur || "",
+
+                    GradeRapporteur:
+                        student.grade_rapporteur || "",
+
+                    Président:
+                        student.president || "",
+
+                    GradePrésident:
+                        student.grade_president || "",
+
+                    Theme:
+                        student.theme || "",
+
+                    Directeur:
+                        student.directeur || "",
+
+                    GradeDirecteur:
+                        student.grade_directeur || "",
+
+                    Date:
+                        formatDate(student.date_soutenance),
+
+                    Heure:
+                        formatTime(student.heure_soutenance),
+
+                    DateSoutenance:
+                        formatDate(student.date_soutenance),
+
+                    HeureSoutenance:
+                        formatTime(student.heure_soutenance),
+
+                    Diplome:
+                        student.diploma_type?.toUpperCase(),
+
+                    Specialite:
+                        student.speciality?.toUpperCase(),
+
+                    Session:
+                        `${student.session_month?.toUpperCase()} ${student.session_year}`,
+
+                    NumeroArrete:
+                        localStorage.getItem("numeroArrete") ||
+                        "................................"
+                };
+
+                // ===== PASS 1 =====
+                const doc1 = new Docxtemplater(zip, {
+                    paragraphLoop: true,
+                    linebreaks: true,
+                    delimiters: { start: "«", end: "»" },
+                });
+
+                doc1.render(data);
+
+                // ===== PASS 2 =====
+                const zip2 = new PizZip(
+                    doc1.getZip().generate({
+                        type: "arraybuffer"
+                    })
+                );
+
+                const doc2 = new Docxtemplater(zip2, {
+                    paragraphLoop: true,
+                    linebreaks: true,
+                    delimiters: { start: "<<", end: ">>" },
+                });
+
+                doc2.render(data);
+
+                const out = doc2.getZip().generate({
+                    type: "blob",
+                    mimeType:
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                });
+
+                const fileName =
+                    `PV_${student.currentNom}_${student.currentPrenoms}.docx`
+                        .replace(/\s+/g, "_");
+
+                zipFile.file(fileName, out);
+            }
+
+            // ===== FINAL ZIP =====
+            const finalZip = await zipFile.generateAsync({
+                type: "blob"
+            });
+
+            const zipName =
+                `PV_${bulkDiplomaType}_${bulkSpeciality}.zip`
+                    .replace(/\s+/g, "_");
+
+            await triggerDownload(finalZip, zipName);
+
+            toast.success("Tous les PV ont été générés !");
+
+        } catch (error: any) {
+
+            console.error(error);
+
+            toast.error(
+                "Erreur lors de la génération des PV"
+            );
+
+        } finally {
+
+            setBulkGenerating(false);
+        }
+    };
+
+
   const handleDownload = async () => {
     console.log("handleDownload triggered", { generatedBlob, downloadFilename });
     if (!generatedBlob) {
@@ -265,6 +466,14 @@ export default function PVGenerationPage() {
       toast.error("Erreur lors du téléchargement.");
     }
   };
+
+
+    const availableSpecialities =
+        bulkDiplomaType === "Licence"
+            ? LICENCE_SPECIALITIES
+            : bulkDiplomaType === "Master"
+                ? MASTER_SPECIALITIES
+                : [];
 
   return (
     <div className="max-w-5xl mx-auto space-y-10 pb-10">
@@ -377,6 +586,92 @@ export default function PVGenerationPage() {
               </Button>
             </CardContent>
           </Card>
+
+            <Card className="border-none shadow-lg bg-white dark:bg-[#0f1629] rounded-3xl overflow-hidden">
+                <CardHeader className="p-6 pb-0">
+                    <CardTitle className="text-lg font-black text-green-700 dark:text-green-400 uppercase">
+                        Génération Massive
+                    </CardTitle>
+
+                    <CardDescription>
+                        Générer automatiquement tous les PV d'une spécialité
+                    </CardDescription>
+                </CardHeader>
+
+                <CardContent className="p-6 space-y-4">
+
+                    {/* DIPLOMA */}
+                    <Select
+                        value={bulkDiplomaType}
+                        onValueChange={(v) => {
+                            setBulkDiplomaType(v);
+                            setBulkSpeciality("");
+                        }}
+                    >
+                        <SelectTrigger className="h-12 rounded-xl">
+                            <SelectValue placeholder="Choisir le diplôme" />
+                        </SelectTrigger>
+
+                        <SelectContent>
+                            <SelectItem value="Licence">
+                                Licence
+                            </SelectItem>
+
+                            <SelectItem value="Master">
+                                Master
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    {/* SPECIALITY */}
+                    <Select
+                        value={bulkSpeciality}
+                        onValueChange={setBulkSpeciality}
+                        disabled={!bulkDiplomaType}
+                    >
+                        <SelectTrigger className="h-12 rounded-xl">
+                            <SelectValue placeholder="Choisir la spécialité" />
+                        </SelectTrigger>
+
+                        <SelectContent>
+
+                            {availableSpecialities.map((spec) => (
+                                <SelectItem
+                                    key={spec}
+                                    value={spec}
+                                >
+                                    {spec}
+                                </SelectItem>
+                            ))}
+
+                        </SelectContent>
+                    </Select>
+
+                    {/* BUTTON */}
+                    <Button
+                        onClick={generateAllPVs}
+                        disabled={
+                            bulkGenerating ||
+                            !bulkDiplomaType ||
+                            !bulkSpeciality
+                        }
+                        className="w-full h-14 rounded-xl bg-green-600 hover:bg-green-700 text-white font-black uppercase tracking-widest"
+                    >
+                        {bulkGenerating ? (
+                            <>
+                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                Génération...
+                            </>
+                        ) : (
+                            <>
+                                <Download className="w-5 h-5 mr-2" />
+                                Générer Tous les PV
+                            </>
+                        )}
+                    </Button>
+
+                </CardContent>
+            </Card>
 
           <div className="grid grid-cols-1 gap-4">
             {[

@@ -37,7 +37,7 @@ interface DirectorStats {
     count: number;
 }
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 12;
 
 export function DirectorsView({ diplomaType }: { diplomaType: string }) {
     const [directors, setDirectors] = useState<DirectorStats[]>([]);
@@ -46,24 +46,44 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
     const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
+
         const fetchDirectors = async () => {
+
             setLoading(true);
 
             const { data } = await supabase
                 .from("soutenances")
-                .select("directeur, grade_directeur")
+                .select(`
+                directeur,
+                grade_directeur,
+                codirecteur,
+                grade_codirecteur
+            `)
                 .eq("diploma_type", diplomaType);
 
             if (data) {
+
                 const counts: Record<string, DirectorStats> = {};
 
+                const normalize = (value?: string) =>
+                    value
+                        ?.trim()
+                        .replace(/\s+/g, " ")
+                        .toUpperCase() || "";
+
                 data.forEach(item => {
+
+                    // ================= DIRECTEUR =================
                     if (item.directeur) {
-                        const key = `${item.directeur}__${item.grade_directeur || ""}`;
+
+                        const normalizedName = normalize(item.directeur);
+
+                        const key = `${normalizedName}__${normalize(item.grade_directeur)}`;
 
                         if (!counts[key]) {
+
                             counts[key] = {
-                                name: item.directeur,
+                                name: item.directeur.trim(),
                                 grade: item.grade_directeur || "",
                                 count: 0
                             };
@@ -71,9 +91,35 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
 
                         counts[key].count += 1;
                     }
+
+                    // ================= CO-DIRECTEUR ONLY FOR MASTER =================
+                    if (
+                        diplomaType === "Master" &&
+                        item.codirecteur
+                    ) {
+
+                        const normalizedName = normalize(item.codirecteur);
+
+                        const key = `${normalizedName}__${normalize(item.grade_codirecteur)}`;
+
+                        if (!counts[key]) {
+
+                            counts[key] = {
+                                name: item.codirecteur.trim(),
+                                grade: item.grade_codirecteur || "",
+                                count: 0
+                            };
+                        }
+
+                        counts[key].count += 1;
+                    }
+
                 });
 
-                const stats = Object.values(counts).sort((a, b) => b.count - a.count);
+                const stats = Object
+                    .values(counts)
+                    .sort((a, b) => b.count - a.count);
+
                 setDirectors(stats);
             }
 
@@ -81,6 +127,7 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
         };
 
         fetchDirectors();
+
     }, [diplomaType]);
 
     const filteredDirectors = directors.filter(d =>

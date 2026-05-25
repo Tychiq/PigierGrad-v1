@@ -26,6 +26,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import Link from "next/link";
+import { normalizeSpeciality } from "@/lib/utils";
 
 export default function InsertionPage() {
   const [loading, setLoading] = useState(false);
@@ -95,8 +96,10 @@ export default function InsertionPage() {
           grade_examinateur: row["GradeExaminateur"] || "",
           rapporteur: row["Rapporteur"] || "",
           grade_rapporteur: row["GradeRapporteur"] || "",
-          speciality: row["Specialite"] || row["Spécialité"] || row["Speciality"] || "",
+            speciality: normalizeSpeciality(row.speciality),
           diploma_type: diplomaType,
+            codirecteur: row.codirecteur || "",
+            grade_codirecteur: row.grade_codirecteur || "",
         }));
 
         const validData = formattedData.filter(d => d.nom);

@@ -62,6 +62,9 @@ import { LICENCE_SPECIALITIES, MASTER_SPECIALITIES } from "@/lib/constants";
 import { ResetEverythingButton } from "./reset-everything-button";
 import { Download } from "lucide-react";
 import { useUserRole } from "@/lib/useUserRole";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import { normalizeSpeciality } from "@/lib/utils";
 
 interface Soutenance {
   id: string;
@@ -93,10 +96,12 @@ interface Soutenance {
   speciality?: string;
   session_month?: string;
   session_year?: string;
+    codirecteur?: string;
+    grade_codirecteur?: string;
   is_merged?: boolean;
 }
 
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = 20;
 
 export function PlanificationView({ diplomaType }: { diplomaType: string }) {
   const [data, setData] = useState<Soutenance[]>([]);
@@ -126,6 +131,8 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
     const [juryNumber, setJuryNumber] = useState<number | "">("");
 
     const [selectedJury, setSelectedJury] = useState("all");
+
+    const [numeroArrete, setNumeroArrete] = useState("");
 
   useEffect(() => {
     const urlSearch = searchParams.get("search");
@@ -252,10 +259,26 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
     fetchData();
   }, [diplomaType]);
 
-  const uniqueSpecialities = useMemo(() => {
-    const specs = new Set(data.map(item => item.speciality).filter(Boolean));
-    return Array.from(specs);
-  }, [data]);
+    const normalize = (s: string) =>
+        (s || "")
+            .trim()
+            .replace(/\s+/g, " ")
+            .toUpperCase();
+
+    const uniqueSpecialities = useMemo(() => {
+        const base =
+            diplomaType === "Licence"
+                ? LICENCE_SPECIALITIES
+                : MASTER_SPECIALITIES;
+
+        const fromDb = data.map(item => normalize(item.speciality || ""));
+
+        const merged = [...base, ...fromDb];
+
+        const specs = new Set(merged);
+
+        return Array.from(specs).sort();
+    }, [data, diplomaType]);
 
   const uniqueDirectors = useMemo(() => {
     const dirs = new Set(data.map(item => item.directeur).filter(Boolean));
@@ -353,7 +376,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
   const filteredData = useMemo(() => {
     return data.filter(item => {
       const matchesSearch = `${item.nom} ${item.prenoms} ${item.theme} ${item.matricule} ${item.nom2 || ""} ${item.prenoms2 || ""}`.toLowerCase().includes(search.toLowerCase());
-      const matchesSpeciality = selectedSpeciality === "all" || item.speciality === selectedSpeciality;
+      const matchesSpeciality = selectedSpeciality === "all" || normalizeSpeciality(item.speciality).includes(normalizeSpeciality(selectedSpeciality));
         const matchesJury =
             selectedJury === "all" || item.jury?.toString() === selectedJury;
       const matchesDirector = selectedDirector === "all" || item.directeur === selectedDirector;
@@ -507,40 +530,46 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
             doc.setFont("helvetica", "normal");
             doc.text(docCode, 285, 8, { align: "right" });
 
+            const pageWidth = doc.internal.pageSize.getWidth();
+
             // ===== LOGO TOP LEFT =====
-            // small logo completely above first line
             doc.addImage(logoBase64, "JPEG", 10, 4, 34, 16);
 
-            // ===== HEADER LINES =====
+// ===== HEADER LINE =====
             doc.setDrawColor(30, 64, 175);
             doc.setLineWidth(1);
-            doc.line(10, 24, 287, 24);
-            doc.line(10, 40, 287, 40);
+            doc.line(10, 24, pageWidth - 10, 24);
 
-            // ===== TITLE =====
-            doc.setFontSize(20);
+// ===== TITLE =====
+            doc.setFontSize(18);
             doc.setTextColor(30, 64, 175);
             doc.setFont("helvetica", "bold");
-            doc.text(" PLANNING DES SOUTENANCES", 148.5, 30, {
-                align: "center"
-            });
-
-            // ===== SUBTITLE =====
-            doc.setFontSize(13);
-            doc.setTextColor(15, 23, 42);
-            doc.setFont("helvetica", "bold");
             doc.text(
-                `${diplomaType.toUpperCase()}${
-                    selectedSpeciality !== "all" ? ` EN ${selectedSpeciality}` : ""
-                } - SESSION DE ${sessionMonth.toUpperCase()} ${sessionYear}`,
-                148.5,
-                37,
+                "PLANNING DES SOUTENANCES",
+                pageWidth / 2,
+                34,
                 { align: "center" }
             );
 
-            // ===== TABLE =====
+// ===== SUBTITLE (IMPORTANT: PUSHED DOWN) =====
+            doc.setFontSize(12);
+            doc.setTextColor(15, 23, 42);
+            doc.setFont("helvetica", "bold");
+            doc.text(
+                `${diplomaType.toUpperCase()} PROFESSIONNEL${
+                    selectedSpeciality !== "all"
+                        ? ` EN ${selectedSpeciality}`
+                        : ""
+                } - SESSION DE ${sessionMonth.toUpperCase()} ${sessionYear}`,
+                pageWidth / 2,
+                42,
+                { align: "center" }
+            );
+
+// ===== TABLE START (PUSHED DOWN CLEANLY) =====
             autoTable(doc, {
-                startY: 46,
+                startY: 60,
+
                 head: [[
                     'JURY',
                     'DATE & HEURE',
@@ -552,19 +581,41 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                     'EXAMINATEUR',
                     'RAPPORTEUR'
                 ]],
+
                 body: filteredData.map(item => [
                     item.jury || "---",
+
                     `${formatDate(item.date_soutenance)}\n${formatTime(item.heure_soutenance)}`,
+
                     item.salle || "---",
-                    `${item.nom} ${item.prenoms}${item.nom2 ? '\n' + item.nom2 + ' ' + item.prenoms2 : ''}`,
+
+                    `${item.nom} ${item.prenoms}${
+                        item.nom2
+                            ? '\n\n&\n\n' + item.nom2 + ' ' + item.prenoms2
+                            : ''
+                    }`,
+
                     item.theme || "---",
-                    `${item.directeur || "---"}\n${item.grade_directeur || ""}`,
-                    `${item.president || "---"}\n${item.grade_president || ""}`,
-                    `${item.examinateur || "---"}\n${item.grade_examinateur || ""}`,
-                    `${item.rapporteur || "---"}\n${item.grade_rapporteur || ""}`
+
+                    `${item.directeur || "---"}\n\n${item.grade_directeur || ""}`,
+
+                    `${item.president || "---"}\n\n${item.grade_president || ""}`,
+
+                    `${item.examinateur || "---"}\n\n${item.grade_examinateur || ""}`,
+
+                    `${item.rapporteur || "---"}\n\n${item.grade_rapporteur || ""}`
                 ]),
+
                 theme: "grid",
-                margin: { top: 46, left: 10, right: 10 },
+
+                // IMPORTANT:
+                // top margin small for next pages
+                // startY controls only first page
+                margin: {
+                    top: 60,
+                    left: 10,
+                    right: 10
+                },
 
                 headStyles: {
                     fillColor: [30, 64, 175],
@@ -578,38 +629,41 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                 bodyStyles: {
                     fontSize: 7.5,
                     valign: "middle",
+                    halign: "center",
                     textColor: [20, 20, 20]
                 },
 
                 styles: {
                     overflow: "linebreak",
-                    cellPadding: 2,
-                    fontSize: 7.5
+                    cellPadding: 2.5,
+                    fontSize: 7.5,
+                    halign: "center",
+                    valign: "middle"
                 },
 
                 columnStyles: {
                     0: { cellWidth: 15, halign: "center" },
                     1: { cellWidth: 27, halign: "center" },
                     2: { cellWidth: 18, halign: "center" },
-                    3: { cellWidth: 35 },
-                    4: { cellWidth: 48 },
-                    5: { cellWidth: 30 },
-                    6: { cellWidth: 28 },
-                    7: { cellWidth: 28 },
-                    8: { cellWidth: 28 }
+                    3: { cellWidth: 35, halign: "center" },
+                    4: { cellWidth: 48, halign: "center" },
+                    5: { cellWidth: 30, halign: "center" },
+                    6: { cellWidth: 28, halign: "center" },
+                    7: { cellWidth: 28, halign: "center" },
+                    8: { cellWidth: 28, halign: "center" }
                 },
-
-                tableWidth: 267,
 
                 didDrawPage: (data) => {
                     doc.setFontSize(8);
                     doc.setTextColor(148, 163, 184);
                     doc.setFont("helvetica", "normal");
 
-
-                    doc.text(`Page ${data.pageNumber}`, 287, 205, {
-                        align: "right"
-                    });
+                    doc.text(
+                        `Page ${data.pageNumber}`,
+                        287,
+                        205,
+                        { align: "right" }
+                    );
                 }
             });
 
@@ -659,6 +713,95 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
         } catch (error) {
             console.error("PDF Export Error:", error);
             toast.error("Erreur lors de l'export PDF.");
+        }
+    };
+
+    const exportPlanningExcel = () => {
+        try {
+            if (filteredData.length === 0) {
+                toast.error("Aucune donnée à exporter.");
+                return;
+            }
+
+            const excelData = filteredData.map((item, index) => ({
+                "N°": index + 1,
+
+                "JURY": item.jury || "",
+
+                "DATE SOUTENANCE": formatDate(item.date_soutenance),
+
+                "HEURE SOUTENANCE": formatTime(item.heure_soutenance),
+
+                "SALLE": item.salle || "",
+
+                "NOM": item.nom || "",
+                "PRENOMS": item.prenoms || "",
+                "MATRICULE": item.matricule || "",
+                "DATE NAISSANCE": item.date_naissance || "",
+                "LIEU NAISSANCE": item.lieu_naissance || "",
+
+                "NOM 2": item.nom2 || "",
+                "PRENOMS 2": item.prenoms2 || "",
+                "MATRICULE 2": item.matricule2 || "",
+                "DATE NAISSANCE 2": item.date_naissance2 || "",
+                "LIEU NAISSANCE 2": item.lieu_naissance2 || "",
+
+                "THEME": item.theme || "",
+
+                "DIRECTEUR": item.directeur || "",
+                "GRADE DIRECTEUR": item.grade_directeur || "",
+
+                "PRESIDENT": item.president || "",
+                "GRADE PRESIDENT": item.grade_president || "",
+
+                "EXAMINATEUR": item.examinateur || "",
+                "GRADE EXAMINATEUR": item.grade_examinateur || "",
+
+                "RAPPORTEUR": item.rapporteur || "",
+                "GRADE RAPPORTEUR": item.grade_rapporteur || "",
+
+                "SPECIALITE": item.speciality || "",
+
+                "DIPLOME": item.diploma_type || "",
+
+                "SESSION MOIS": item.session_month || "",
+                "SESSION ANNEE": item.session_year || "",
+
+                "DATE DEPOT": item.date_depot || ""
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+            const workbook = XLSX.utils.book_new();
+
+            XLSX.utils.book_append_sheet(
+                workbook,
+                worksheet,
+                diplomaType === "Licence" ? "LICENCE" : "MASTER"
+            );
+
+            const excelBuffer = XLSX.write(workbook, {
+                bookType: "xlsx",
+                type: "array"
+            });
+
+            const file = new Blob(
+                [excelBuffer],
+                {
+                    type:
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                }
+            );
+
+            const filename =
+                `Planning_${diplomaType}_${sessionMonth}_${sessionYear}.xlsx`;
+
+            saveAs(file, filename);
+
+            toast.success("Planning Excel exporté avec succès !");
+        } catch (error) {
+            console.error(error);
+            toast.error("Erreur lors de l'export Excel.");
         }
     };
 
@@ -714,11 +857,23 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                   }}
                   className="h-9 text-xs"
               />
-
               <Button onClick={updateJury}>
                   Appliquer Jury
               </Button>
           </div>
+
+            <div className="space-y-2">
+                <Label>Numéro d'arrêté</Label>
+
+                <Input
+                    placeholder="Ex: 2026-154/MESRS/DGES/..."
+                    value={numeroArrete}
+                    onChange={(e) => {
+                        setNumeroArrete(e.target.value);
+                        localStorage.setItem("numeroArrete", e.target.value);
+                    }}
+                />
+            </div>
 
           <div className="flex items-center gap-3 flex-wrap">
             <ResetEverythingButton diplomaType={diplomaType} target="planning" />
@@ -753,6 +908,13 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
               >
                 <Download className="w-4 h-4 mr-2" />
                 Exporter Planning
+              </Button>
+
+              <Button
+                  onClick={exportPlanningExcel}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                  Exporter Planning Excel
               </Button>
               
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
