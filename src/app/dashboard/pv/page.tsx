@@ -39,6 +39,7 @@ import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 import JSZip from "jszip";
 import { LICENCE_SPECIALITIES, MASTER_SPECIALITIES } from "@/lib/constants";
+import { sortStudentsByName } from "@/lib/utils";
 
 interface Student {
   id: string;
@@ -117,7 +118,7 @@ export default function PVGenerationPage() {
     fetchStudents();
   }, []);
 
-  const flattenedStudents: FlatStudent[] = students.flatMap(s => {
+  const flattenedStudents: FlatStudent[] = sortStudentsByName(students).flatMap(s => {
     const list: FlatStudent[] = [{
       ...s,
       uniqueId: `${s.id}-1`,
@@ -264,23 +265,35 @@ export default function PVGenerationPage() {
     const generateAllPVs = async () => {
 
         if (!bulkDiplomaType || !bulkSpeciality) {
-            toast.error("Missing selection");
+            toast.error("Veuillez sélectionner le diplôme et la spécialité");
             return;
         }
 
-        const { data } = await supabase
-            .from("soutenances")
-            .select("*")
-            .eq("diploma_type", bulkDiplomaType)
-            .ilike("speciality", `%${bulkSpeciality}%`);
-
+        setBulkGenerating(true);
 
         try {
 
-            const studentsToGenerate = flattenedStudents.filter(
-                s =>
-                    s.diploma_type === bulkDiplomaType &&
-                    s.speciality === bulkSpeciality
+            const normalize = (s: string) =>
+                (s || "")
+                    .trim()
+                    .replace(/\s+/g, " ")
+                    .toUpperCase();
+
+            // ===== FETCH DIRECTLY FROM DB =====
+            const { data, error } = await supabase
+                .from("soutenances")
+                .select("*")
+                .eq("diploma_type", bulkDiplomaType);
+
+            if (error) {
+                throw error;
+            }
+
+            // ===== FILTER SAFELY =====
+            const studentsToGenerate = (data || []).filter(
+                (s) =>
+                    normalize(s.speciality || "") ===
+                    normalize(bulkSpeciality)
             );
 
             if (studentsToGenerate.length === 0) {
@@ -288,47 +301,59 @@ export default function PVGenerationPage() {
                 return;
             }
 
-            toast.info(`Génération de ${studentsToGenerate.length} PV...`);
+            toast.info(
+                `Génération de ${studentsToGenerate.length} PV en cours...`
+            );
 
             const zipFile = new JSZip();
 
-            const normalize = (s: string) =>
-                (s || "").trim().replace(/\s+/g, " ").toUpperCase();
-
-
-            // ===== LOAD TEMPLATE ONCE =====
-            let response = await fetch("/templates/Essai-PV-SoutenanceRGL.docx");
+            // ===== LOAD TEMPLATE =====
+            let response = await fetch(
+                "/templates/Essai-PV-SoutenanceRGL.docx"
+            );
 
             if (!response.ok) {
-                response = await fetch("/templates/Essai PV-SoutenanceRGL - Final.docx");
+                response = await fetch(
+                    "/templates/Essai PV-SoutenanceRGL - Final.docx"
+                );
             }
 
             if (!response.ok) {
-                throw new Error("Impossible de charger le modèle");
+                throw new Error(
+                    "Impossible de charger le modèle"
+                );
             }
 
-            const templateBuffer = await response.arrayBuffer();
+            const templateBuffer =
+                await response.arrayBuffer();
 
             // ===== GENERATE EACH DOC =====
             for (const student of studentsToGenerate) {
 
                 const zip = new PizZip(templateBuffer);
 
-                const data = {
+                const currentNom = student.nom || "";
+                const currentPrenoms = student.prenoms || "";
+
+                const dataToInject = {
 
                     Jury: student.jury || "....................",
                     Salle: student.salle || "....................",
 
-                    Matricule: student.currentMatricule || "....................",
+                    Matricule:
+                        student.matricule || "....................",
 
-                    Nom: (student.currentNom || "").toUpperCase(),
-                    Prenoms: student.currentPrenoms || "",
+                    Nom:
+                        currentNom.toUpperCase(),
+
+                    Prenoms:
+                    currentPrenoms,
 
                     DateNaiss:
-                        formatDate(student.currentDateNaissance),
+                        formatDate(student.date_naissance),
 
                     LieuNaiss:
-                        student.currentLieuNaissance || "",
+                        student.lieu_naissance || "",
 
                     Examinateur:
                         student.examinateur || "",
@@ -370,10 +395,28 @@ export default function PVGenerationPage() {
                         formatTime(student.heure_soutenance),
 
                     Diplome:
-                        student.diploma_type?.toUpperCase(),
+                        student.diploma_type?.toUpperCase() || "LICENCE",
+
+                    Diploma:
+                        student.diploma_type?.toUpperCase() || "LICENCE",
 
                     Specialite:
-                        student.speciality?.toUpperCase(),
+                        student.speciality?.toUpperCase() || "",
+
+                    Speciality:
+                        student.speciality?.toUpperCase() || "",
+
+                    session_month:
+                        student.session_month?.toUpperCase() || "",
+
+                    session_year:
+                        student.session_year || "",
+
+                    Session_Month:
+                        student.session_month?.toUpperCase() || "",
+
+                    Session_Year:
+                        student.session_year || "",
 
                     Session:
                         `${student.session_month?.toUpperCase()} ${student.session_year}`,
@@ -385,12 +428,15 @@ export default function PVGenerationPage() {
 
                 // ===== PASS 1 =====
                 const doc1 = new Docxtemplater(zip, {
-                    paragraphLoop: true,
-                    linebreaks: true,
-                    delimiters: { start: "«", end: "»" },
+                    paragraphLoop: false,
+                    linebreaks: false,
+                    delimiters: {
+                        start: "«",
+                        end: "»"
+                    },
                 });
 
-                doc1.render(data);
+                doc1.render(dataToInject);
 
                 // ===== PASS 2 =====
                 const zip2 = new PizZip(
@@ -400,12 +446,15 @@ export default function PVGenerationPage() {
                 );
 
                 const doc2 = new Docxtemplater(zip2, {
-                    paragraphLoop: true,
-                    linebreaks: true,
-                    delimiters: { start: "<<", end: ">>" },
+                    paragraphLoop: false,
+                    linebreaks: false,
+                    delimiters: {
+                        start: "<<",
+                        end: ">>"
+                    },
                 });
 
-                doc2.render(data);
+                doc2.render(dataToInject);
 
                 const out = doc2.getZip().generate({
                     type: "blob",
@@ -414,7 +463,7 @@ export default function PVGenerationPage() {
                 });
 
                 const fileName =
-                    `PV_${student.currentNom}_${student.currentPrenoms}.docx`
+                    `PV_${currentNom}_${currentPrenoms}.docx`
                         .replace(/\s+/g, "_");
 
                 zipFile.file(fileName, out);
@@ -431,7 +480,9 @@ export default function PVGenerationPage() {
 
             await triggerDownload(finalZip, zipName);
 
-            toast.success("Tous les PV ont été générés !");
+            toast.success(
+                `${studentsToGenerate.length} PV générés avec succès !`
+            );
 
         } catch (error: any) {
 

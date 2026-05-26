@@ -128,3 +128,16 @@ export const normalizeSpeciality = (s: string = "") => {
         .replace(/\s+/g, " ")
         .trim();
 };
+
+export function sortStudentsByName<T extends { nom?: string; prenoms?: string }>(
+    data: T[]
+): T[] {
+    return [...data].sort((a, b) => {
+        const nameA = `${a.nom || ""} ${a.prenoms || ""}`.trim().toUpperCase();
+        const nameB = `${b.nom || ""} ${b.prenoms || ""}`.trim().toUpperCase();
+
+        return nameA.localeCompare(nameB, "fr", {
+            sensitivity: "base"
+        });
+    });
+}

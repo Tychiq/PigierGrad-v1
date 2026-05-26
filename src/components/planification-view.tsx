@@ -65,6 +65,7 @@ import { useUserRole } from "@/lib/useUserRole";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { normalizeSpeciality } from "@/lib/utils";
+import { sortStudentsByName } from "@/lib/utils";
 
 interface Soutenance {
   id: string;
@@ -247,7 +248,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
             .order("created_at", { ascending: false });
 
         if (data) {
-            setData(data);
+            setData(sortStudentsByName(data || []));
             // Persist the session globally from the first student
             if (data[0]?.session_month) setSessionMonth(data[0].session_month);
             if (data[0]?.session_year) setSessionYear(data[0].session_year);
@@ -259,7 +260,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
     fetchData();
   }, [diplomaType]);
 
-    const normalize = (s: string) =>
+    const normalize = (s?: string) =>
         (s || "")
             .trim()
             .replace(/\s+/g, " ")
@@ -271,13 +272,21 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                 ? LICENCE_SPECIALITIES
                 : MASTER_SPECIALITIES;
 
-        const fromDb = data.map(item => normalize(item.speciality || ""));
+        const fromDb = data.map(item =>
+            normalize(item.speciality || "")
+        );
 
-        const merged = [...base, ...fromDb];
+        const merged = [...base, ...fromDb]
+            .map(spec => normalize(spec))
+            .filter(spec => spec !== "");
 
         const specs = new Set(merged);
 
-        return Array.from(specs).sort();
+        return Array.from(specs).sort((a, b) =>
+            a.localeCompare(b, "fr", {
+                sensitivity: "base"
+            })
+        );
     }, [data, diplomaType]);
 
   const uniqueDirectors = useMemo(() => {
@@ -566,9 +575,16 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                 { align: "center" }
             );
 
+
+            // ===== SECOND BLUE LINE UNDER SUBTITLE =====
+            doc.setDrawColor(30, 64, 175);
+            doc.setLineWidth(0.8);
+
+            doc.line(10, 46, 287, 46);
+
 // ===== TABLE START (PUSHED DOWN CLEANLY) =====
             autoTable(doc, {
-                startY: 60,
+                startY: 55,
 
                 head: [[
                     'JURY',
@@ -582,7 +598,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                     'RAPPORTEUR'
                 ]],
 
-                body: filteredData.map(item => [
+                body: sortStudentsByName(filteredData).map(item => [
                     item.jury || "---",
 
                     `${formatDate(item.date_soutenance)}\n${formatTime(item.heure_soutenance)}`,
@@ -723,7 +739,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                 return;
             }
 
-            const excelData = filteredData.map((item, index) => ({
+            const excelData = sortStudentsByName(filteredData).map((item, index) => ({
                 "N°": index + 1,
 
                 "JURY": item.jury || "",

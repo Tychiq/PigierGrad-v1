@@ -116,9 +116,15 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
 
                 });
 
-                const stats = Object
-                    .values(counts)
-                    .sort((a, b) => b.count - a.count);
+                const stats = Object.values(counts).sort((a, b) => {
+                    if (b.count !== a.count) {
+                        return b.count - a.count;
+                    }
+
+                    return a.name.localeCompare(b.name, "fr", {
+                        sensitivity: "base"
+                    });
+                });
 
                 setDirectors(stats);
             }
