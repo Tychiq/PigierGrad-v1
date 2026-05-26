@@ -956,17 +956,36 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                     <div className="space-y-4">
                       <h3 className="text-xs font-black uppercase tracking-widest text-blue-600">Informations Générales</h3>
                       <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">Spécialité</Label>
-                        <Select value={form.speciality || ""} onValueChange={(val) => setForm({...form, speciality: val})}>
-                          <SelectTrigger className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none">
-                            <SelectValue placeholder="Sélectionner une spécialité..." />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-xl">
-                            {activeSpecialities.map(spec => (
-                              <SelectItem key={spec} value={spec}>{spec}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-blue-400">
+                              Spécialité
+                          </Label>
+
+                          <Select
+                              value={form.speciality || ""}
+                              onValueChange={(val) =>
+                                  setForm({
+                                      ...form,
+                                      speciality: val
+                                  })
+                              }
+                          >
+                              <SelectTrigger className="h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 border-none">
+                                  <SelectValue placeholder="Sélectionner une spécialité..." />
+                              </SelectTrigger>
+
+                              <SelectContent className="rounded-xl">
+
+                                  {uniqueSpecialities.map(spec => (
+                                      <SelectItem
+                                          key={spec}
+                                          value={spec}
+                                      >
+                                          {spec}
+                                      </SelectItem>
+                                  ))}
+
+                              </SelectContent>
+                          </Select>
                       </div>
                     </div>
                     <div className="space-y-4">
