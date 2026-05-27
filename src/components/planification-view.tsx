@@ -927,7 +927,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
             doc.setFont("helvetica", "normal");
 
             doc.text(
-                `Cotonou, le ${formattedDate}`,
+                "Cotonou, le ",
                 220,
                 signatureY
             );
