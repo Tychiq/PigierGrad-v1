@@ -40,6 +40,7 @@ import Docxtemplater from "docxtemplater";
 import JSZip from "jszip";
 import { LICENCE_SPECIALITIES, MASTER_SPECIALITIES } from "@/lib/constants";
 import { sortStudentsByName } from "@/lib/utils";
+import { normalizeSpeciality } from "@/lib/utils";
 
 interface Student {
   id: string;
@@ -265,7 +266,9 @@ export default function PVGenerationPage() {
     const generateAllPVs = async () => {
 
         if (!bulkDiplomaType || !bulkSpeciality) {
-            toast.error("Veuillez sélectionner le diplôme et la spécialité");
+            toast.error(
+                "Veuillez sélectionner le diplôme et la spécialité"
+            );
             return;
         }
 
@@ -273,31 +276,62 @@ export default function PVGenerationPage() {
 
         try {
 
-            const normalize = (s: string) =>
-                (s || "")
-                    .trim()
-                    .replace(/\s+/g, " ")
-                    .toUpperCase();
 
-            // ===== FETCH DIRECTLY FROM DB =====
+
+            const normalizedSelectedDiploma =
+                normalizeSpeciality(bulkDiplomaType);
+
+            const normalizedSelectedSpeciality =
+                normalizeSpeciality(bulkSpeciality);
+
+            // ===== FETCH FROM DB =====
             const { data, error } = await supabase
                 .from("soutenances")
-                .select("*")
-                .eq("diploma_type", bulkDiplomaType);
+                .select("*");
 
             if (error) {
                 throw error;
             }
 
-            // ===== FILTER SAFELY =====
+            // ===== SAFE FILTER =====
             const studentsToGenerate = (data || []).filter(
-                (s) =>
-                    normalize(s.speciality || "") ===
-                    normalize(bulkSpeciality)
+                (student) => {
+
+                    const studentDiploma =
+                        normalizeSpeciality(student.diploma_type);
+
+                    const studentSpeciality =
+                        normalizeSpeciality(student.speciality);
+
+                    return (
+                        studentDiploma === normalizedSelectedDiploma &&
+                        studentSpeciality === normalizedSelectedSpeciality
+                    );
+                }
+            );
+
+            // ===== SORT ALPHABETICALLY =====
+            studentsToGenerate.sort((a, b) =>
+                (a.nom || "").localeCompare(
+                    b.nom || "",
+                    "fr",
+                    { sensitivity: "base" }
+                )
             );
 
             if (studentsToGenerate.length === 0) {
+
+                console.log("Selected speciality:",
+                    normalizedSelectedSpeciality
+                );
+
+                console.log(
+                    "Available specialities:",
+                    (data || []).map(s => s.speciality)
+                );
+
                 toast.error("Aucun étudiant trouvé");
+
                 return;
             }
 
@@ -327,18 +361,36 @@ export default function PVGenerationPage() {
             const templateBuffer =
                 await response.arrayBuffer();
 
-            // ===== GENERATE EACH DOC =====
+            // ===== GENERATE DOCS =====
             for (const student of studentsToGenerate) {
 
                 const zip = new PizZip(templateBuffer);
 
-                const currentNom = student.nom || "";
-                const currentPrenoms = student.prenoms || "";
+                const currentNom =
+                    student.nom || "";
+
+                const currentPrenoms =
+                    student.prenoms || "";
+
+                const speciality =
+                    student.speciality || "";
+
+                const diploma =
+                    student.diploma_type || "LICENCE";
+
+                const sessionMonth =
+                    student.session_month || "";
+
+                const sessionYear =
+                    student.session_year || "";
 
                 const dataToInject = {
 
-                    Jury: student.jury || "....................",
-                    Salle: student.salle || "....................",
+                    Jury:
+                        student.jury || "....................",
+
+                    Salle:
+                        student.salle || "....................",
 
                     Matricule:
                         student.matricule || "....................",
@@ -395,31 +447,31 @@ export default function PVGenerationPage() {
                         formatTime(student.heure_soutenance),
 
                     Diplome:
-                        student.diploma_type?.toUpperCase() || "LICENCE",
+                        diploma.toUpperCase(),
 
                     Diploma:
-                        student.diploma_type?.toUpperCase() || "LICENCE",
+                        diploma.toUpperCase(),
 
                     Specialite:
-                        student.speciality?.toUpperCase() || "",
+                        speciality.toUpperCase(),
 
                     Speciality:
-                        student.speciality?.toUpperCase() || "",
+                        speciality.toUpperCase(),
 
                     session_month:
-                        student.session_month?.toUpperCase() || "",
+                        sessionMonth.toUpperCase(),
 
                     session_year:
-                        student.session_year || "",
+                    sessionYear,
 
                     Session_Month:
-                        student.session_month?.toUpperCase() || "",
+                        sessionMonth.toUpperCase(),
 
                     Session_Year:
-                        student.session_year || "",
+                    sessionYear,
 
                     Session:
-                        `${student.session_month?.toUpperCase()} ${student.session_year}`,
+                        `${sessionMonth.toUpperCase()} ${sessionYear}`,
 
                     NumeroArrete:
                         localStorage.getItem("numeroArrete") ||
@@ -469,10 +521,11 @@ export default function PVGenerationPage() {
                 zipFile.file(fileName, out);
             }
 
-            // ===== FINAL ZIP =====
-            const finalZip = await zipFile.generateAsync({
-                type: "blob"
-            });
+            // ===== GENERATE ZIP =====
+            const finalZip =
+                await zipFile.generateAsync({
+                    type: "blob"
+                });
 
             const zipName =
                 `PV_${bulkDiplomaType}_${bulkSpeciality}.zip`

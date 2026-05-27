@@ -116,17 +116,19 @@ export function formatFullTime(
 }
 
 
-export const normalizeSpeciality = (s: string = "") => {
+export const normalizeSpeciality = (
+    s: string = ""
+) => {
     return s
-        .replace(/\s+/g, " ")          // collapse spaces
-        .replace(/\s*\(\s*/g, " (")    // fix space before "("
-        .replace(/\s*\)\s*/g, ") ")    // fix space after ")"
-        .trim()
-        .toUpperCase()
-        .replace(/\(\s+/g, "(")        // remove space after (
-        .replace(/\s+\)/g, ")")        // remove space before )
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
         .replace(/\s+/g, " ")
-        .trim();
+        .replace(/\s*\(\s*/g, " (")
+        .replace(/\s*\)\s*/g, ") ")
+        .replace(/\(\s+/g, "(")
+        .replace(/\s+\)/g, ")")
+        .trim()
+        .toUpperCase();
 };
 
 export function sortStudentsByName<T extends { nom?: string; prenoms?: string }>(

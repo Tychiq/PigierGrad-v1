@@ -260,11 +260,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
     fetchData();
   }, [diplomaType]);
 
-    const normalize = (s?: string) =>
-        (s || "")
-            .trim()
-            .replace(/\s+/g, " ")
-            .toUpperCase();
+
 
     const uniqueSpecialities = useMemo(() => {
         const base =
@@ -273,11 +269,11 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                 : MASTER_SPECIALITIES;
 
         const fromDb = data.map(item =>
-            normalize(item.speciality || "")
+            normalizeSpeciality(item.speciality || "")
         );
 
         const merged = [...base, ...fromDb]
-            .map(spec => normalize(spec))
+            .map(spec => normalizeSpeciality(spec))
             .filter(spec => spec !== "");
 
         const specs = new Set(merged);
@@ -537,33 +533,47 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
             doc.setFontSize(10);
             doc.setTextColor(80, 80, 80);
             doc.setFont("helvetica", "normal");
-            doc.text(docCode, 285, 8, { align: "right" });
 
             const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
 
-            // ===== LOGO TOP LEFT =====
+            doc.text(docCode, pageWidth - 10, 8, {
+                align: "right"
+            });
+
+// ===== LOGO TOP LEFT =====
             doc.addImage(logoBase64, "JPEG", 10, 4, 34, 16);
 
 // ===== HEADER LINE =====
             doc.setDrawColor(30, 64, 175);
             doc.setLineWidth(1);
-            doc.line(10, 24, pageWidth - 10, 24);
+
+            doc.line(
+                10,
+                24,
+                pageWidth - 10,
+                24
+            );
 
 // ===== TITLE =====
             doc.setFontSize(18);
             doc.setTextColor(30, 64, 175);
             doc.setFont("helvetica", "bold");
+
             doc.text(
                 "PLANNING DES SOUTENANCES",
                 pageWidth / 2,
                 34,
-                { align: "center" }
+                {
+                    align: "center"
+                }
             );
 
-// ===== SUBTITLE (IMPORTANT: PUSHED DOWN) =====
+// ===== SUBTITLE =====
             doc.setFontSize(12);
             doc.setTextColor(15, 23, 42);
             doc.setFont("helvetica", "bold");
+
             doc.text(
                 `${diplomaType.toUpperCase()} PROFESSIONNEL${
                     selectedSpeciality !== "all"
@@ -572,19 +582,44 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                 } - SESSION DE ${sessionMonth.toUpperCase()} ${sessionYear}`,
                 pageWidth / 2,
                 42,
-                { align: "center" }
+                {
+                    align: "center"
+                }
             );
 
-
-            // ===== SECOND BLUE LINE UNDER SUBTITLE =====
+// ===== SECOND BLUE LINE =====
             doc.setDrawColor(30, 64, 175);
             doc.setLineWidth(0.8);
 
-            doc.line(10, 46, 287, 46);
+            doc.line(
+                10,
+                46,
+                pageWidth - 10,
+                46
+            );
 
-// ===== TABLE START (PUSHED DOWN CLEANLY) =====
+// ===== TABLE =====
             autoTable(doc, {
+
                 startY: 55,
+
+                theme: "grid",
+
+                // ===== PROFESSIONAL SETTINGS =====
+                pageBreak: "auto",
+
+                rowPageBreak: "avoid",
+
+                showHead: "everyPage",
+
+                tableWidth: pageWidth - 20,
+
+                margin: {
+                    top: 55,
+                    left: 10,
+                    right: 10,
+                    bottom: 25
+                },
 
                 head: [[
                     'JURY',
@@ -599,6 +634,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                 ]],
 
                 body: sortStudentsByName(filteredData).map(item => [
+
                     item.jury || "---",
 
                     `${formatDate(item.date_soutenance)}\n${formatTime(item.heure_soutenance)}`,
@@ -613,25 +649,14 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
 
                     item.theme || "---",
 
-                    `${item.directeur || "---"}\n\n${item.grade_directeur || ""}`,
+                    `${item.directeur || "---"}\n${item.grade_directeur || ""}`,
 
-                    `${item.president || "---"}\n\n${item.grade_president || ""}`,
+                    `${item.president || "---"}\n${item.grade_president || ""}`,
 
-                    `${item.examinateur || "---"}\n\n${item.grade_examinateur || ""}`,
+                    `${item.examinateur || "---"}\n${item.grade_examinateur || ""}`,
 
-                    `${item.rapporteur || "---"}\n\n${item.grade_rapporteur || ""}`
+                    `${item.rapporteur || "---"}\n${item.grade_rapporteur || ""}`
                 ]),
-
-                theme: "grid",
-
-                // IMPORTANT:
-                // top margin small for next pages
-                // startY controls only first page
-                margin: {
-                    top: 60,
-                    left: 10,
-                    right: 10
-                },
 
                 headStyles: {
                     fillColor: [30, 64, 175],
@@ -646,89 +671,197 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                     fontSize: 7.5,
                     valign: "middle",
                     halign: "center",
-                    textColor: [20, 20, 20]
+                    textColor: [20, 20, 20],
+                    overflow: "linebreak"
                 },
 
                 styles: {
                     overflow: "linebreak",
-                    cellPadding: 2.5,
+                    cellPadding: 2,
                     fontSize: 7.5,
                     halign: "center",
                     valign: "middle"
                 },
 
                 columnStyles: {
-                    0: { cellWidth: 15, halign: "center" },
-                    1: { cellWidth: 27, halign: "center" },
-                    2: { cellWidth: 18, halign: "center" },
-                    3: { cellWidth: 35, halign: "center" },
-                    4: { cellWidth: 48, halign: "center" },
-                    5: { cellWidth: 30, halign: "center" },
-                    6: { cellWidth: 28, halign: "center" },
-                    7: { cellWidth: 28, halign: "center" },
-                    8: { cellWidth: 28, halign: "center" }
-                },
 
-                didDrawPage: (data) => {
-                    doc.setFontSize(8);
-                    doc.setTextColor(148, 163, 184);
-                    doc.setFont("helvetica", "normal");
+                    0: {
+                        cellWidth: 15,
+                        halign: "center"
+                    },
 
-                    doc.text(
-                        `Page ${data.pageNumber}`,
-                        287,
-                        205,
-                        { align: "right" }
-                    );
+                    1: {
+                        cellWidth: 27,
+                        halign: "center"
+                    },
+
+                    2: {
+                        cellWidth: 18,
+                        halign: "center"
+                    },
+
+                    3: {
+                        cellWidth: 35,
+                        halign: "center"
+                    },
+
+                    4: {
+                        cellWidth: 58,
+                        halign: "center"
+                    },
+
+                    5: {
+                        cellWidth: 30,
+                        halign: "center"
+                    },
+
+                    6: {
+                        cellWidth: 30,
+                        halign: "center"
+                    },
+
+                    7: {
+                        cellWidth: 30,
+                        halign: "center"
+                    },
+
+                    8: {
+                        cellWidth: 30,
+                        halign: "center"
+                    }
                 }
             });
 
-            // ===== SIGNATURE =====
+
+// ===== PAGE NUMBERS ONLY =====
             const totalPages = doc.getNumberOfPages();
-            doc.setPage(totalPages);
 
-            const finalY = (doc as any).lastAutoTable.finalY || 170;
-            const pageHeight = doc.internal.pageSize.height;
+            for (let i = 1; i <= totalPages; i++) {
 
-            let signatureY = finalY + 20;
+                doc.setPage(i);
 
-            if (signatureY > pageHeight - 45) {
-                doc.addPage();
-                doc.setPage(doc.getNumberOfPages());
-                signatureY = 40;
+                doc.setFontSize(8);
+
+                doc.setTextColor(148, 163, 184);
+
+                doc.setFont("helvetica", "normal");
+
+                doc.text(
+                    `Page ${i}`,
+                    pageWidth - 10,
+                    pageHeight - 5,
+                    {
+                        align: "right"
+                    }
+                );
             }
 
-            const formattedDate = today.toLocaleDateString("fr-FR", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric"
-            });
+// ===== SIGNATURE =====
+            const totalPdfPages = doc.getNumberOfPages();
+
+            for (let i = 1; i <= totalPdfPages; i++) {
+
+                doc.setPage(i);
+
+                doc.setFontSize(8);
+
+                doc.setTextColor(148, 163, 184);
+
+                doc.setFont("helvetica", "normal");
+
+                doc.text(
+                    `Page ${i}`,
+                    pageWidth - 10,
+                    pageHeight - 5,
+                    {
+                        align: "right"
+                    }
+                );
+            }
+
+// ===== SIGNATURE =====
+
+            const finalY =
+                (doc as any).lastAutoTable.finalY || 170;
+
+// FORCE signature to remain
+// on last page bottom professionally
+
+            const signatureY = Math.max(
+                finalY + 10,
+                pageHeight - 45
+            );
+
+            const formattedDate = today.toLocaleDateString(
+                "fr-FR",
+                {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric"
+                }
+            );
 
             doc.setFontSize(11);
+
             doc.setTextColor(30, 30, 30);
+
             doc.setFont("helvetica", "normal");
 
-            doc.text("Cotonou, le ", 220, signatureY);
-            doc.text("Le Directeur des Etudes", 220, signatureY + 12);
+            doc.text(
+                `Cotonou, le ${formattedDate}`,
+                220,
+                signatureY
+            );
+
+            doc.text(
+                "Le Directeur des Etudes",
+                220,
+                signatureY + 12
+            );
 
             const directorName = "Dr Arsène VIGAN";
 
             doc.setFont("helvetica", "bold");
-            doc.text(directorName, 220, signatureY + 32);
 
-            const textWidth = doc.getTextWidth(directorName);
-            doc.line(220, signatureY + 33, 220 + textWidth, signatureY + 33);
+            doc.text(
+                directorName,
+                220,
+                signatureY + 32
+            );
+
+            const textWidth =
+                doc.getTextWidth(directorName);
+
+            doc.line(
+                220,
+                signatureY + 33,
+                220 + textWidth,
+                signatureY + 33
+            );
 
             // ===== SAVE =====
-            const filename = `Planning_${diplomaType}_${sessionMonth}_${sessionYear}.pdf`;
+
+            const filename =
+                `Planning_${diplomaType}_${sessionMonth}_${sessionYear}.pdf`;
+
             const pdfBlob = doc.output("blob");
 
             await triggerDownload(pdfBlob, filename);
 
-            toast.success("Planning exporté avec succès !");
+            toast.success(
+                "Planning exporté avec succès !"
+            );
+
         } catch (error) {
-            console.error("PDF Export Error:", error);
-            toast.error("Erreur lors de l'export PDF.");
+
+            console.error(
+                "PDF Export Error:",
+                error
+            );
+
+            toast.error(
+                "Erreur lors de l'export PDF."
+            );
         }
     };
 

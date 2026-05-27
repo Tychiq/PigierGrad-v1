@@ -96,10 +96,21 @@ export default function InsertionPage() {
           grade_examinateur: row["GradeExaminateur"] || "",
           rapporteur: row["Rapporteur"] || "",
           grade_rapporteur: row["GradeRapporteur"] || "",
-            speciality: normalizeSpeciality(row.speciality),
+            speciality: normalizeSpeciality(
+                row["SPECIALITE"]
+            ),
           diploma_type: diplomaType,
-            codirecteur: row.codirecteur || "",
-            grade_codirecteur: row.grade_codirecteur || "",
+            codirecteur:
+                row["Codirecteur"] ||
+                row["CoDirecteur"] ||
+                row["Co-directeur"] ||
+                "",
+
+            grade_codirecteur:
+                row["GradeCodirecteur"] ||
+                row["GradeCoDirecteur"] ||
+                row["GradeCo-directeur"] ||
+                "",
         }));
 
         const validData = formattedData.filter(d => d.nom);
