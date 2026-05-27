@@ -575,7 +575,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
             doc.setFont("helvetica", "bold");
 
             doc.text(
-                `${diplomaType.toUpperCase()} PROFESSIONNEL${
+                `${diplomaType.toUpperCase()} PROFESSIONNELLE${
                     selectedSpeciality !== "all"
                         ? ` EN ${selectedSpeciality}`
                         : ""
