@@ -361,16 +361,98 @@ export default function PVGenerationPage() {
             const templateBuffer =
                 await response.arrayBuffer();
 
-            // ===== GENERATE DOCS =====
-            for (const student of studentsToGenerate) {
+            // ======================================================
+// BUILD FINAL STUDENT LIST (INCLUDING BINOMES)
+// ======================================================
+
+            const finalStudents: any[] = [];
+
+            studentsToGenerate.forEach((student) => {
+
+                // =========================================
+                // MAIN STUDENT
+                // =========================================
+
+                finalStudents.push({
+
+                    ...student,
+
+                    current_nom:
+                        student.nom || "",
+
+                    current_prenoms:
+                        student.prenoms || "",
+
+                    current_matricule:
+                        student.matricule || "",
+
+                    current_date_naissance:
+                        student.date_naissance || "",
+
+                    current_lieu_naissance:
+                        student.lieu_naissance || ""
+                });
+
+                // =========================================
+                // BINOME STUDENT
+                // =========================================
+
+                if (
+                    student.nom2 &&
+                    student.prenoms2
+                ) {
+
+                    finalStudents.push({
+
+                        ...student,
+
+                        current_nom:
+                            student.nom2 || "",
+
+                        current_prenoms:
+                            student.prenoms2 || "",
+
+                        current_matricule:
+                            student.matricule2 || "",
+
+                        current_date_naissance:
+                            student.date_naissance2 || "",
+
+                        current_lieu_naissance:
+                            student.lieu_naissance2 || ""
+                    });
+                }
+            });
+
+// ======================================================
+// SORT FINAL LIST
+// ======================================================
+
+            finalStudents.sort((a, b) =>
+                (a.current_nom || "").localeCompare(
+                    b.current_nom || "",
+                    "fr",
+                    { sensitivity: "base" }
+                )
+            );
+
+            toast.info(
+                `Génération de ${finalStudents.length} PV en cours...`
+            );
+
+// ======================================================
+// GENERATE DOCS
+// ======================================================
+
+            for (const student of finalStudents) {
 
                 const zip = new PizZip(templateBuffer);
 
                 const currentNom =
-                    student.nom || "";
+                    student.current_nom || "";
 
                 const currentPrenoms =
-                    student.prenoms || "";
+                    student.current_prenoms || "";
 
                 const speciality =
                     student.speciality || "";
@@ -393,7 +475,7 @@ export default function PVGenerationPage() {
                         student.salle || "....................",
 
                     Matricule:
-                        student.matricule || "....................",
+                        student.current_matricule || "....................",
 
                     Nom:
                         currentNom.toUpperCase(),
@@ -402,10 +484,12 @@ export default function PVGenerationPage() {
                     currentPrenoms,
 
                     DateNaiss:
-                        formatDate(student.date_naissance),
+                        formatDate(
+                            student.current_date_naissance
+                        ),
 
                     LieuNaiss:
-                        student.lieu_naissance || "",
+                        student.current_lieu_naissance || "",
 
                     Examinateur:
                         student.examinateur || "",
@@ -434,17 +518,31 @@ export default function PVGenerationPage() {
                     GradeDirecteur:
                         student.grade_directeur || "",
 
+                    Codirecteur:
+                        student.codirecteur || "",
+
+                    GradeCodirecteur:
+                        student.grade_codirecteur || "",
+
                     Date:
-                        formatDate(student.date_soutenance),
+                        formatDate(
+                            student.date_soutenance
+                        ),
 
                     Heure:
-                        formatTime(student.heure_soutenance),
+                        formatTime(
+                            student.heure_soutenance
+                        ),
 
                     DateSoutenance:
-                        formatDate(student.date_soutenance),
+                        formatDate(
+                            student.date_soutenance
+                        ),
 
                     HeureSoutenance:
-                        formatTime(student.heure_soutenance),
+                        formatTime(
+                            student.heure_soutenance
+                        ),
 
                     Diplome:
                         diploma.toUpperCase(),
@@ -478,10 +576,16 @@ export default function PVGenerationPage() {
                         "................................"
                 };
 
-                // ===== PASS 1 =====
+                // =========================================
+                // PASS 1
+                // =========================================
+
                 const doc1 = new Docxtemplater(zip, {
+
                     paragraphLoop: false,
+
                     linebreaks: false,
+
                     delimiters: {
                         start: "«",
                         end: "»"
@@ -490,7 +594,10 @@ export default function PVGenerationPage() {
 
                 doc1.render(dataToInject);
 
-                // ===== PASS 2 =====
+                // =========================================
+                // PASS 2
+                // =========================================
+
                 const zip2 = new PizZip(
                     doc1.getZip().generate({
                         type: "arraybuffer"
@@ -498,8 +605,11 @@ export default function PVGenerationPage() {
                 );
 
                 const doc2 = new Docxtemplater(zip2, {
+
                     paragraphLoop: false,
+
                     linebreaks: false,
+
                     delimiters: {
                         start: "<<",
                         end: ">>"
@@ -509,7 +619,9 @@ export default function PVGenerationPage() {
                 doc2.render(dataToInject);
 
                 const out = doc2.getZip().generate({
+
                     type: "blob",
+
                     mimeType:
                         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 });
@@ -534,7 +646,7 @@ export default function PVGenerationPage() {
             await triggerDownload(finalZip, zipName);
 
             toast.success(
-                `${studentsToGenerate.length} PV générés avec succès !`
+                `${finalStudents.length} PV générés avec succès !`
             );
 
         } catch (error: any) {
