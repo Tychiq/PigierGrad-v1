@@ -49,42 +49,71 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
 
         const fetchDirectors = async () => {
 
-            setLoading(true);
+            try {
 
-            const { data } = await supabase
-                .from("soutenances")
-                .select(`
-                directeur,
-                grade_directeur,
-                codirecteur,
-                grade_codirecteur
-            `)
-                .eq("diploma_type", diplomaType);
+                setLoading(true);
 
-            if (data) {
+                const normalizedDiploma =
+                    diplomaType
+                        .trim()
+                        .toUpperCase();
+
+                const { data, error } = await supabase
+                    .from("soutenances")
+                    .select(`
+                    directeur,
+                    grade_directeur,
+                    codirecteur,
+                    grade_codirecteur,
+                    diploma_type,
+                    is_merged
+                `);
+
+                if (error) {
+                    console.error(error);
+                    toast.error(error.message);
+                    return;
+                }
+
+                // ===== SAFE NORMALIZER =====
+                const normalize = (value?: string | null) =>
+                    String(value || "")
+                        .trim()
+                        .replace(/\s+/g, " ")
+                        .toUpperCase();
+
+                // ===== CLEAN DATA =====
+                const cleaned =
+                    (data || []).filter(item =>
+                        normalize(item.diploma_type) === normalizedDiploma
+                        &&
+                        item.is_merged !== true
+                    );
 
                 const counts: Record<string, DirectorStats> = {};
 
-                const normalize = (value?: string) =>
-                    value
-                        ?.trim()
-                        .replace(/\s+/g, " ")
-                        .toUpperCase() || "";
-
-                data.forEach(item => {
+                cleaned.forEach(item => {
 
                     // ================= DIRECTEUR =================
-                    if (item.directeur) {
 
-                        const normalizedName = normalize(item.directeur);
+                    const directeur =
+                        normalize(item.directeur);
 
-                        const key = `${normalizedName}__${normalize(item.grade_directeur)}`;
+                    const gradeDirecteur =
+                        normalize(item.grade_directeur);
+
+                    if (directeur) {
+
+                        const key =
+                            `${directeur}__${gradeDirecteur}`;
 
                         if (!counts[key]) {
 
                             counts[key] = {
-                                name: item.directeur.trim(),
-                                grade: item.grade_directeur || "",
+                                name:
+                                    String(item.directeur || "").trim(),
+                                grade:
+                                    String(item.grade_directeur || "").trim(),
                                 count: 0
                             };
                         }
@@ -92,44 +121,71 @@ export function DirectorsView({ diplomaType }: { diplomaType: string }) {
                         counts[key].count += 1;
                     }
 
-                    // ================= CO-DIRECTEUR ONLY FOR MASTER =================
+                    // ================= CO-DIRECTEUR =================
+
                     if (
-                        diplomaType === "Master" &&
-                        item.codirecteur
+                        normalizedDiploma === "MASTER"
                     ) {
 
-                        const normalizedName = normalize(item.codirecteur);
+                        const codirecteur =
+                            normalize(item.codirecteur);
 
-                        const key = `${normalizedName}__${normalize(item.grade_codirecteur)}`;
+                        const gradeCodirecteur =
+                            normalize(item.grade_codirecteur);
 
-                        if (!counts[key]) {
+                        if (codirecteur) {
 
-                            counts[key] = {
-                                name: item.codirecteur.trim(),
-                                grade: item.grade_codirecteur || "",
-                                count: 0
-                            };
+                            const key =
+                                `${codirecteur}__${gradeCodirecteur}`;
+
+                            if (!counts[key]) {
+
+                                counts[key] = {
+                                    name:
+                                        String(item.codirecteur || "").trim(),
+                                    grade:
+                                        String(item.grade_codirecteur || "").trim(),
+                                    count: 0
+                                };
+                            }
+
+                            counts[key].count += 1;
                         }
-
-                        counts[key].count += 1;
                     }
 
                 });
 
-                const stats = Object.values(counts).sort((a, b) => {
-                    if (b.count !== a.count) {
-                        return b.count - a.count;
-                    }
+                const stats =
+                    Object.values(counts)
+                        .sort((a, b) => {
 
-                    return a.name.localeCompare(b.name, "fr", {
-                        sensitivity: "base"
-                    });
-                });
+                            if (b.count !== a.count) {
+                                return b.count - a.count;
+                            }
+
+                            return a.name.localeCompare(
+                                b.name,
+                                "fr",
+                                {
+                                    sensitivity: "base"
+                                }
+                            );
+                        });
 
                 setDirectors(stats);
-            }
 
-            setLoading(false);
+            } catch (err: any) {
+
+                console.error(err);
+
+                toast.error(
+                    "Erreur chargement directeurs"
+                );
+
+            } finally {
+
+                setLoading(false);
+            }
         };
 
         fetchDirectors();

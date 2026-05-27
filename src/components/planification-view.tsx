@@ -143,6 +143,11 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
     }
   }, [searchParams]);
 
+
+    useEffect(() => {
+        fetchData();
+    }, [diplomaType]);
+
     const toggleSelection = (id: string) => {
         setSelectedSoutenances(prev => {
             const newSet = new Set(prev);
@@ -163,7 +168,10 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
         if (selectedSoutenances.size > 0) {
             query.in("id", Array.from(selectedSoutenances));
         } else {
-            query.eq("diploma_type", diplomaType);
+            query.ilike(
+                "diploma_type",
+                diplomaType.trim().toUpperCase()
+            );
         }
 
         const { error } = await query;
@@ -207,83 +215,131 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
     };
 
     const fetchData = async () => {
-        setLoading(true);
-        const { data, error } = await supabase
-            .from("soutenances")
-            .select(`
-    id,
-    matricule,
-    nom,
-    prenoms,
-    date_naissance,
-    lieu_naissance,
-    matricule2,
-    nom2,
-    prenoms2,
-    date_naissance2,
-    lieu_naissance2,
-    theme,
-    directeur,
-    grade_directeur,
-    date_depot,
-    jury,
-    salle,
-    date_soutenance,
-    heure_soutenance,
-    president,
-    grade_president,
-    examinateur,
-    grade_examinateur,
-    rapporteur,
-    grade_rapporteur,
-    diploma_type,
-    speciality,
-    session_month,
-    session_year,
-    is_merged,
-    created_at
-  `)
-            .eq("is_merged", false)
-            .ilike("diploma_type", diplomaType)
-            .order("created_at", { ascending: false });
 
-        if (data) {
-            setData(sortStudentsByName(data || []));
-            // Persist the session globally from the first student
-            if (data[0]?.session_month) setSessionMonth(data[0].session_month);
-            if (data[0]?.session_year) setSessionYear(data[0].session_year);
+        try {
+
+            setLoading(true);
+
+            const normalizedDiploma =
+                diplomaType
+                    .trim()
+                    .toUpperCase();
+
+            const { data: dbData, error } = await supabase
+                .from("soutenances")
+                .select("*")
+                .eq("is_merged", false)
+                .order("created_at", {
+                    ascending: false
+                });
+
+            if (error) {
+                throw error;
+            }
+
+            // ===== CLEAN EVERYTHING =====
+            const cleanedData: Soutenance[] =
+                (dbData || [])
+                    .map((item: any) => {
+
+                        const cleanedDiploma =
+                            String(item.diploma_type || "")
+                                .trim()
+                                .toUpperCase();
+
+                        const cleanedSpeciality =
+                            normalizeSpeciality(
+                                item.speciality || ""
+                            ) || "NON DEFINIE";
+
+                        return {
+                            ...item,
+
+                            diploma_type:
+                            cleanedDiploma,
+
+                            speciality:
+                            cleanedSpeciality,
+
+                            nom:
+                                String(item.nom || "")
+                                    .trim()
+                                    .toUpperCase(),
+
+                            prenoms:
+                                String(item.prenoms || "")
+                                    .trim(),
+
+                            directeur:
+                                String(item.directeur || "")
+                                    .trim(),
+
+                            jury:
+                                item.jury
+                                    ? String(item.jury).trim()
+                                    : ""
+                        };
+                    })
+
+                    // ===== VERY IMPORTANT =====
+                    .filter(item =>
+                        item.diploma_type === normalizedDiploma
+                    );
+
+            const sorted =
+                sortStudentsByName(cleanedData);
+
+            setData(sorted);
+
+            // RESET FILTERS AFTER IMPORT
+            setSelectedSpeciality("all");
+            setSelectedDirector("all");
+            setSelectedJury("all");
+
+            if (sorted.length > 0) {
+
+                setSessionMonth(
+                    sorted[0]?.session_month || ""
+                );
+
+                setSessionYear(
+                    sorted[0]?.session_year || ""
+                );
+            }
+
+        } catch (err: any) {
+
+            console.error(err);
+
+            toast.error(
+                err.message || "Erreur chargement"
+            );
+
+        } finally {
+
+            setLoading(false);
         }
-        setLoading(false);
     };
 
-  useEffect(() => {
-    fetchData();
-  }, [diplomaType]);
-
-
-
     const uniqueSpecialities = useMemo(() => {
-        const base =
-            diplomaType === "Licence"
-                ? LICENCE_SPECIALITIES
-                : MASTER_SPECIALITIES;
 
-        const fromDb = data.map(item =>
-            normalizeSpeciality(item.speciality || "")
-        );
-
-        const merged = [...base, ...fromDb]
-            .map(spec => normalizeSpeciality(spec))
-            .filter(spec => spec !== "");
-
-        const specs = new Set(merged);
-
-        return Array.from(specs).sort((a, b) =>
+        return Array.from(
+            new Set(
+                data
+                    .map(item =>
+                        normalizeSpeciality(
+                            item.speciality || ""
+                        )
+                    )
+                    .filter(Boolean)
+            )
+        ).sort((a, b) =>
             a.localeCompare(b, "fr", {
                 sensitivity: "base"
             })
         );
-    }, [data, diplomaType]);
+
+    }, [data]);
 
   const uniqueDirectors = useMemo(() => {
     const dirs = new Set(data.map(item => item.directeur).filter(Boolean));
@@ -325,7 +381,10 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
 
                     speciality: form.speciality,
 
-                    diploma_type: diplomaType,
+                    diploma_type:
+                        diplomaType
+                            .trim()
+                            .toUpperCase(),
                     session_month: form.session_month || sessionMonth,
                     session_year: form.session_year || sessionYear
                 };
@@ -378,17 +437,63 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
     }
   };
 
-  const filteredData = useMemo(() => {
-    return data.filter(item => {
-      const matchesSearch = `${item.nom} ${item.prenoms} ${item.theme} ${item.matricule} ${item.nom2 || ""} ${item.prenoms2 || ""}`.toLowerCase().includes(search.toLowerCase());
-      const matchesSpeciality = selectedSpeciality === "all" || normalizeSpeciality(item.speciality).includes(normalizeSpeciality(selectedSpeciality));
-        const matchesJury =
-            selectedJury === "all" || item.jury?.toString() === selectedJury;
-      const matchesDirector = selectedDirector === "all" || item.directeur === selectedDirector;
+    const filteredData = useMemo(() => {
 
-        return matchesSearch && matchesSpeciality && matchesDirector && matchesJury;
-    });
-  }, [data, search, selectedSpeciality, selectedJury, selectedDirector]);
+        return data.filter(item => {
+
+            const searchable =
+                `
+            ${item.nom || ""}
+            ${item.prenoms || ""}
+            ${item.theme || ""}
+            ${item.matricule || ""}
+            ${item.nom2 || ""}
+            ${item.prenoms2 || ""}
+            ${item.speciality || ""}
+            `
+                    .toLowerCase();
+
+            const matchesSearch =
+                searchable.includes(
+                    search.toLowerCase().trim()
+                );
+
+            const matchesSpeciality =
+                selectedSpeciality === "all"
+                ||
+                normalizeSpeciality(
+                    item.speciality || ""
+                ) === normalizeSpeciality(
+                    selectedSpeciality
+                );
+
+            const matchesJury =
+                selectedJury === "all"
+                ||
+                String(item.jury || "")
+                    .trim() ===
+                String(selectedJury).trim();
+
+            const matchesDirector =
+                selectedDirector === "all"
+                ||
+                item.directeur === selectedDirector;
+
+            return (
+                matchesSearch &&
+                matchesSpeciality &&
+                matchesJury &&
+                matchesDirector
+            );
+        });
+
+    }, [
+        data,
+        search,
+        selectedSpeciality,
+        selectedJury,
+        selectedDirector
+    ]);
 
   const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
   const paginatedData = filteredData.slice(
@@ -414,7 +519,15 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
         setIsDialogOpen(true);
     };
 
-  const activeSpecialities = diplomaType === "Licence" ? LICENCE_SPECIALITIES : MASTER_SPECIALITIES;
+    const normalizedDiploma =
+        diplomaType
+            .trim()
+            .toUpperCase();
+
+    const activeSpecialities =
+        normalizedDiploma === "LICENCE"
+            ? LICENCE_SPECIALITIES
+            : MASTER_SPECIALITIES;
 
     const binomeCandidates = useMemo(() => {
         if (!targetBinomeItem) return [];
@@ -574,8 +687,14 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
             doc.setTextColor(15, 23, 42);
             doc.setFont("helvetica", "bold");
 
+
+            const professionnelLabel =
+                diplomaType.toUpperCase() === "LICENCE"
+                    ? "PROFESSIONNELLE"
+                    : "PROFESSIONNEL";
+
             doc.text(
-                `${diplomaType.toUpperCase()} PROFESSIONNELLE${
+                `${diplomaType.toUpperCase()} ${professionnelLabel}${
                     selectedSpeciality !== "all"
                         ? ` EN ${selectedSpeciality}`
                         : ""
@@ -1394,7 +1513,11 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
 
       <div className="grid grid-cols-1 gap-6">
         <AnimatePresence mode="popLayout">
-          {loading ? (
+
+            console.log("DATA:", data);
+            console.log("FILTERED:", filteredData);
+            console.log("DIPLOMA:", diplomaType);
+            {loading ? (
             Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="h-32 bg-white dark:bg-[#0f1629] rounded-3xl animate-pulse shadow-lg" />
             ))

@@ -71,57 +71,220 @@ export default function InsertionPage() {
         const sheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(sheet) as any[];
 
-        const formattedData = jsonData.map((row) => ({
-          matricule: row["Matricule"] || "",
-          nom: row["Nom"] || "",
-          prenoms: row["Prenoms"] || "",
-            date_naissance: excelDateToISO(row["DateNaiss"]),
-          lieu_naissance: row["LieuNaiss"] || "",
-          matricule2: row["Matricule2"] || "",
-          nom2: row["Nom2"] || "",
-          prenoms2: row["Prenoms2"] || "",
-            date_naissance2: excelDateToISO(row["DateNaiss2"]),
-          lieu_naissance2: row["LieuNaiss2"] || "",
-          theme: row["Theme"] || "",
-          directeur: row["Directeur"] || "",
-          grade_directeur: row["GradeDirecteur"] || "",
-            date_depot: excelDateToISO(row["DateDepot"]),
-          jury: row["Jury"] || "",
-          salle: row["Salle"] || "",
-            date_soutenance: excelDateToISO(row["Date"]),
-          heure_soutenance: row["Heure"] || "",
-          president: row["Président"] || row["President"] || "",
-          grade_president: row["GradePrésident"] || row["GradePresident"] || "",
-          examinateur: row["Examinateur"] || "",
-          grade_examinateur: row["GradeExaminateur"] || "",
-          rapporteur: row["Rapporteur"] || "",
-          grade_rapporteur: row["GradeRapporteur"] || "",
-            speciality: normalizeSpeciality(
-                row["SPECIALITE"]
-            ),
-          diploma_type: diplomaType,
-            codirecteur:
-                row["Codirecteur"] ||
-                row["CoDirecteur"] ||
-                row["Co-directeur"] ||
-                "",
+          const formattedData = jsonData.map((row) => {
 
-            grade_codirecteur:
-                row["GradeCodirecteur"] ||
-                row["GradeCoDirecteur"] ||
-                row["GradeCo-directeur"] ||
-                "",
-        }));
+              // ===== SAFE SPECIALITY EXTRACTION =====
+              const rawSpeciality =
+                  row["Specialite"] ||
+                  row["Spécialité"] ||
+                  row["SPECIALITE"] ||
+                  row["specialite"] ||
+                  row["speciality"] ||
+                  row["SPECIALITY"] ||
+                  "";
 
-        const validData = formattedData.filter(d => d.nom);
+              // ===== SAFE DIPLOMA EXTRACTION =====
+              const rawDiploma =
+                  row["Diplome"] ||
+                  row["Diplôme"] ||
+                  row["Diploma"] ||
+                  row["diploma_type"] ||
+                  diplomaType ||
+                  "";
 
-        // Batch insertion to avoid payload limits and timeouts (especially for 100+ rows)
-        const BATCH_SIZE = 50;
-        for (let i = 0; i < validData.length; i += BATCH_SIZE) {
-          const batch = validData.slice(i, i + BATCH_SIZE);
-          const { error } = await supabase.from("soutenances").insert(batch);
-          if (error) throw error;
-        }
+              // ===== NORMALIZED VALUES =====
+              const normalizedSpeciality = normalizeSpeciality(
+                  String(rawSpeciality || "").trim()
+              );
+
+              const normalizedDiploma = String(rawDiploma || "")
+                  .trim()
+                  .toUpperCase();
+
+              return {
+
+                  matricule: String(
+                      row["Matricule"] || ""
+                  ).trim(),
+
+                  nom: String(
+                      row["Nom"] || ""
+                  )
+                      .trim()
+                      .toUpperCase(),
+
+                  prenoms: String(
+                      row["Prenoms"] || ""
+                  ).trim(),
+
+                  date_naissance:
+                      excelDateToISO(
+                          row["DateNaiss"]
+                      ),
+
+                  lieu_naissance: String(
+                      row["LieuNaiss"] || ""
+                  ).trim(),
+
+                  matricule2: String(
+                      row["Matricule2"] || ""
+                  ).trim(),
+
+                  nom2: String(
+                      row["Nom2"] || ""
+                  )
+                      .trim()
+                      .toUpperCase(),
+
+                  prenoms2: String(
+                      row["Prenoms2"] || ""
+                  ).trim(),
+
+                  date_naissance2:
+                      excelDateToISO(
+                          row["DateNaiss2"]
+                      ),
+
+                  lieu_naissance2: String(
+                      row["LieuNaiss2"] || ""
+                  ).trim(),
+
+                  theme: String(
+                      row["Theme"] || ""
+                  ).trim(),
+
+                  directeur: String(
+                      row["Directeur"] || ""
+                  ).trim(),
+
+                  grade_directeur: String(
+                      row["GradeDirecteur"] || ""
+                  ).trim(),
+
+                  date_depot:
+                      excelDateToISO(
+                          row["DateDepot"]
+                      ),
+
+                  jury:
+                      row["Jury"] !== undefined &&
+                      row["Jury"] !== null &&
+                      row["Jury"] !== ""
+                          ? String(row["Jury"]).trim()
+                          : null,
+
+                  salle: String(
+                      row["Salle"] || ""
+                  ).trim(),
+
+                  date_soutenance:
+                      excelDateToISO(
+                          row["Date"]
+                      ),
+
+                  heure_soutenance: String(
+                      row["Heure"] || ""
+                  ).trim(),
+
+                  president: String(
+                      row["Président"] ||
+                      row["President"] ||
+                      ""
+                  ).trim(),
+
+                  grade_president: String(
+                      row["GradePrésident"] ||
+                      row["GradePresident"] ||
+                      ""
+                  ).trim(),
+
+                  examinateur: String(
+                      row["Examinateur"] || ""
+                  ).trim(),
+
+                  grade_examinateur: String(
+                      row["GradeExaminateur"] || ""
+                  ).trim(),
+
+                  rapporteur: String(
+                      row["Rapporteur"] || ""
+                  ).trim(),
+
+                  grade_rapporteur: String(
+                      row["GradeRapporteur"] || ""
+                  ).trim(),
+
+                  // ===== FINAL FIXED VALUES =====
+                  speciality:
+                  normalizedSpeciality,
+
+                  diploma_type:
+                      normalizedDiploma === "LICENCE"
+                          ? "Licence"
+                          : normalizedDiploma === "MASTER"
+                              ? "Master"
+                              : diplomaType,
+
+                  codirecteur: String(
+                      row["Codirecteur"] ||
+                      row["CoDirecteur"] ||
+                      row["Co-directeur"] ||
+                      ""
+                  ).trim(),
+
+                  grade_codirecteur: String(
+                      row["GradeCodirecteur"] ||
+                      row["GradeCoDirecteur"] ||
+                      row["GradeCo-directeur"] ||
+                      ""
+                  ).trim(),
+
+                  session_month: "",
+
+                  session_year: "",
+
+                  is_merged: false
+              };
+          });
+
+// ===== IMPORTANT FINAL FILTER =====
+          const validData = formattedData.filter(
+              (d) =>
+                  d.nom &&
+                  d.prenoms &&
+                  d.speciality &&
+                  d.diploma_type
+          );
+
+// ===== REMOVE DUPLICATES =====
+          const uniqueData = Array.from(
+              new Map(
+                  validData.map((item) => [
+                      `${item.matricule}-${item.speciality}-${item.diploma_type}`,
+                      item
+                  ])
+              ).values()
+          );
+
+// ===== INSERT =====
+          const BATCH_SIZE = 50;
+
+          for (let i = 0; i < uniqueData.length; i += BATCH_SIZE) {
+
+              const batch = uniqueData.slice(
+                  i,
+                  i + BATCH_SIZE
+              );
+
+              const { error } = await supabase
+                  .from("soutenances")
+                  .insert(batch);
+
+              if (error) {
+                  console.error(error);
+                  throw error;
+              }
+          }
 
         await supabase.from("notifications").insert({
           title: "Importation Réussie",

@@ -115,22 +115,6 @@ export function formatFullTime(
     }
 }
 
-
-export const normalizeSpeciality = (
-    s: string = ""
-) => {
-    return s
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/\s+/g, " ")
-        .replace(/\s*\(\s*/g, " (")
-        .replace(/\s*\)\s*/g, ") ")
-        .replace(/\(\s+/g, "(")
-        .replace(/\s+\)/g, ")")
-        .trim()
-        .toUpperCase();
-};
-
 export function sortStudentsByName<T extends { nom?: string; prenoms?: string }>(
     data: T[]
 ): T[] {
@@ -143,3 +127,26 @@ export function sortStudentsByName<T extends { nom?: string; prenoms?: string }>
         });
     });
 }
+
+
+export const normalizeSpeciality = (s: string = "") => {
+    return s
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // remove accents
+        .replace(/\s+/g, " ")
+        .replace(/\s*\(\s*/g, " (")
+        .replace(/\s*\)\s*/g, ") ")
+        .trim()
+        .toUpperCase()
+        .replace(/\(\s+/g, "(")
+        .replace(/\s+\)/g, ")")
+        .replace(/\s+/g, " ")
+        .trim();
+};
+
+export const normalizeDiplomaType = (s: string = "") => {
+    return s
+        .trim()
+        .replace(/\s+/g, " ")
+        .toUpperCase();
+};

@@ -45,58 +45,156 @@ export function JuryView({ diplomaType }: { diplomaType: string }) {
     const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
+
         const fetchMembers = async () => {
-            setLoading(true);
 
-            const { data, error } = await supabase
-                .from("soutenances")
-                .select(`
-    id,
-    nom,
-    prenoms,
-    president,
-    grade_president,
-    examinateur,
-    grade_examinateur,
-    rapporteur,
-    grade_rapporteur
-  `)
-                .eq("diploma_type", "Licence")
-                .order("date_soutenance", { ascending: true });
+            try {
 
-            if (data) {
-                const counts: Record<string, JuryMemberStats> = {};
+                setLoading(true);
 
-                data.forEach(item => {
+                const normalizedDiploma =
+                    diplomaType
+                        .trim()
+                        .toUpperCase();
+
+                const { data, error } = await supabase
+                    .from("soutenances")
+                    .select(`
+                    id,
+                    nom,
+                    prenoms,
+
+                    president,
+                    grade_president,
+
+                    examinateur,
+                    grade_examinateur,
+
+                    rapporteur,
+                    grade_rapporteur,
+
+                    diploma_type,
+                    is_merged,
+
+                    date_soutenance
+                `)
+                    .order("date_soutenance", {
+                        ascending: true
+                    });
+
+                if (error) {
+                    console.error(error);
+                    return;
+                }
+
+                // ===== SAFE NORMALIZER =====
+
+                const normalize = (
+                    value?: string | null
+                ) =>
+                    String(value || "")
+                        .trim()
+                        .replace(/\s+/g, " ")
+                        .toUpperCase();
+
+                // ===== FILTER CLEAN DATA =====
+
+                const cleaned =
+                    (data || []).filter(item =>
+                        normalize(item.diploma_type)
+                        ===
+                        normalizedDiploma
+                        &&
+                        item.is_merged !== true
+                    );
+
+                const counts:
+                    Record<string, JuryMemberStats> = {};
+
+                cleaned.forEach(item => {
+
                     const roles = [
-                        { name: item.president, grade: item.grade_president },
-                        { name: item.examinateur, grade: item.grade_examinateur },
-                        { name: item.rapporteur, grade: item.grade_rapporteur }
+
+                        {
+                            name: item.president,
+                            grade: item.grade_president
+                        },
+
+                        {
+                            name: item.examinateur,
+                            grade: item.grade_examinateur
+                        },
+
+                        {
+                            name: item.rapporteur,
+                            grade: item.grade_rapporteur
+                        }
                     ];
 
                     roles.forEach(role => {
-                        if (role.name) {
-                            const key = `${role.name}__${role.grade || ""}`;
-                            if (!counts[key]) {
-                                counts[key] = {
-                                    name: role.name,
-                                    grade: role.grade || "",
-                                    count: 0
-                                };
-                            }
-                            counts[key].count += 1;
+
+                        const normalizedName =
+                            normalize(role.name);
+
+                        const normalizedGrade =
+                            normalize(role.grade);
+
+                        if (!normalizedName) return;
+
+                        const key =
+                            `${normalizedName}__${normalizedGrade}`;
+
+                        if (!counts[key]) {
+
+                            counts[key] = {
+
+                                name:
+                                    String(role.name || "").trim(),
+
+                                grade:
+                                    String(role.grade || "").trim(),
+
+                                count: 0
+                            };
                         }
+
+                        counts[key].count += 1;
+
                     });
+
                 });
 
-                const stats = Object.values(counts).sort((a, b) => b.count - a.count);
-                setMembers(stats);
-            }
+                const stats =
+                    Object.values(counts)
+                        .sort((a, b) => {
 
-            setLoading(false);
+                            if (b.count !== a.count) {
+                                return b.count - a.count;
+                            }
+
+                            return a.name.localeCompare(
+                                b.name,
+                                "fr",
+                                {
+                                    sensitivity: "base"
+                                }
+                            );
+                        });
+
+                setMembers(stats);
+
+            } catch (err) {
+
+                console.error(err);
+
+            } finally {
+
+                setLoading(false);
+            }
         };
 
         fetchMembers();
+
     }, [diplomaType]);
 
     const filteredMembers = members.filter(m =>

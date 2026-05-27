@@ -2,95 +2,264 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
 import { Button } from "@/components/ui/button";
-import { Trash2, AlertTriangle, RefreshCcw } from "lucide-react";
+
+import {
+    Trash2,
+    AlertTriangle,
+    RefreshCcw
+} from "lucide-react";
+
 import { toast } from "sonner";
+
 import { useRouter } from "next/navigation";
 
 interface ResetEverythingButtonProps {
+
     diplomaType: string;
-    target: "planning" | "directors" | "jury"; // add "jury" here
+
+    target:
+        | "planning"
+        | "directors"
+        | "jury";
 }
 
-export function ResetEverythingButton({ diplomaType = "", target }: ResetEverythingButtonProps) {
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+export function ResetEverythingButton({
+                                          diplomaType = "",
+                                          target
+                                      }: ResetEverythingButtonProps) {
 
-  const handleReset = async () => {
-    if (!diplomaType) {
-      toast.error("Type de diplôme non spécifié");
-      return;
-    }
+    const [loading, setLoading] = useState(false);
 
-    setLoading(true);
-    try {
-      if (target === "planning") {
-        // Delete all soutenances for this diploma type
-        const { error: soutenancesError } = await supabase
-          .from("soutenances")
-          .delete()
-          .eq("diploma_type", diplomaType);
-        
-        if (soutenancesError) throw soutenancesError;
+    const router = useRouter();
 
-        // Also delete related notifications for this diploma type
-        const { error: notificationsError } = await supabase
-          .from("notifications")
-          .delete()
-          .ilike("message", `%${diplomaType}%`);
-        
-        if (notificationsError) throw notificationsError;
+    // ===== SAFE NORMALIZER =====
 
-        toast.success(`Toutes les données de planification ${diplomaType} ont été supprimées.`);
-      } else {
-        // Clear only director fields for this diploma type
-        const { error: directorsError } = await supabase
-          .from("soutenances")
-          .update({ 
-            directeur: "", 
-            grade_directeur: "" 
-          })
-          .eq("diploma_type", diplomaType);
-        
-        if (directorsError) throw directorsError;
+    const normalize = (
+        value?: string | null
+    ) =>
+        String(value || "")
+            .trim()
+            .replace(/\s+/g, " ")
+            .toUpperCase();
 
-        toast.success(`Tous les directeurs assignés en ${diplomaType} ont été retirés.`);
-      }
-      
-      router.refresh();
-      // Use window.location.reload() as a fallback to ensure state is cleared
-      setTimeout(() => window.location.reload(), 500);
-    } catch (error: any) {
-      console.error("Error resetting data:", error);
-      toast.error("Erreur lors de l'opération: " + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const handleReset = async () => {
 
-  const safeDiplomaType = diplomaType || "";
-  const displayDiplomaType = safeDiplomaType.toUpperCase();
+        if (!diplomaType) {
 
-  const title = target === "planning" 
-    ? `RÉINITIALISER LE PLANNING ${displayDiplomaType}`
-    : `RÉINITIALISER LES DIRECTEURS ${displayDiplomaType}`;
+            toast.error(
+                "Type de diplôme non spécifié"
+            );
 
-  const description = target === "planning"
-    ? `Cette action supprimera définitivement TOUS les étudiants et planifications pour le diplôme ${safeDiplomaType}.`
-    : `Cette action retirera TOUS les directeurs assignés aux soutenances de type ${safeDiplomaType}. Les étudiants et thèmes seront conservés.`;
+            return;
+        }
 
-  return (
+        setLoading(true);
+
+        try {
+
+            const normalizedDiploma =
+                normalize(diplomaType);
+
+            // ============================================
+            // FETCH MATCHING IDS SAFELY
+            // ============================================
+
+            const {
+                data: soutenances,
+                error: fetchError
+            } = await supabase
+                .from("soutenances")
+                .select(`
+                    id,
+                    diploma_type
+                `);
+
+            if (fetchError) {
+                throw fetchError;
+            }
+
+            const matchingIds =
+                (soutenances || [])
+                    .filter(item =>
+                        normalize(item.diploma_type)
+                        ===
+                        normalizedDiploma
+                    )
+                    .map(item => item.id);
+
+            if (matchingIds.length === 0) {
+
+                toast.error(
+                    "Aucune donnée trouvée."
+                );
+
+                return;
+            }
+
+            // ============================================
+            // PLANNING RESET
+            // ============================================
+
+            if (target === "planning") {
+
+                const {
+                    error: deleteError
+                } = await supabase
+                    .from("soutenances")
+                    .delete()
+                    .in("id", matchingIds);
+
+                if (deleteError) {
+                    throw deleteError;
+                }
+
+                // ===== DELETE RELATED NOTIFICATIONS =====
+
+                await supabase
+                    .from("notifications")
+                    .delete()
+                    .ilike(
+                        "message",
+                        `%${diplomaType}%`
+                    );
+
+                toast.success(
+                    `Toutes les soutenances ${normalizedDiploma} ont été supprimées.`
+                );
+            }
+
+                // ============================================
+                // DIRECTORS RESET
+            // ============================================
+
+            else if (target === "directors") {
+
+                const {
+                    error: directorsError
+                } = await supabase
+                    .from("soutenances")
+                    .update({
+
+                        directeur: "",
+                        grade_directeur: "",
+
+                        codirecteur: "",
+                        grade_codirecteur: ""
+                    })
+                    .in("id", matchingIds);
+
+                if (directorsError) {
+                    throw directorsError;
+                }
+
+                toast.success(
+                    `Tous les directeurs ${normalizedDiploma} ont été réinitialisés.`
+                );
+            }
+
+                // ============================================
+                // JURY RESET
+            // ============================================
+
+            else if (target === "jury") {
+
+                const {
+                    error: juryError
+                } = await supabase
+                    .from("soutenances")
+                    .update({
+
+                        jury: null,
+
+                        president: "",
+                        grade_president: "",
+
+                        examinateur: "",
+                        grade_examinateur: "",
+
+                        rapporteur: "",
+                        grade_rapporteur: ""
+                    })
+                    .in("id", matchingIds);
+
+                if (juryError) {
+                    throw juryError;
+                }
+
+                toast.success(
+                    `Tous les jurys ${normalizedDiploma} ont été réinitialisés.`
+                );
+            }
+
+            // ============================================
+            // FORCE UI REFRESH
+            // ============================================
+
+            router.refresh();
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 400);
+
+        } catch (error: any) {
+
+            console.error(
+                "RESET ERROR:",
+                error
+            );
+
+            toast.error(
+                error.message ||
+                "Erreur lors de la réinitialisation."
+            );
+
+        } finally {
+
+            setLoading(false);
+        }
+    };
+
+    const safeDiplomaType =
+        normalize(diplomaType);
+
+    // ============================================
+    // TITLES
+    // ============================================
+
+    const title =
+        target === "planning"
+            ? `RÉINITIALISER LE PLANNING ${safeDiplomaType}`
+            : target === "directors"
+                ? `RÉINITIALISER LES DIRECTEURS ${safeDiplomaType}`
+                : `RÉINITIALISER LES JURYS ${safeDiplomaType}`;
+
+    const description =
+        target === "planning"
+
+            ? `Cette action supprimera définitivement toutes les soutenances ${safeDiplomaType}.`
+
+            : target === "directors"
+
+                ? `Cette action retirera tous les directeurs et co-directeurs des soutenances ${safeDiplomaType}.`
+
+                : `Cette action retirera tous les jurys et membres de jury des soutenances ${safeDiplomaType}.`;
+
+
+    return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button 
