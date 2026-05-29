@@ -41,6 +41,7 @@ import JSZip from "jszip";
 import { LICENCE_SPECIALITIES, MASTER_SPECIALITIES } from "@/lib/constants";
 import { sortStudentsByName } from "@/lib/utils";
 import { normalizeSpeciality } from "@/lib/utils";
+import { useMemo } from "react";
 
 interface Student {
   id: string;
@@ -683,13 +684,56 @@ export default function PVGenerationPage() {
     }
   };
 
+    const [availableSpecialities, setAvailableSpecialities] = useState<string[]>([]);
 
-    const availableSpecialities =
-        bulkDiplomaType === "Licence"
-            ? LICENCE_SPECIALITIES
-            : bulkDiplomaType === "Master"
-                ? MASTER_SPECIALITIES
-                : [];
+    useEffect(() => {
+
+        const fetchSpecialities = async () => {
+
+            if (!bulkDiplomaType) {
+                setAvailableSpecialities([]);
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from("soutenances")
+                .select("speciality, diploma_type");
+
+            if (error) {
+                console.error(error);
+                return;
+            }
+
+            const normalizedDiploma =
+                normalizeSpeciality(bulkDiplomaType);
+
+            const specialities = Array.from(
+                new Set(
+                    (data || [])
+                        .filter(item =>
+                            normalizeSpeciality(
+                                item.diploma_type || ""
+                            ) === normalizedDiploma
+                        )
+                        .map(item =>
+                            normalizeSpeciality(
+                                item.speciality || ""
+                            )
+                        )
+                        .filter(Boolean)
+                )
+            ).sort((a, b) =>
+                a.localeCompare(b, "fr", {
+                    sensitivity: "base"
+                })
+            );
+
+            setAvailableSpecialities(specialities);
+        };
+
+        fetchSpecialities();
+
+    }, [bulkDiplomaType]);
 
   return (
     <div className="max-w-5xl mx-auto space-y-10 pb-10">

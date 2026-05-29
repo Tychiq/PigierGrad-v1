@@ -439,7 +439,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
 
     const filteredData = useMemo(() => {
 
-        return data.filter(item => {
+        const filtered = data.filter(item => {
 
             const searchable =
                 `
@@ -486,6 +486,30 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                 matchesDirector
             );
         });
+
+        // ============================================
+        // IF JURY FILTER ACTIVE → SORT BY HOUR
+        // ============================================
+
+        if (selectedJury !== "all") {
+
+            return filtered.sort((a, b) => {
+
+                const hourA =
+                    String(a.heure_soutenance || "");
+
+                const hourB =
+                    String(b.heure_soutenance || "");
+
+                return hourA.localeCompare(hourB);
+            });
+        }
+
+        // ============================================
+        // DEFAULT SORT → ALPHABETICAL
+        // ============================================
+
+        return sortStudentsByName(filtered);
 
     }, [
         data,
@@ -752,7 +776,7 @@ export function PlanificationView({ diplomaType }: { diplomaType: string }) {
                     'RAPPORTEUR'
                 ]],
 
-                body: sortStudentsByName(filteredData).map(item => [
+                body: filteredData.map(item => [
 
                     item.jury || "---",
 
